@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data - Open Source Bond Asset Pricing</title>
+<meta name="description" content="Corporate bond panels, factors and data reports, free to download.">
+<!--
+  Open Source Bond Asset Pricing.
+
+  ❗GENERATED. The source is osbap_data/site/, built by tools/make_site.py. Editing the
+  deployed copy is overwritten without warning by the next deploy.
+
+  Self-contained by design -- no framework, no build step, no external CSS. The only external
+  dependencies anywhere on the site are Chart.js and KaTeX on the pages that need them,
+  both pinned from cdnjs.
+-->
+<style>
+  :root {
+    --bg: #ffffff;
+    --panel: #f7f7f5;
+    --ink: #1a1a1a;
+    --ink-soft: #5a5a5a;
+    --line: #dcdcd6;
+    --accent: #1f4e79;
+    --accent-soft: #e8eff5;
+    --pos: #1a6b3c;
+    --neg: #9b2226;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16181c; --panel: #1e2126; --ink: #e8e8e6; --ink-soft: #a0a0a0;
+      --line: #32363d; --accent: #7fb3e0; --accent-soft: #22303c;
+      --pos: #5fc98a; --neg: #e0787c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 var(--sans); }
+  a { color: var(--accent); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 72px; }
+
+  header.site { border-bottom: 1px solid var(--line); margin-bottom: 28px; background: var(--bg); }
+  header.site .inner { max-width: 1040px; margin: 0 auto; padding: 18px 20px 0;
+                       display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px; }
+  header.site .brand { font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
+                       color: var(--ink); text-decoration: none; }
+  header.site .brand span { color: var(--ink-soft); font-weight: 400; }
+  nav.site { max-width: 1040px; margin: 0 auto; padding: 10px 20px 0; display: flex; gap: 2px; }
+  nav.site a {
+    padding: 8px 14px; font-size: 14px; font-weight: 500; color: var(--ink-soft);
+    text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  nav.site a:hover { color: var(--ink); }
+  nav.site a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+  h1 { font-size: 27px; font-weight: 600; letter-spacing: -0.015em; margin: 8px 0 6px; }
+  h2 { font-size: 17px; font-weight: 600; margin: 34px 0 10px; }
+  h3 { font-size: 14.5px; font-weight: 600; margin: 20px 0 6px; }
+  p.lead { font-size: 16px; color: var(--ink-soft); max-width: 72ch; margin: 0 0 18px; }
+  p { max-width: 78ch; margin: 0 0 12px; }
+  ul { max-width: 78ch; }
+  code { font-family: var(--mono); font-size: 12.5px; background: var(--panel);
+         border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; }
+  pre { font-family: var(--mono); font-size: 12.5px; background: var(--panel);
+        border: 1px solid var(--line); border-left: 3px solid var(--accent);
+        border-radius: 0 4px 4px 0; padding: 10px 13px; overflow-x: auto; max-width: 78ch; }
+  pre code { background: none; border: none; padding: 0; }
+
+  .note {
+    background: var(--accent-soft); border-left: 3px solid var(--accent);
+    padding: 11px 15px; font-size: 13.5px; border-radius: 0 4px 4px 0;
+    margin: 0 0 22px; max-width: 78ch;
+  }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+           gap: 14px; margin: 18px 0 8px; }
+  .card {
+    border: 1px solid var(--line); border-radius: 6px; padding: 15px 17px;
+    background: var(--bg); text-decoration: none; color: var(--ink); display: block;
+  }
+  .card:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .card b { display: block; font-size: 15px; margin-bottom: 4px; }
+  .card span { font-size: 13px; color: var(--ink-soft); }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin-bottom: 6px; }
+  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line);
+           vertical-align: top; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+       color: var(--ink-soft); font-weight: 600; white-space: nowrap; }
+  td.size { font-family: var(--mono); font-size: 12.5px; white-space: nowrap;
+            color: var(--ink-soft); }
+  td.get { white-space: nowrap; }
+  td .what { display: block; color: var(--ink-soft); font-size: 12.5px; margin-top: 2px; }
+  .pending { color: var(--ink-soft); font-style: italic; font-size: 12.5px; }
+  details summary { cursor: pointer; color: var(--accent); font-size: 13.5px; }
+  .parts { display: flex; flex-wrap: wrap; gap: 4px 10px; max-width: 320px;
+           margin-top: 6px; font-family: var(--mono); font-size: 12px; }
+
+  .figure { border: 1px solid var(--line); border-radius: 6px; padding: 15px 17px;
+            margin: 18px 0 10px; }
+  .figure-head { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-start;
+                 justify-content: space-between; margin-bottom: 12px; }
+  .figure-head strong { font-size: 15px; }
+  .figure-head .what { display: block; color: var(--ink-soft); font-size: 12.5px;
+                       max-width: 62ch; margin-top: 3px; }
+  label.pick { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+               color: var(--ink-soft); display: flex; flex-direction: column; gap: 4px; }
+  label.pick select { font: inherit; font-size: 13px; text-transform: none;
+                      letter-spacing: normal; color: var(--ink); background: var(--bg);
+                      border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; }
+  .figure-box { position: relative; height: 380px; }
+  .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
+
+  .people { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 0; list-style: none;
+            font-size: 14px; }
+  .people li { min-width: 200px; }
+  .people span { color: var(--ink-soft); font-size: 12.5px; }
+
+  .news { list-style: none; padding: 0; font-size: 14px; }
+  .news li { display: flex; gap: 14px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .news time { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
+               white-space: nowrap; }
+
+  footer.site { border-top: 1px solid var(--line); margin-top: 44px; padding-top: 16px;
+                font-size: 12.5px; color: var(--ink-soft); }
+  footer.site p { margin: 0 0 5px; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="inner">
+    <a class="brand" href="/">Open Source Bond Asset Pricing</a>
+  </div>
+  <nav class="site"><a href="/">Home</a><a href="/data/" aria-current="page">Data</a><a href="/code/">Code</a><a href="/factorviz/">FactorViz</a></nav>
+</header>
+
+<div class="wrap">
+<h1>Data</h1>
+<p class="lead">
+  Everything below is built by our own pipeline from raw TRACE, Lehman and ICE data, and is
+  free to download. Sizes are measured from the files themselves.
+</p>
+
+<div class="note">
+  The paper behind this data is under Revise and Resubmit, so the data may change over the
+  coming months. Every change is recorded in the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/CHANGELOG.md">changelog on GitHub</a>.
+</div>
+
+<h2>Monthly bond panel</h2>
+<p>
+  One row per bond per month, from 2002-08. The main file carries returns, prices, ratings,
+  duration and the standard characteristics. The additional file carries the wider set,
+  including the beta, momentum and reversal blocks and the duration-adjusted returns. Together
+  they are what the factors on this site are sorted from.
+</p>
+<div class="scroll"><table><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>OSBAP monthly panel, main</strong><span class="what">Returns, prices, ratings, duration and the standard characteristics, monthly from 2002-08. Proprietary fields are excluded.</span></td><td class="size">zipped parquet</td><td class="size">1.27 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_main_data_2026.zip">download</a></td></tr><tr><td><strong>OSBAP monthly panel, additional</strong><span class="what">The wider characteristic set, including the beta, momentum and reversal blocks and the duration-adjusted returns.</span></td><td class="size">zipped parquet</td><td class="size">1.36 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_additional_data_2026.zip">download</a></td></tr><tr><td><strong>Market and macro factors</strong><span class="what">The exogenous monthly series the panel's betas are estimated against, including the bond market factor and its duration-adjusted twins.</span></td><td class="size">zipped parquet</td><td class="size">147 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_stage2_factors_2026.zip">download</a></td></tr><tr><td><strong>Extended bond factors, 1973 to 2023</strong><span class="what">The pre-TRACE extension of the bond market factor, built from Lehman and ICE quote data.</span></td><td class="size">zipped parquet</td><td class="size">48 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/bbw_factors_extended_1973_2023.zip">download</a></td></tr></tbody></table></div>
+
+<h2>Daily bond panel</h2>
+<p>
+  Every bond-day from 2002-07, combining Enhanced, Standard and 144A TRACE, with clean prices,
+  accrued interest, yields, credit spreads, duration and convexity. <strong>No filter on par
+  or dollar volume</strong> is applied, so small trades are present and can be filtered by the
+  user rather than for them.
+</p>
+<div class="scroll"><table><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>Daily bond panel</strong><span class="what">Every bond-day from 2002-07, Enhanced, Standard and 144A TRACE combined, with no filter on par or dollar volume. In two parts, which read together as one panel.</span></td><td class="size">parquet, two parts</td><td class="size">2.29 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_daily_panel_2026_2002_2016.parquet">2002 to 2016</a> <span class="pending">1.05 GB</span><br><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_daily_panel_2026_2017_2025.parquet">2017 to 2025</a> <span class="pending">1.24 GB</span></td></tr></tbody></table></div>
+
+<h2>Corporate bond factors</h2>
+<p>
+  The 108 long-short factors, sorted across the whole cross-section and again within each
+  issuer. Explore them first in <a href="/factorviz/">FactorViz</a>, which plots exactly the files below and
+  carries the full grid of return definitions, rating universes and weightings.
+</p>
+<div class="scroll"><table><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>108 factors, single sort, wide</strong><span class="what">One CSV per return definition, universe and weighting. This is what FactorViz plots.</span></td><td class="size">zipped CSV</td><td class="size">8 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/single_sort_extended_2026_csv.zip">download</a></td></tr><tr><td><strong>108 factors, single sort, panel</strong><span class="what">The long panel, with the long leg, the short leg, two-way turnover and portfolio counts.</span></td><td class="size">zipped parquet</td><td class="size">66 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/single_sort_panel_extended_2026.zip">download</a></td></tr><tr><td><strong>108 factors, within firm, wide</strong><span class="what">The same grid, sorted only against other bonds of the same issuer.</span></td><td class="size">zipped CSV</td><td class="size">8 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/within_firm_sort_extended_2026_csv.zip">download</a></td></tr><tr><td><strong>108 factors, within firm, panel</strong><span class="what">The within-firm long panel, with both legs, turnover and counts.</span></td><td class="size">zipped parquet</td><td class="size">66 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/within_firm_sort_panel_extended_2026.zip">download</a></td></tr></tbody></table></div>
+
+<h2>Data reports</h2>
+<p>
+  What the cleaning did, measured rather than described. Each report is generated by the
+  pipeline itself as part of the run it documents.
+</p>
+<div class="scroll"><table><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>Monthly panel data report</strong><span class="what">Coverage, market aggregates and the comparisons behind the monthly panel.</span></td><td class="size">PDF</td><td class="size">884 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage2_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Transaction cleaning reports, Enhanced and 144A</strong><span class="what">Every trade-level filter, measured. Built on the WRDS grid where Stage 0 runs.</span></td><td class="size"></td><td class="size">&mdash;</td><td class="get"><span class="pending">not yet rebuilt for the 2026 vintage</span></td></tr><tr><td><strong>Daily panel data report</strong><span class="what">Coverage, trade size, sparsity and the distressed-bond screen.</span></td><td class="size"></td><td class="size">&mdash;</td><td class="get"><span class="pending">not yet rebuilt for the 2026 vintage</span></td></tr></tbody></table></div>
+
+<h2>Papers</h2>
+<div class="scroll"><table><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>The Corporate Bond Factor Replication Crisis</strong><span class="what">The paper the data and the pipeline are built for.</span></td><td class="size">PDF</td><td class="size">2 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/corp-bond-replication-crisis-dickerson.pdf">download</a></td></tr><tr><td><strong>Internet Appendix</strong><span class="what">The appendix tables and figures.</span></td><td class="size">PDF</td><td class="size">794 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/corp-bond-replication-crisis-internet-appendix.pdf">download</a></td></tr><tr><td><strong>The Co-Pricing Factor Zoo</strong><span class="what">Traded bond, stock and nontraded factors, priced together.</span></td><td class="size"></td><td class="size">&mdash;</td><td class="get"><span class="pending">PDF to be supplied from its own repo</span></td></tr><tr><td><strong>Priced risk in corporate bonds</strong><span class="what">Journal of Financial Economics 150, article 103707.</span></td><td class="size"></td><td class="size">&mdash;</td><td class="get"><span class="pending">PDF to be supplied</span></td></tr></tbody></table></div>
+
+<h2>Notes on the files</h2>
+<ul>
+  <li>Everything is zipped parquet unless the table says otherwise. Parquet reads in pandas
+      with <code>pd.read_parquet</code> and in R with <code>arrow::read_parquet</code>.</li>
+  <li>Proprietary fields are excluded, so ratings are collapsed and identifiers such as
+      <code>gvkey</code> are removed. Anyone with the underlying licences can regenerate the
+      full version by running the pipeline.</li>
+  <li>Column definitions are in the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage1/DATA_DICTIONARY.md">daily data dictionary</a> for the daily panel and the
+      <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage2/DATA_DICTIONARY.md">monthly data dictionary</a> for the monthly panel.</li>
+  <li>To rebuild any of it from raw data, the whole pipeline is public at
+      <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a>. It needs a WRDS account and the relevant data licences.</li>
+  <li>The daily and monthly panels are also distributed through WRDS as contributed data,
+      <a href="https://wrds-www.wharton.upenn.edu/pages/get-data/contributed-data-forms/corporate-bond-data-dickerson-daily/">daily</a> and <a href="https://wrds-www.wharton.upenn.edu/pages/get-data/contributed-data-forms/corporate-bond-data-dickerson-monthly/">monthly</a>.</li>
+</ul>
+
+<footer class="site">
+  <p>This website (design/layout) is based on work of Andrew Y. Chen and Tom Zimmermann.</p>
+  <p>Questions and corrections, <a href="mailto:alexander.dickerson1@unsw.edu.au">alexander.dickerson1@unsw.edu.au</a>.</p>
+  <p>&copy;2026 Open Source Bond Asset Pricing &middot; built 2026-09-17</p>
+</footer>
+</div>
+
+</body>
+</html>

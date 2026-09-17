@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home - Open Source Bond Asset Pricing</title>
+<meta name="description" content="Open corporate bond data, factors and code. Built from raw TRACE, Lehman and ICE data, free to download, reproducible end to end.">
+<!--
+  Open Source Bond Asset Pricing.
+
+  ❗GENERATED. The source is osbap_data/site/, built by tools/make_site.py. Editing the
+  deployed copy is overwritten without warning by the next deploy.
+
+  Self-contained by design -- no framework, no build step, no external CSS. The only external
+  dependencies anywhere on the site are Chart.js and KaTeX on the pages that need them,
+  both pinned from cdnjs.
+-->
+<style>
+  :root {
+    --bg: #ffffff;
+    --panel: #f7f7f5;
+    --ink: #1a1a1a;
+    --ink-soft: #5a5a5a;
+    --line: #dcdcd6;
+    --accent: #1f4e79;
+    --accent-soft: #e8eff5;
+    --pos: #1a6b3c;
+    --neg: #9b2226;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16181c; --panel: #1e2126; --ink: #e8e8e6; --ink-soft: #a0a0a0;
+      --line: #32363d; --accent: #7fb3e0; --accent-soft: #22303c;
+      --pos: #5fc98a; --neg: #e0787c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 var(--sans); }
+  a { color: var(--accent); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 72px; }
+
+  header.site { border-bottom: 1px solid var(--line); margin-bottom: 28px; background: var(--bg); }
+  header.site .inner { max-width: 1040px; margin: 0 auto; padding: 18px 20px 0;
+                       display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px; }
+  header.site .brand { font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
+                       color: var(--ink); text-decoration: none; }
+  header.site .brand span { color: var(--ink-soft); font-weight: 400; }
+  nav.site { max-width: 1040px; margin: 0 auto; padding: 10px 20px 0; display: flex; gap: 2px; }
+  nav.site a {
+    padding: 8px 14px; font-size: 14px; font-weight: 500; color: var(--ink-soft);
+    text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  nav.site a:hover { color: var(--ink); }
+  nav.site a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+  h1 { font-size: 27px; font-weight: 600; letter-spacing: -0.015em; margin: 8px 0 6px; }
+  h2 { font-size: 17px; font-weight: 600; margin: 34px 0 10px; }
+  h3 { font-size: 14.5px; font-weight: 600; margin: 20px 0 6px; }
+  p.lead { font-size: 16px; color: var(--ink-soft); max-width: 72ch; margin: 0 0 18px; }
+  p { max-width: 78ch; margin: 0 0 12px; }
+  ul { max-width: 78ch; }
+  code { font-family: var(--mono); font-size: 12.5px; background: var(--panel);
+         border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; }
+  pre { font-family: var(--mono); font-size: 12.5px; background: var(--panel);
+        border: 1px solid var(--line); border-left: 3px solid var(--accent);
+        border-radius: 0 4px 4px 0; padding: 10px 13px; overflow-x: auto; max-width: 78ch; }
+  pre code { background: none; border: none; padding: 0; }
+
+  .note {
+    background: var(--accent-soft); border-left: 3px solid var(--accent);
+    padding: 11px 15px; font-size: 13.5px; border-radius: 0 4px 4px 0;
+    margin: 0 0 22px; max-width: 78ch;
+  }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+           gap: 14px; margin: 18px 0 8px; }
+  .card {
+    border: 1px solid var(--line); border-radius: 6px; padding: 15px 17px;
+    background: var(--bg); text-decoration: none; color: var(--ink); display: block;
+  }
+  .card:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .card b { display: block; font-size: 15px; margin-bottom: 4px; }
+  .card span { font-size: 13px; color: var(--ink-soft); }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin-bottom: 6px; }
+  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line);
+           vertical-align: top; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+       color: var(--ink-soft); font-weight: 600; white-space: nowrap; }
+  td.size { font-family: var(--mono); font-size: 12.5px; white-space: nowrap;
+            color: var(--ink-soft); }
+  td.get { white-space: nowrap; }
+  td .what { display: block; color: var(--ink-soft); font-size: 12.5px; margin-top: 2px; }
+  .pending { color: var(--ink-soft); font-style: italic; font-size: 12.5px; }
+  details summary { cursor: pointer; color: var(--accent); font-size: 13.5px; }
+  .parts { display: flex; flex-wrap: wrap; gap: 4px 10px; max-width: 320px;
+           margin-top: 6px; font-family: var(--mono); font-size: 12px; }
+
+  .figure { border: 1px solid var(--line); border-radius: 6px; padding: 15px 17px;
+            margin: 18px 0 10px; }
+  .figure-head { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-start;
+                 justify-content: space-between; margin-bottom: 12px; }
+  .figure-head strong { font-size: 15px; }
+  .figure-head .what { display: block; color: var(--ink-soft); font-size: 12.5px;
+                       max-width: 62ch; margin-top: 3px; }
+  label.pick { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+               color: var(--ink-soft); display: flex; flex-direction: column; gap: 4px; }
+  label.pick select { font: inherit; font-size: 13px; text-transform: none;
+                      letter-spacing: normal; color: var(--ink); background: var(--bg);
+                      border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; }
+  .figure-box { position: relative; height: 380px; }
+  .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
+
+  .people { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 0; list-style: none;
+            font-size: 14px; }
+  .people li { min-width: 200px; }
+  .people span { color: var(--ink-soft); font-size: 12.5px; }
+
+  .news { list-style: none; padding: 0; font-size: 14px; }
+  .news li { display: flex; gap: 14px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .news time { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
+               white-space: nowrap; }
+
+  footer.site { border-top: 1px solid var(--line); margin-top: 44px; padding-top: 16px;
+                font-size: 12.5px; color: var(--ink-soft); }
+  footer.site p { margin: 0 0 5px; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="inner">
+    <a class="brand" href="/">Open Source Bond Asset Pricing</a>
+  </div>
+  <nav class="site"><a href="/" aria-current="page">Home</a><a href="/data/">Data</a><a href="/code/">Code</a><a href="/factorviz/">FactorViz</a></nav>
+</header>
+
+<div class="wrap">
+<h1>Open Source Bond Asset Pricing</h1>
+<p class="lead">
+  Corporate bond data, factors and the code that builds them. Everything here is produced by
+  a public pipeline from raw TRACE, Lehman and ICE data, and everything is free to download.
+</p>
+
+<div class="note">
+  The paper behind this data is under Revise and Resubmit, so the data may change over the
+  coming months. Every change is recorded in the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/CHANGELOG.md">changelog on GitHub</a>.
+</div>
+
+<div class="cards">
+  <a class="card" href="/data/"><b>Data</b>
+    <span>The daily and monthly bond panels, the 108 factors, and the reports that show what
+    the cleaning did.</span></a>
+  <a class="card" href="/factorviz/"><b>FactorViz</b>
+    <span>Explore every factor in the browser, across three datasets, four return definitions
+    and two sorts.</span></a>
+  <a class="card" href="/code/"><b>Code</b>
+    <span>The pipeline that builds the data and the library that forms the factors.</span></a>
+</div>
+
+<h2>What is here</h2>
+<ul>
+  <li><strong>A daily bond panel</strong> from 2002-07, Enhanced, Standard and 144A TRACE
+      combined, cleaned trade by trade, with no filter on par or dollar volume.</li>
+  <li><strong>A monthly bond panel</strong> built from it, carrying returns, credit spreads,
+      duration, ratings and the characteristics the literature sorts on.</li>
+  <li><strong>108 long-short factors</strong>, single sorted and within firm, published
+      without sign correction and explorable in <a href="/factorviz/">FactorViz</a>.</li>
+  <li><strong>Data reports</strong> that measure what each stage of the cleaning removed,
+      generated by the run they document.</li>
+</ul>
+
+<h2>How the data is built</h2>
+<p>
+  The pipeline is public and runs in four stages, at <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a>.
+</p>
+<ul>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage0">Stage 0</a> cleans the transaction tape, removing cancellations,
+      corrections, reversals, interdealer double counts, decimal-shifted prices and
+      bounce-back errors.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage1">Stage 1</a> turns the cleaned trades into a daily panel with clean prices,
+      accrued interest, yields, credit spreads, duration and convexity.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage2">Stage 2</a> aggregates to the monthly panel and estimates the
+      characteristics, betas and momentum signals.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage3">Stage 3</a> reproduces every table and figure in the paper from that
+      panel.</li>
+</ul>
+
+<h2>Most of a bond's return is the Treasury inside it</h2>
+<p>
+  Over the past twenty years the greater part of the total return to holding corporate bonds
+  is the return on the duration-matched Treasury portfolio, not compensation for credit or
+  liquidity risk. That is the point of van Binsbergen, Nozawa and Schwert (2025), and the
+  figure below is it, measured on our own data. All three duration-matched benchmarks we
+  publish are here, because the split moves with the choice.
+</p>
+<div class="figure">
+  <div class="figure-head">
+    <div>
+      <strong>The corporate bond market, split into duration and credit</strong>
+      <span class="what">Cumulative log return, value-weighted, each series compounded on its
+      own. The Treasury leg is the duration-matched portfolio inside the market.</span>
+    </div>
+    <label class="pick">Duration benchmark
+      <select id="dec-bench">
+        <option value="bns">BNS, the bond's own cash flows</option>
+        <option value="cls">CLS, cash flows on the Treasury zero curve</option>
+        <option value="apr">APR, duration-interpolated key rates</option>
+      </select>
+    </label>
+  </div>
+  <div class="figure-box"><canvas id="dec-chart"></canvas></div>
+  <p class="figure-foot" id="dec-note"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+"use strict";
+/* The decomposition figure.
+
+   The series are built by osbap_data/tools/make_decomposition.py from our own monthly panel,
+   value-weighted on the previous month's market value -- the weighting that reproduces the
+   published bond market factor, corr 0.99996. The CSV beside this chart is exactly what is
+   plotted, which is the same rule FactorViz holds itself to. */
+(function () {
+  const COLORS = {market: "#1f4e79", treasury: "#bc6c25", credit: "#2a9d8f", rf: "#8d99ae"};
+  const NAMES = {bns: "BNS", cls: "CLS", apr: "APR"};
+  let ROWS = null, chart = null;
+
+  function cum(xs) {          // cumulative log return in percent
+    let a = 0;
+    return xs.map((x) => { a += Math.log(1 + x); return a * 100; });
+  }
+
+  function draw() {
+    const b = document.getElementById("dec-bench").value;
+    const tcol = "treasury_" + b;
+    const dates = ROWS.map((r) => r.date);
+    const mkt = cum(ROWS.map((r) => r.market));
+    const tre = cum(ROWS.map((r) => r[tcol]));
+    const cre = cum(ROWS.map((r) => r.market - r[tcol]));
+    const rf = cum(ROWS.map((r) => r.rf));
+    const mk = (label, data, color) => ({
+      label, data, borderColor: color, backgroundColor: color,
+      borderWidth: 1.9, pointRadius: 0, tension: 0,
+    });
+    const datasets = [
+      mk("Bond market, total return", mkt, COLORS.market),
+      mk("Duration-matched Treasuries (" + NAMES[b] + ")", tre, COLORS.treasury),
+      mk("Credit component", cre, COLORS.credit),
+      mk("One-month T-bill", rf, COLORS.rf),
+    ];
+    if (chart) chart.destroy();
+    chart = new Chart(document.getElementById("dec-chart"), {
+      type: "line",
+      data: {labels: dates, datasets},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: {mode: "index", intersect: false},
+        scales: {
+          x: {ticks: {maxTicksLimit: 12, autoSkip: true}, grid: {display: false}},
+          y: {title: {display: true, text: "Cumulative log return (%)"},
+              grid: {color: "rgba(128,128,128,.18)"}},
+        },
+        plugins: {
+          legend: {position: "bottom", labels: {boxWidth: 10, font: {size: 11}}},
+          tooltip: {callbacks: {label: (c) => c.dataset.label + ", " + c.parsed.y.toFixed(1) + "%"}},
+        },
+      },
+    });
+    const last = (a) => a[a.length - 1];
+    document.getElementById("dec-note").textContent =
+      `Over ${ROWS.length} months, ${dates[0].slice(0, 7)} to ${last(dates).slice(0, 7)}, the `
+      + `market returned ${last(mkt).toFixed(0)}% cumulatively, of which `
+      + `${last(tre).toFixed(0)}% came from the Treasuries inside it and `
+      + `${last(cre).toFixed(0)}% from credit. The T-bill returned ${last(rf).toFixed(0)}%.`;
+  }
+
+  fetch("/figures/decomposition.csv").then((r) => r.text()).then((text) => {
+    const lines = text.trim().split(/\r?\n/);
+    const head = lines[0].split(",");
+    ROWS = lines.slice(1).map((line) => {
+      const p = line.split(",");
+      const o = {};
+      head.forEach((h, i) => { o[h] = h === "date" ? p[i] : Number(p[i]); });
+      return o;
+    }).filter((r) => Number.isFinite(r.market) && Number.isFinite(r.rf));
+    document.getElementById("dec-bench").onchange = draw;
+    draw();
+  }).catch((e) => {
+    document.getElementById("dec-note").textContent =
+      "The figure data could not be loaded. " + e;
+  });
+})();
+</script>
+
+<p>
+  Every panel we publish carries all three duration-adjusted returns as columns, so this
+  choice is yours to make rather than ours to make for you. The definitions are in
+  <a href="/factorviz/">FactorViz</a>, under the About tab.
+</p>
+
+<h2>Priced risk in corporate bonds</h2>
+<p>
+  This site also hosts the corrected Bai, Bali and Wen (2019) four factors, with the code and
+  data to reproduce them, from Dickerson, Mueller and Robotti (2023).
+</p>
+<p>
+  The paper's central finding is that the bias-adjusted sample squared Sharpe ratio of the
+  bond market portfolio is greater than that of all four BBW factors together. From an
+  investment standpoint it is optimal to hold the market.
+</p>
+<pre><code>@article{Dickerson-Mueller-Robotti-2023,
+  title   = {Priced Risk in Corporate Bonds},
+  author  = {Alexander Dickerson and Philippe Mueller and Cesare Robotti},
+  journal = {Journal of Financial Economics},
+  volume  = {150},
+  pages   = {article 103707},
+  year    = {2023},
+  publisher = {Elsevier}}</code></pre>
+
+<h2>Papers</h2>
+<ul class="people"><li><strong>The Corporate Bond Factor Replication Crisis</strong><br><span class="what">Dickerson, Robotti and Rossetti (2026). Working paper, under Revise and Resubmit. <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">SSRN</a> &middot; <a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/corp-bond-replication-crisis-dickerson.pdf">PDF</a></span></li><li><strong>The Co-Pricing Factor Zoo</strong><br><span class="what">Dickerson, Julliard and Robotti (2026). Working paper.</span></li><li><strong>Priced risk in corporate bonds</strong><br><span class="what">Dickerson, Mueller and Robotti (2023). Journal of Financial Economics 150, article 103707. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">journal</a></span></li></ul>
+
+<h2>Contributors</h2>
+<ul class="people"><li><a href="https://www.alexdickerson.com/">Alex Dickerson</a> <span>UNSW</span></li><li><a href="https://www.wbs.ac.uk/about/person/philippe-mueller">Philippe Mueller</a> <span>Warwick</span></li><li><a href="https://www.cesarerobotti.com/">Cesare Robotti</a> <span>Warwick</span></li><li><a href="https://christianjulliard.net/">Christian Julliard</a> <span>LSE</span></li><li><a href="https://yoshionozawa.github.io/">Yoshio Nozawa</a> <span>Toronto</span></li><li><a href="https://giuliorossetti94.github.io/">Giulio Rossetti</a> <span>Warwick</span></li><li><a href="https://www.chuckfang.finance/">Chuck Fang</a> <span>Drexel</span></li></ul>
+
+<h2>News</h2>
+<ul class="news"><li><time>2026-09-17</time><span>The website is rebuilt and now serves the 2026 vintage of every dataset.</span></li><li><time>2026-09-16</time><span>FactorViz is live, an interactive explorer for all 108 long-short bond factors.</span></li><li><time>2025-12-11</time><span>Stage 1 of the trace-data-pipeline is in public beta. <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage1">Stage 1</a></span></li></ul>
+
+<footer class="site">
+  <p>This website (design/layout) is based on work of Andrew Y. Chen and Tom Zimmermann.</p>
+  <p>Questions and corrections, <a href="mailto:alexander.dickerson1@unsw.edu.au">alexander.dickerson1@unsw.edu.au</a>.</p>
+  <p>&copy;2026 Open Source Bond Asset Pricing &middot; built 2026-09-17</p>
+</footer>
+</div>
+
+</body>
+</html>

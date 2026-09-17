@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code - Open Source Bond Asset Pricing</title>
+<meta name="description" content="The public pipeline that builds the bond data, and the library that forms the factors.">
+<!--
+  Open Source Bond Asset Pricing.
+
+  ❗GENERATED. The source is osbap_data/site/, built by tools/make_site.py. Editing the
+  deployed copy is overwritten without warning by the next deploy.
+
+  Self-contained by design -- no framework, no build step, no external CSS. The only external
+  dependencies anywhere on the site are Chart.js and KaTeX on the pages that need them,
+  both pinned from cdnjs.
+-->
+<style>
+  :root {
+    --bg: #ffffff;
+    --panel: #f7f7f5;
+    --ink: #1a1a1a;
+    --ink-soft: #5a5a5a;
+    --line: #dcdcd6;
+    --accent: #1f4e79;
+    --accent-soft: #e8eff5;
+    --pos: #1a6b3c;
+    --neg: #9b2226;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16181c; --panel: #1e2126; --ink: #e8e8e6; --ink-soft: #a0a0a0;
+      --line: #32363d; --accent: #7fb3e0; --accent-soft: #22303c;
+      --pos: #5fc98a; --neg: #e0787c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 var(--sans); }
+  a { color: var(--accent); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 72px; }
+
+  header.site { border-bottom: 1px solid var(--line); margin-bottom: 28px; background: var(--bg); }
+  header.site .inner { max-width: 1040px; margin: 0 auto; padding: 18px 20px 0;
+                       display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px; }
+  header.site .brand { font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
+                       color: var(--ink); text-decoration: none; }
+  header.site .brand span { color: var(--ink-soft); font-weight: 400; }
+  nav.site { max-width: 1040px; margin: 0 auto; padding: 10px 20px 0; display: flex; gap: 2px; }
+  nav.site a {
+    padding: 8px 14px; font-size: 14px; font-weight: 500; color: var(--ink-soft);
+    text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  nav.site a:hover { color: var(--ink); }
+  nav.site a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+  h1 { font-size: 27px; font-weight: 600; letter-spacing: -0.015em; margin: 8px 0 6px; }
+  h2 { font-size: 17px; font-weight: 600; margin: 34px 0 10px; }
+  h3 { font-size: 14.5px; font-weight: 600; margin: 20px 0 6px; }
+  p.lead { font-size: 16px; color: var(--ink-soft); max-width: 72ch; margin: 0 0 18px; }
+  p { max-width: 78ch; margin: 0 0 12px; }
+  ul { max-width: 78ch; }
+  code { font-family: var(--mono); font-size: 12.5px; background: var(--panel);
+         border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; }
+  pre { font-family: var(--mono); font-size: 12.5px; background: var(--panel);
+        border: 1px solid var(--line); border-left: 3px solid var(--accent);
+        border-radius: 0 4px 4px 0; padding: 10px 13px; overflow-x: auto; max-width: 78ch; }
+  pre code { background: none; border: none; padding: 0; }
+
+  .note {
+    background: var(--accent-soft); border-left: 3px solid var(--accent);
+    padding: 11px 15px; font-size: 13.5px; border-radius: 0 4px 4px 0;
+    margin: 0 0 22px; max-width: 78ch;
+  }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+           gap: 14px; margin: 18px 0 8px; }
+  .card {
+    border: 1px solid var(--line); border-radius: 6px; padding: 15px 17px;
+    background: var(--bg); text-decoration: none; color: var(--ink); display: block;
+  }
+  .card:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .card b { display: block; font-size: 15px; margin-bottom: 4px; }
+  .card span { font-size: 13px; color: var(--ink-soft); }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin-bottom: 6px; }
+  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line);
+           vertical-align: top; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+       color: var(--ink-soft); font-weight: 600; white-space: nowrap; }
+  td.size { font-family: var(--mono); font-size: 12.5px; white-space: nowrap;
+            color: var(--ink-soft); }
+  td.get { white-space: nowrap; }
+  td .what { display: block; color: var(--ink-soft); font-size: 12.5px; margin-top: 2px; }
+  .pending { color: var(--ink-soft); font-style: italic; font-size: 12.5px; }
+  details summary { cursor: pointer; color: var(--accent); font-size: 13.5px; }
+  .parts { display: flex; flex-wrap: wrap; gap: 4px 10px; max-width: 320px;
+           margin-top: 6px; font-family: var(--mono); font-size: 12px; }
+
+  .figure { border: 1px solid var(--line); border-radius: 6px; padding: 15px 17px;
+            margin: 18px 0 10px; }
+  .figure-head { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-start;
+                 justify-content: space-between; margin-bottom: 12px; }
+  .figure-head strong { font-size: 15px; }
+  .figure-head .what { display: block; color: var(--ink-soft); font-size: 12.5px;
+                       max-width: 62ch; margin-top: 3px; }
+  label.pick { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+               color: var(--ink-soft); display: flex; flex-direction: column; gap: 4px; }
+  label.pick select { font: inherit; font-size: 13px; text-transform: none;
+                      letter-spacing: normal; color: var(--ink); background: var(--bg);
+                      border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; }
+  .figure-box { position: relative; height: 380px; }
+  .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
+
+  .people { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 0; list-style: none;
+            font-size: 14px; }
+  .people li { min-width: 200px; }
+  .people span { color: var(--ink-soft); font-size: 12.5px; }
+
+  .news { list-style: none; padding: 0; font-size: 14px; }
+  .news li { display: flex; gap: 14px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .news time { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
+               white-space: nowrap; }
+
+  footer.site { border-top: 1px solid var(--line); margin-top: 44px; padding-top: 16px;
+                font-size: 12.5px; color: var(--ink-soft); }
+  footer.site p { margin: 0 0 5px; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="inner">
+    <a class="brand" href="/">Open Source Bond Asset Pricing</a>
+  </div>
+  <nav class="site"><a href="/">Home</a><a href="/data/">Data</a><a href="/code/" aria-current="page">Code</a><a href="/factorviz/">FactorViz</a></nav>
+</header>
+
+<div class="wrap">
+<h1>Code</h1>
+<p class="lead">
+  Two pieces. A pipeline that turns raw TRACE, Lehman and ICE data into bond panels, and a
+  library that turns those panels into factors. Both are public, and both are what produced
+  every number on this site.
+</p>
+
+<h2>TRACE data pipeline</h2>
+<p>
+  <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a> processes Enhanced, Standard and 144A TRACE, with error-correction and
+  cleaning procedures documented in the paper, and produces the daily and monthly panels on
+  the Data page. It runs in parallel on the WRDS cloud and writes a data report for every run.
+</p>
+<ul>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage0">Stage 0</a>, transaction-level cleaning.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage1">Stage 1</a>, the daily bond panel.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage2">Stage 2</a>, the monthly panel and its characteristics.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage3">Stage 3</a>, every exhibit in the paper, from any Stage 2 panel.</li>
+</ul>
+<p>
+  Reproducing the data needs a WRDS account and the underlying data licences. The
+  <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/README.md">pipeline README</a> is the place to start, and the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage1/DATA_DICTIONARY.md">daily data dictionary</a> and
+  <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage2/DATA_DICTIONARY.md">monthly data dictionary</a> define every column.
+</p>
+
+<h2>PyBondLab</h2>
+<p>
+  <a href="https://pypi.org/project/pybondlab/">PyBondLab</a> forms corporate bond portfolios, with portfolio turnover,
+  characteristics, holding periods and transaction-cost adjustments built in. It is what
+  sorts the 108 factors published here.
+</p>
+<pre><code>pip install PyBondLab</code></pre>
+<p>
+  Source and issues at <a href="https://github.com/GiulioRossetti94/PyBondLab">PyBondLab on GitHub</a>, worked examples at
+  <a href="https://github.com/GiulioRossetti94/PyBondLab/tree/main/examples">the PyBondLab examples</a>. Maintained by Giulio Rossetti.
+</p>
+
+<h2>Data uncertainty</h2>
+<p>
+  The same library measures how much a factor moves when reasonable choices in the data change
+  - the filters, the sample, the weighting. The examples show how to run a grid of those
+  choices and read the spread rather than a single number.
+</p>
+
+<h2>Co-pricing factor zoo</h2>
+<p>
+  The replication package for the co-pricing paper, including the traded bond, stock and
+  nontraded factors, is at <a href="https://github.com/Alexander-M-Dickerson/co-pricing-factor-zoo/tree/main">the replication package</a>.
+</p>
+
+<h2>Contributors</h2>
+<ul class="people"><li><a href="https://www.alexdickerson.com/">Alex Dickerson</a> <span>UNSW</span></li><li><a href="https://www.wbs.ac.uk/about/person/philippe-mueller">Philippe Mueller</a> <span>Warwick</span></li><li><a href="https://www.cesarerobotti.com/">Cesare Robotti</a> <span>Warwick</span></li><li><a href="https://christianjulliard.net/">Christian Julliard</a> <span>LSE</span></li><li><a href="https://yoshionozawa.github.io/">Yoshio Nozawa</a> <span>Toronto</span></li><li><a href="https://giuliorossetti94.github.io/">Giulio Rossetti</a> <span>Warwick</span></li><li><a href="https://www.chuckfang.finance/">Chuck Fang</a> <span>Drexel</span></li></ul>
+
+<footer class="site">
+  <p>This website (design/layout) is based on work of Andrew Y. Chen and Tom Zimmermann.</p>
+  <p>Questions and corrections, <a href="mailto:alexander.dickerson1@unsw.edu.au">alexander.dickerson1@unsw.edu.au</a>.</p>
+  <p>&copy;2026 Open Source Bond Asset Pricing &middot; built 2026-09-17</p>
+</footer>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.6/katex.min.css">
+<title>FactorViz -- OSBAP Corporate Bond Factors</title>
+<!--
+  FactorViz -- explore the OSBAP corporate bond factors.
+
+  Self-contained but for Chart.js (pinned, from cdnjs) and its data directory, which must
+  sit beside this file as ./data/ . Upload both to WordPress and point a page at it.
+
+  Data contract, produced by osbap_data/tools/make_factorviz.py:
+    data/meta.json                          controls, labels, product index, flip counts
+    data/stats_<dataset>_<sort>.json        every series x 4 windows, precomputed
+    data/series/<dataset>_<sort>_<rt>_<band>_<w>.csv   wide time series, fetched on demand
+
+  The CSVs are byte-for-byte the files the release archives ship, so what this page draws is
+  exactly what a visitor can download.
+
+  NOTE ON SIGN: the factors are published UNFLIPPED -- a factor's sign is whatever the raw
+  sort gives. "Orient to positive mean" applies the SHIPPED flip set (data/stats_*.json
+  -> flip), which is the same mapping in the download. It is a display convention, never a
+  recomputation.
+-->
+<style>
+  :root {
+    --bg: #ffffff;
+    --panel: #f7f7f5;
+    --ink: #1a1a1a;
+    --ink-soft: #5a5a5a;
+    --line: #dcdcd6;
+    --accent: #1f4e79;
+    --accent-soft: #e8eff5;
+    --pos: #1a6b3c;
+    --neg: #9b2226;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16181c; --panel: #1e2126; --ink: #e8e8e6; --ink-soft: #a0a0a0;
+      --line: #32363d; --accent: #7fb3e0; --accent-soft: #22303c;
+      --pos: #5fc98a; --neg: #e0787c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 var(--sans);
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 24px 20px 64px; }
+  header h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  header p.sub { margin: 0 0 20px; color: var(--ink-soft); font-size: 14px; max-width: 70ch; }
+  a { color: var(--accent); }
+
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+  .tabs button {
+    background: none; border: none; border-bottom: 2px solid transparent;
+    padding: 10px 18px; font: inherit; font-weight: 500; color: var(--ink-soft);
+    cursor: pointer; margin-bottom: -1px;
+  }
+  .tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: flex-end;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 14px 16px; margin-bottom: 18px;
+  }
+  .field { display: flex; flex-direction: column; gap: 4px; position: relative; }
+  .check-wrap { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+  button.info {
+    width: 15px; height: 15px; padding: 0; margin-left: 5px; vertical-align: middle;
+    border: 1px solid var(--line); border-radius: 50%; background: var(--bg);
+    color: var(--ink-soft); cursor: pointer;
+    font: italic 600 10px/1 Georgia, "Times New Roman", serif;
+  }
+  button.info:hover, button.info[aria-expanded="true"] {
+    border-color: var(--accent); color: var(--accent);
+  }
+  .pop {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+    width: 370px; max-width: 80vw; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 6px; padding: 12px 14px; font-size: 12.5px; line-height: 1.45;
+    color: var(--ink); text-align: left; text-transform: none; letter-spacing: normal;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+  }
+  .pop h4 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase;
+            letter-spacing: .06em; color: var(--ink-soft); }
+  .pop p { margin: 0 0 8px; }
+  .pop p:last-child { margin-bottom: 0; }
+  .pop dl { margin: 0; }
+  .pop dt { font-weight: 600; margin-top: 9px; }
+  .pop dl > dt:first-child { margin-top: 0; }
+  .pop dd { margin: 2px 0 0; color: var(--ink-soft); }
+  .field label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); }
+  select, input[type=search] {
+    font: inherit; font-size: 14px; padding: 6px 8px; background: var(--bg);
+    color: var(--ink); border: 1px solid var(--line); border-radius: 4px; min-width: 150px;
+  }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .seg button {
+    background: var(--bg); border: none; border-right: 1px solid var(--line);
+    padding: 6px 12px; font: inherit; font-size: 13px; color: var(--ink-soft); cursor: pointer;
+  }
+  .seg button:last-child { border-right: none; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-soft); }
+
+  .btn {
+    font: inherit; font-size: 13px; font-weight: 500; padding: 7px 14px; cursor: pointer;
+    background: var(--accent); color: #fff; border: none; border-radius: 4px;
+  }
+  .btn.ghost { background: var(--bg); color: var(--accent); border: 1px solid var(--line); }
+  .btn.sm { padding: 5px 11px; font-size: 12.5px; font-weight: 400; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .controls.quick { gap: 8px; align-items: center; padding: 10px 16px; margin-bottom: 14px; }
+  .quick-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+                 color: var(--ink-soft); margin-right: 2px; }
+
+  .card {
+    border: 1px solid var(--line); border-radius: 6px; padding: 16px;
+    margin-bottom: 18px; background: var(--bg);
+  }
+  .card h2 { font-size: 15px; font-weight: 600; margin: 0 0 12px; }
+  .card h2 .note { font-weight: 400; color: var(--ink-soft); font-size: 13px; margin-left: 8px; }
+
+  .chartbox { position: relative; height: 380px; }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 6px 12px; text-align: center; white-space: nowrap; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  /* Centred numbers only read well if the digits are the same width and every cell in a
+     column has the same number of decimals -- both are true here (tabular monospace, fixed
+     dp per column), so the decimal points still line up. */
+  td.num { font-variant-numeric: tabular-nums; }
+  .slice-sub { display: block; font-size: 11px; color: var(--ink-soft); font-weight: 400;
+               letter-spacing: .01em; margin-top: 1px; }
+  tr.grouphead td {
+    text-align: left; background: var(--panel); font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft);
+    padding: 7px 12px;
+  }
+  tr.grouphead:hover { background: var(--panel); }
+  p.method { margin: -2px 0 12px; font-size: 12.5px; color: var(--ink-soft); max-width: 92ch; }
+  th {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft);
+    font-weight: 600; cursor: pointer; user-select: none; position: sticky; top: 0;
+    background: var(--bg);
+  }
+  th.sorted::after { content: " \25BC"; font-size: 9px; }
+  th.sorted.asc::after { content: " \25B2"; }
+  tbody tr:hover { background: var(--accent-soft); }
+  td.num { font-family: var(--mono); font-size: 12.5px; }
+  .pos { color: var(--pos); }
+  .neg { color: var(--neg); }
+  .muted { color: var(--ink-soft); }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 7px; vertical-align: baseline; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; min-height: 30px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 4px 6px 4px 10px;
+  }
+  .chip button {
+    border: none; background: none; cursor: pointer; color: var(--ink-soft);
+    font-size: 15px; line-height: 1; padding: 0 4px;
+  }
+  .chip button:hover { color: var(--neg); }
+
+  .empty { color: var(--ink-soft); font-size: 14px; padding: 28px 4px; text-align: center; }
+  .prose { max-width: 78ch; }
+  .prose h2 { font-size: 15px; font-weight: 600; margin: 26px 0 8px; }
+  .prose h2:first-child { margin-top: 0; }
+  .prose h3 { font-size: 13.5px; font-weight: 600; margin: 18px 0 5px; }
+  .prose p { margin: 0 0 10px; }
+  .prose ul { margin: 0 0 10px; padding-left: 20px; }
+  .prose li { margin-bottom: 4px; }
+  .eq {
+    font-family: var(--mono); font-size: 12.5px; background: var(--panel);
+    border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0; padding: 9px 12px; margin: 8px 0 10px;
+    overflow-x: auto; white-space: pre;
+  }
+  /* Set once KaTeX has replaced the plain-text fallback. */
+  .eq.tex { font-family: inherit; white-space: normal; padding: 12px 14px; }
+  .eq.tex .katex { font-size: 1.06em; }
+  .cite { font-size: 12.5px; color: var(--ink-soft); margin: 4px 0 12px; padding-left: 12px;
+          border-left: 2px solid var(--line); }
+  .prose table { max-width: 100%; margin-bottom: 12px; }
+  .warn {
+    background: var(--accent-soft); border-left: 3px solid var(--accent);
+    padding: 10px 14px; font-size: 13px; border-radius: 0 4px 4px 0; margin-bottom: 16px;
+  }
+  footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
+           font-size: 12.5px; color: var(--ink-soft); }
+  footer code { font-family: var(--mono); font-size: 12px; }
+  .hidden { display: none !important; }
+  .spin { color: var(--ink-soft); font-size: 13px; padding: 20px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Exploring the corporate bond factor zoo</h1>
+  <p class="sub">
+    108 Long&ndash;short corporate bond factors from
+    <a href="https://openbondassetpricing.com">Open Source Bond Asset Pricing</a>. Compare
+    single sorts against within-firm sorts, four return definitions, three rating universes
+    and two weighting schemes &mdash; across three datasets reaching back to 1973.
+  </p>
+</header>
+
+<div class="tabs" role="tablist">
+  <button role="tab" id="tab-explore" aria-selected="true">Explore</button>
+  <button role="tab" id="tab-compare" aria-selected="false">Compare</button>
+  <button role="tab" id="tab-about" aria-selected="false">About the data/Downloads</button>
+</div>
+
+<!-- ===================== EXPLORE ===================== -->
+<section id="panel-explore">
+  <div class="warn">
+    Pick a dataset, a sort, a return definition, a universe and a weighting. The table
+    below ranks every factor in that slice selection, grouped by factor cluster. Tick up to
+    ten factors to chart them.
+  </div>
+
+  <div class="controls">
+    <div class="field"><label for="e-dataset">Dataset<button type="button" class="info"
+      data-help="dataset" aria-expanded="false" aria-label="About the datasets">i</button></label>
+      <select id="e-dataset"></select></div>
+    <div class="field"><label for="e-sort">Sort<button type="button" class="info"
+      data-help="sort" aria-expanded="false" aria-label="About the sorts">i</button></label>
+      <select id="e-sort"></select></div>
+    <div class="field"><label for="e-rt">Return definition<button type="button" class="info"
+      data-help="rt" aria-expanded="false" aria-label="About the return definitions">i</button></label>
+      <select id="e-rt"></select></div>
+    <div class="field"><label for="e-band">Universe<button type="button" class="info"
+      data-help="band" aria-expanded="false" aria-label="About the universes">i</button></label>
+      <select id="e-band"></select></div>
+    <div class="field"><label for="e-w">Weighting<button type="button" class="info"
+      data-help="w" aria-expanded="false" aria-label="About the weightings">i</button></label>
+      <select id="e-w"></select></div>
+    <div class="field"><label>Window</label><div class="seg" id="e-window"></div></div>
+    <div class="field"><label for="e-search">Find a factor</label>
+      <input type="search" id="e-search" placeholder="name or mnemonic"></div>
+    <span class="check-wrap">
+      <label class="check"><input type="checkbox" id="e-flip" checked> Orient to positive mean</label>
+      <button type="button" class="info" data-help="flip" aria-expanded="false"
+              aria-label="About orienting to a positive mean">i</button></span>
+    <span class="check-wrap">
+      <label class="check"><input type="checkbox" id="e-group" checked> Group by cluster</label>
+      <button type="button" class="info" data-help="group" aria-expanded="false"
+              aria-label="About grouping by cluster">i</button></span>
+  </div>
+
+  <div class="card">
+    <h2>Cumulative performance
+      <span class="note" id="e-chart-note">tick factors in the table below</span></h2>
+    <div class="chartbox"><canvas id="e-chart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h2>All factors <span class="note" id="e-table-note"></span></h2>
+    <p class="method">
+      Alpha is the intercept from the one-factor bond CAPM (CAPMB) of
+      <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson,
+      Mueller and Robotti (2023)</a>, the factor regressed on the market benchmark matched to
+      its return definition. Both t-statistics use Newey-West standard errors with lags
+      = floor(T<sup>0.25</sup>), where T is the number of months in the series.
+    </p>
+    <div class="scroll"><table id="e-table"></table></div>
+  </div>
+</section>
+
+<!-- ===================== COMPARE ===================== -->
+<section id="panel-compare" class="hidden">
+  <div class="warn">
+    Build a list of factors, each with its own dataset, sort, return definition, universe
+    and weighting &mdash; then compare them.
+  </div>
+
+  <div class="controls">
+    <div class="field"><label for="c-dataset">Dataset<button type="button" class="info"
+      data-help="dataset" aria-expanded="false" aria-label="About the datasets">i</button></label>
+      <select id="c-dataset"></select></div>
+    <div class="field"><label for="c-sort">Sort<button type="button" class="info"
+      data-help="sort" aria-expanded="false" aria-label="About the sorts">i</button></label>
+      <select id="c-sort"></select></div>
+    <div class="field"><label for="c-rt">Return definition<button type="button" class="info"
+      data-help="rt" aria-expanded="false" aria-label="About the return definitions">i</button></label>
+      <select id="c-rt"></select></div>
+    <div class="field"><label for="c-band">Universe<button type="button" class="info"
+      data-help="band" aria-expanded="false" aria-label="About the universes">i</button></label>
+      <select id="c-band"></select></div>
+    <div class="field"><label for="c-w">Weighting<button type="button" class="info"
+      data-help="w" aria-expanded="false" aria-label="About the weightings">i</button></label>
+      <select id="c-w"></select></div>
+    <div class="field"><label for="c-factor">Factor</label><select id="c-factor"></select></div>
+    <button class="btn" id="c-add">Add series</button>
+    <button class="btn ghost" id="c-clear">Clear all</button>
+  </div>
+
+  <div class="controls quick">
+    <span class="quick-label">Add this factor across &rarr;</span>
+    <button class="btn ghost sm" data-axis="sort">Both sorts</button>
+    <button class="btn ghost sm" data-axis="rt">All return definitions</button>
+    <button class="btn ghost sm" data-axis="dataset">All datasets</button>
+    <button class="btn ghost sm" data-axis="band">All universes</button>
+    <button class="btn ghost sm" data-axis="w">EW and VW</button>
+    <span class="muted" id="c-quick-note" style="font-size:12.5px"></span>
+  </div>
+
+  <div class="controls" style="padding-top:10px;padding-bottom:10px">
+    <div class="field"><label>Window</label><div class="seg" id="c-window"></div></div>
+    <span class="check-wrap">
+      <label class="check"><input type="checkbox" id="c-flip" checked> Orient to positive mean</label>
+      <button type="button" class="info" data-help="flip" aria-expanded="false"
+              aria-label="About orienting to a positive mean">i</button></span>
+    <span class="check-wrap">
+      <label class="check"><input type="checkbox" id="c-align"> Aligned sample</label>
+      <button type="button" class="info" data-help="align" aria-expanded="false"
+              aria-label="About the aligned sample">i</button></span>
+    <span class="muted" id="c-hint" style="font-size:13px"></span>
+  </div>
+
+  <div class="chips" id="c-chips"></div>
+
+  <div class="card">
+    <h2>Cumulative performance</h2>
+    <div class="chartbox"><canvas id="c-chart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h2>Statistics</h2>
+    <div class="scroll"><table id="c-table"></table></div>
+  </div>
+</section>
+
+<!-- ===================== ABOUT ===================== -->
+<section id="panel-about" class="hidden">
+  <div class="card" id="about-body"></div>
+</section>
+
+<footer>
+  <p id="foot-built"></p>
+  <p>
+    <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, A.,
+    Robotti, C. and Rossetti, G. (2026). <em>The Corporate Bond Factor Replication
+    Crisis.</em></a> Working Paper.
+    &nbsp;&middot;&nbsp;
+    <a href="https://openbondassetpricing.com">openbondassetpricing.com</a>
+  </p>
+</footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- KaTeX, pinned. Loaded before the inline script so `katex` is defined by the time the
+     About tab renders, the same pattern as Chart.js. Optional at runtime -- see renderMath. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.6/katex.min.js"></script>
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ state */
+const DATA = "./data";
+let META = null;
+const STATS = new Map();     // "<ds>_<sort>"                   -> parsed stats json
+const SERIES = new Map();    // "<ds>_<sort>_<rt>_<band>_<w>"   -> {dates:[], cols:{name:[...]}}
+
+const PALETTE = ["#1f4e79", "#c1121f", "#2a9d8f", "#e76f51", "#6a4c93", "#606c38",
+                 "#457b9d", "#bc6c25", "#8d99ae", "#d62828"];
+
+const explore = { picked: new Set(), window: "full", sortBy: "sharpe", asc: false };
+const compare = { cart: [], window: "full" };
+
+/* ------------------------------------------------------------ small utils */
+const $ = (id) => document.getElementById(id);
+
+function baseName(factor) {
+  // ❗Strip the rating suffix BEFORE _wf. 'cs_wf_hy' ends in _hy, so peeling in the other
+  // order leaves '_wf_hy'. Mirrors code/factor_checks.base_name and the caution recorded in
+  // spec/factor_names.json -> compose.caution.
+  let f = factor;
+  for (const s of ["_ig", "_hy"]) { if (f.endsWith(s)) { f = f.slice(0, -s.length); break; } }
+  if (f.endsWith("_wf")) f = f.slice(0, -3);
+  return f;
+}
+
+function bandOf(factor) {
+  if (factor.endsWith("_ig")) return "ig";
+  if (factor.endsWith("_hy")) return "nig";
+  return "all";
+}
+
+function labelFor(factor) {
+  const sig = META.signals[baseName(factor)];
+  return sig ? sig.name : factor;
+}
+
+function groupOf(factor) {
+  // The cluster a factor belongs to -- meta.json -> signals[*].group, the same nine clusters
+  // the data dictionary uses. Unknown signals fall into a trailing bucket rather than
+  // vanishing, because a row that is silently not rendered is the worse failure.
+  const sig = META.signals[baseName(factor)];
+  return sig && sig.group ? sig.group : "?";
+}
+
+function groupTitle(g) {
+  // ❗`g.label` reads "Cluster I: ...". Public text here uses commas and dashes, never
+  // colons, so the title is composed from the key and the short name instead.
+  return `Cluster ${g.key} — ${g.short}`;
+}
+
+function groupsInUse(rows) {
+  const seen = new Set(rows.map((r) => r._group));
+  const out = META.groups.filter((g) => seen.has(g.key));
+  if (seen.has("?")) out.push({ key: "?", short: "Other", label: "Other" });
+  return out;
+}
+
+function fmt(v, dp = 2) {
+  if (v === null || v === undefined || Number.isNaN(v)) return "—";
+  return Number(v).toFixed(dp);
+}
+
+function signClass(v) {
+  if (v === null || v === undefined || Number.isNaN(v)) return "";
+  return v > 0 ? "pos" : (v < 0 ? "neg" : "");
+}
+
+function option(value, text) {
+  const o = document.createElement("option");
+  o.value = value; o.textContent = text;
+  return o;
+}
+
+function fill(sel, entries, keep) {
+  sel.innerHTML = "";
+  for (const [v, t] of entries) sel.appendChild(option(v, t));
+  if (keep && entries.some(([v]) => v === keep)) sel.value = keep;
+}
+
+/* --------------------------------------------------------------- fetching */
+async function loadStats(dataset, sort) {
+  const key = `${dataset}_${sort}`;
+  if (STATS.has(key)) return STATS.get(key);
+  const r = await fetch(`${DATA}/stats_${key}.json`);
+  if (!r.ok) throw new Error(`stats_${key}.json: ${r.status}`);
+  const j = await r.json();
+  STATS.set(key, j);
+  return j;
+}
+
+let BENCH = null;
+async function loadBenchmarks() {
+  if (BENCH) return BENCH;
+  const r = await fetch(`${DATA}/benchmarks.csv`);
+  if (!r.ok) throw new Error(`benchmarks.csv: ${r.status}`);
+  BENCH = parseCsv(await r.text());
+  BENCH.index = new Map(BENCH.dates.map((d, i) => [d, i]));
+  return BENCH;
+}
+
+async function loadSeries(dataset, sort, rt, band, w) {
+  const key = `${dataset}_${sort}_${rt}_${band}_${w}`;
+  if (SERIES.has(key)) return SERIES.get(key);
+  const file = `${dataset}_${sort}_${rt}_${band}_${w}.csv`;
+  const r = await fetch(`${DATA}/series/${file}`);
+  if (!r.ok) throw new Error(`${file}: ${r.status}`);
+  const parsed = parseCsv(await r.text());
+  SERIES.set(key, parsed);
+  return parsed;
+}
+
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const head = lines[0].split(",");
+  const names = head.slice(1);
+  const dates = [];
+  const cols = {};
+  for (const n of names) cols[n] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(",");
+    dates.push(parts[0]);
+    for (let j = 0; j < names.length; j++) {
+      const raw = parts[j + 1];
+      cols[names[j]].push(raw === "" || raw === undefined ? NaN : Number(raw));
+    }
+  }
+  return { dates, cols };
+}
+
+/* ------------------------------------------------------------ computation */
+function windowMask(dates, win) {
+  // The window counts back from the LAST month of this product, matching how
+  // make_factorviz.py cut the same windows for stats.json.
+  if (win === "full") return dates.map(() => true);
+  const months = { "10y": 120, "5y": 60, "1y": 12 }[win];
+  const last = new Date(dates[dates.length - 1] + "T00:00:00Z");
+  const cut = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() - (months - 1), 1));
+  return dates.map((d) => new Date(d + "T00:00:00Z") >= cut);
+}
+
+function cumulative(values, mask, flip) {
+  // Cumulative SUM of monthly returns, in percent. A long-short factor is zero-cost, so
+  // compounding it is not meaningful; the sum is the standard factor-chart convention and
+  // is what make_factorviz.py measures max drawdown on.
+  const out = [];
+  let acc = 0;
+  const s = flip ? -1 : 1;
+  for (let i = 0; i < values.length; i++) {
+    if (!mask[i]) { out.push(null); continue; }
+    const v = values[i];
+    if (Number.isFinite(v)) acc += s * v;
+    out.push(acc * 100);
+  }
+  return out;
+}
+
+/* ------------------------------------------------- statistics, in the browser
+
+   ❗These must reproduce tools/make_factorviz.py exactly. Two implementations of the same
+   statistic is precisely the drift this project gates elsewhere, so
+   `tests/check_page_stats.mjs` recomputes every series over the full window and compares
+   against stats.json, field by field. If a formula here changes and the Python does not,
+   that check fails.
+
+   Only used when the window is not one of the four precomputed ones, which today means the
+   aligned sample. Everything else reads stats.json.                                        */
+
+function nwLags(T) {
+  // floor(T^0.25) -- the paper's one lag convention, and tools/make_factorviz.py `_nw_lags`.
+  return Math.floor(Math.pow(T, 0.25));
+}
+
+function nwT(ys, xs) {
+  // t-statistic of the intercept with Newey-West (Bartlett) standard errors, for a
+  // constant-only regression (xs null) or a regression on [1, xs].
+  //
+  // ❗`ys` and `xs` must already be COMPACTED to the observations that count. A missing
+  // month left in place would make the Bartlett products pair months that are not adjacent.
+  // ❗No small-sample correction, matching statsmodels' default for cov_type HAC, which is
+  // what the paper computes. Mirrors `_nw_t0` in tools/make_factorviz.py.
+  const T = ys.length;
+  if (T < (xs ? 3 : 2)) return null;
+  let Sx = 0, Sxx = 0, Sy = 0, Sxy = 0;
+  for (let i = 0; i < T; i++) {
+    Sy += ys[i];
+    if (xs) { Sx += xs[i]; Sxx += xs[i] * xs[i]; Sxy += xs[i] * ys[i]; }
+  }
+  let b0, b1 = 0, i00, i01 = 0, i11 = 0;
+  if (!xs) { i00 = 1 / T; b0 = Sy / T; }
+  else {
+    const det = T * Sxx - Sx * Sx;
+    if (det === 0) return null;
+    i00 = Sxx / det; i01 = -Sx / det; i11 = T / det;
+    b0 = i00 * Sy + i01 * Sxy;
+    b1 = i01 * Sy + i11 * Sxy;
+  }
+  const z0 = new Float64Array(T), z1 = xs ? new Float64Array(T) : null;
+  for (let i = 0; i < T; i++) {
+    const u = ys[i] - b0 - (xs ? b1 * xs[i] : 0);
+    z0[i] = u;
+    if (xs) z1[i] = xs[i] * u;
+  }
+  let S00 = 0, S01 = 0, S11 = 0;
+  for (let i = 0; i < T; i++) {
+    S00 += z0[i] * z0[i];
+    if (xs) { S01 += z0[i] * z1[i]; S11 += z1[i] * z1[i]; }
+  }
+  const L = nwLags(T);
+  for (let l = 1; l <= L; l++) {
+    const w = 1 - l / (L + 1);
+    let a00 = 0, a01 = 0, a10 = 0, a11 = 0;
+    for (let i = l; i < T; i++) {
+      a00 += z0[i] * z0[i - l];
+      if (xs) { a01 += z0[i] * z1[i - l]; a10 += z1[i] * z0[i - l]; a11 += z1[i] * z1[i - l]; }
+    }
+    S00 += 2 * w * a00;
+    if (xs) { S01 += w * (a01 + a10); S11 += 2 * w * a11; }
+  }
+  const v00 = xs
+    ? (i00 * S00 + i01 * S01) * i00 + (i00 * S01 + i01 * S11) * i01
+    : i00 * S00 * i00;
+  if (!(v00 > 0) || !Number.isFinite(v00)) return null;
+  return b0 / Math.sqrt(v00);
+}
+
+function drawdown(values, mask, sign) {
+  // Max drawdown on the cumulative SUM, with the running peak starting at ZERO, the level
+  // the path starts from. Matches `_drawdown` in tools/make_factorviz.py.
+  let acc = 0, peak = 0, dd = 0;
+  for (let i = 0; i < values.length; i++) {
+    if (!mask[i]) continue;
+    if (Number.isFinite(values[i])) acc += sign * values[i];
+    if (acc > peak) peak = acc;
+    if (acc - peak < dd) dd = acc - peak;
+  }
+  return dd;
+}
+
+function computeStats(y, x, mask) {
+  const n = y.length;
+  const ys = [], yb = [], xb = [];
+  for (let i = 0; i < n; i++) {
+    if (!mask[i] || !Number.isFinite(y[i])) continue;
+    ys.push(y[i]);
+    if (x && Number.isFinite(x[i])) { yb.push(y[i]); xb.push(x[i]); }
+  }
+  const cnt = ys.length;
+  if (!cnt) return null;
+  let sum = 0;
+  for (let i = 0; i < cnt; i++) sum += ys[i];
+  const mean = sum / cnt;
+  let ss = 0;
+  for (let i = 0; i < cnt; i++) ss += (ys[i] - mean) ** 2;
+  const sd = cnt > 1 ? Math.sqrt(ss / (cnt - 1)) : NaN;
+
+  // OLS on the matched benchmark, same algebra as _ols_many, then its Newey-West t.
+  const m = yb.length;
+  let alpha = null, beta = null, ir = null, alphaT = null;
+  if (m >= (META.benchmarks.min_months || 24)) {
+    let Sx = 0, Sy = 0, Sxx = 0, Sxy = 0, Syy = 0;
+    for (let i = 0; i < m; i++) {
+      Sx += xb[i]; Sy += yb[i]; Sxx += xb[i] * xb[i];
+      Sxy += xb[i] * yb[i]; Syy += yb[i] * yb[i];
+    }
+    const den = m * Sxx - Sx * Sx;
+    if (den !== 0) {
+      beta = (m * Sxy - Sx * Sy) / den;
+      alpha = (Sy - beta * Sx) / m;
+      const sse = Syy - alpha * Sy - beta * Sxy;
+      const rsd = m > 2 ? Math.sqrt(Math.max(sse, 0) / (m - 2)) : NaN;
+      ir = rsd > 0 ? (alpha / rsd) * Math.sqrt(12) : null;
+      alphaT = nwT(yb, xb);
+      alpha = alpha * 12 * 100;
+    }
+  }
+  return {
+    n: cnt,
+    mean_ann: mean * 12 * 100,
+    vol_ann: sd * Math.sqrt(12) * 100,
+    sharpe: sd > 0 ? (mean / sd) * Math.sqrt(12) : null,
+    tstat: nwT(ys, null),
+    maxdd: drawdown(y, mask, 1) * 100,
+    maxdd_flip: drawdown(y, mask, -1) * 100,
+    alpha_ann: alpha, alpha_t: alphaT, beta: beta, ir: ir, n_bm: m,
+  };
+}
+
+function statsRow(stats, factor, w, rt, win) {
+  const row = stats.series[`${factor}|${w}|${rt}`];
+  if (!row) return null;
+  const wi = stats.windows.indexOf(win);
+  if (wi < 0) return null;
+  const vals = row[wi];
+  const o = {};
+  stats.fields.forEach((f, i) => { o[f] = vals[i]; });
+  return o;
+}
+
+function isFlipped(stats, factor, w, rt) {
+  return Boolean(stats.flip && stats.flip[`${factor}|${w}|${rt}`]);
+}
+
+function applyFlip(row, flip) {
+  // A sign correction negates the long-short return, so every statistic linear in the return
+  // negates with it -- mean, Sharpe, both t-statistics, alpha, beta and the information
+  // ratio. Volatility does not.
+  // ❗Max drawdown is NOT a sign flip of itself. The drawdown of the negated path is a
+  // different number, so the corrected one is MEASURED and carried as `maxdd_flip` rather
+  // than derived here.
+  if (!flip) return row;
+  const o = { ...row };
+  for (const k of ["mean_ann", "sharpe", "tstat", "alpha_ann", "alpha_t", "beta", "ir"]) {
+    if (o[k] !== null && o[k] !== undefined) o[k] = -o[k];
+  }
+  o.maxdd = (o.maxdd_flip === undefined) ? null : o.maxdd_flip;
+  o._flipped = true;
+  return o;
+}
+
+/* ------------------------------------------------------------- rendering */
+// ❗Each estimate is followed by its OWN t-statistic. Return, then t. Alpha, then t. A
+// t-statistic parked three columns away from the number it belongs to gets read against the
+// wrong one.
+const COLUMNS = [
+  ["factor",    "Factor",        null],
+  ["n",         "Months",        0],
+  ["mean_ann",  "Return % p.a.", 2],
+  ["tstat",     "t-stat",        2],
+  ["vol_ann",   "Vol % p.a.",    2],
+  ["sharpe",    "Sharpe",        2],
+  ["alpha_ann", "Alpha % p.a.",  2],
+  ["alpha_t",   "t(alpha)",      2],
+  ["beta",      "Beta",          2],
+  ["ir",        "Info. ratio",   2],
+  ["maxdd",     "Max DD %",      1],
+];
+
+// The columns where a sign is information rather than an artefact of the definition.
+const SIGNED = new Set(["mean_ann", "tstat", "sharpe", "alpha_ann", "alpha_t", "beta", "ir"]);
+
+function renderTable(el, rows, opts) {
+  const { sortBy, asc, onSort, onPick, picked, showSlice, grouped } = opts;
+  // ❗No "Slice" column. It was the widest thing on the page and it repeated what the chips
+  // above already say. The slice now sits as a muted second line under the factor name, so a
+  // row is still identifiable without spending a column on it.
+  const cols = COLUMNS;
+
+  const order = (a, b) => {
+    const x = a[sortBy], y = b[sortBy];
+    if (typeof x === "string" || typeof y === "string") {
+      return (asc ? 1 : -1) * String(x).localeCompare(String(y));
+    }
+    const nx = (x === null || x === undefined || Number.isNaN(x)) ? -Infinity : x;
+    const ny = (y === null || y === undefined || Number.isNaN(y)) ? -Infinity : y;
+    return asc ? nx - ny : ny - nx;
+  };
+
+  const thead = cols.map(([k, t]) => {
+    const cls = k === sortBy ? `sorted${asc ? " asc" : ""}` : "";
+    return `<th data-k="${k}" class="${cls}">${t}</th>`;
+  }).join("");
+
+  const rowHtml = (r) => {
+    const tds = cols.map(([k, , dp]) => {
+      if (k === "factor") {
+        const tick = onPick
+          ? `<input type="checkbox" data-f="${r._key}" ${picked && picked.has(r._key) ? "checked" : ""}> `
+          : `<span class="swatch" style="background:${r._color}"></span>`;
+        const star = r._flipped
+          ? ' <span class="muted" title="sign-corrected for display">&minus;</span>' : "";
+        const sub = showSlice && r._slice
+          ? `<span class="slice-sub">${r._slice}</span>` : "";
+        return `<td>${tick}<strong>${r._label}</strong>${star}
+                <span class="muted">${r.factor}</span>${sub}</td>`;
+      }
+      const v = r[k];
+      // ❗Colour only where the SIGN means something. A month count and a volatility are
+      // positive by construction, and painting them green reads as a verdict on a number
+      // that cannot be negative. Max drawdown is negative by construction, same argument.
+      return `<td class="num ${SIGNED.has(k) ? signClass(v) : ""}">${fmt(v, dp)}</td>`;
+    }).join("");
+    return `<tr>${tds}</tr>`;
+  };
+
+  // ❗Grouped, the column sort ranks WITHIN each cluster. Ranking across clusters and then
+  // cutting the list into cluster blocks would put the headings in a meaningless order and
+  // read as a broken sort.
+  const body = grouped
+    ? groupsInUse(rows).map((g) => {
+        const rs = rows.filter((r) => r._group === g.key).sort(order);
+        if (!rs.length) return "";
+        return `<tr class="grouphead"><td colspan="${cols.length}">${groupTitle(g)}`
+             + ` <span class="muted">${rs.length}</span></td></tr>` + rs.map(rowHtml).join("");
+      }).join("")
+    : [...rows].sort(order).map(rowHtml).join("");
+
+  el.innerHTML = `<thead><tr>${thead}</tr></thead><tbody>${body}</tbody>`;
+
+  el.querySelectorAll("th").forEach((th) => {
+    th.onclick = () => onSort(th.dataset.k);
+  });
+  if (onPick) {
+    el.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+      cb.onchange = () => onPick(cb.dataset.f, cb.checked);
+    });
+  }
+}
+
+let eChart = null, cChart = null;
+
+function drawChart(canvas, existing, labels, datasets) {
+  if (existing) existing.destroy();
+  return new Chart(canvas, {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      elements: { point: { radius: 0 }, line: { borderWidth: 1.8, tension: 0 } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 12, autoSkip: true }, grid: { display: false } },
+        y: { title: { display: true, text: "Cumulative return (%)" },
+             grid: { color: "rgba(128,128,128,.18)" } },
+      },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 11 } } },
+        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.parsed.y, 1)}%` } },
+      },
+    },
+  });
+}
+
+/* ------------------------------------------------------------- EXPLORE UI */
+function exploreSlice() {
+  return {
+    dataset: $("e-dataset").value, sort: $("e-sort").value, rt: $("e-rt").value,
+    band: $("e-band").value, w: $("e-w").value,
+  };
+}
+
+async function renderExplore() {
+  const s = exploreSlice();
+  const key = `${s.dataset}_${s.sort}`;
+  const prod = META.products[key];
+  const stats = await loadStats(s.dataset, s.sort);
+  const flipOn = $("e-flip").checked;
+  const q = $("e-search").value.trim().toLowerCase();
+
+  const factors = prod.factors.filter((f) => bandOf(f) === s.band);
+  const rows = [];
+  for (const f of factors) {
+    const raw = statsRow(stats, f, s.w, s.rt, explore.window);
+    if (!raw) continue;
+    const flip = flipOn && isFlipped(stats, f, s.w, s.rt);
+    const r = applyFlip(raw, flip);
+    r.factor = f;
+    r._key = f;
+    r._label = labelFor(f);
+    r._group = groupOf(f);
+    if (q && !(`${f} ${r._label}`.toLowerCase().includes(q))) continue;
+    rows.push(r);
+  }
+
+  // ❗No column mnemonics on a public page. This line used to end "alpha vs mktb", which
+  // names an internal column and answers a question nobody outside the build repo asked.
+  $("e-table-note").textContent =
+    `${rows.length} factors · ${prod.span[0]} to ${prod.span[1]}`;
+
+  renderTable($("e-table"), rows, {
+    sortBy: explore.sortBy, asc: explore.asc,
+    picked: explore.picked, grouped: $("e-group").checked,
+    onSort: (k) => {
+      if (explore.sortBy === k) explore.asc = !explore.asc;
+      else { explore.sortBy = k; explore.asc = false; }
+      renderExplore();
+    },
+    onPick: (f, on) => {
+      if (on) { if (explore.picked.size >= 10) { alert("Ten series at once is the limit -- untick one first."); renderExplore(); return; } explore.picked.add(f); }
+      else explore.picked.delete(f);
+      renderExplore();
+    },
+  });
+
+  await drawExploreChart(s, stats, flipOn);
+}
+
+async function drawExploreChart(s, stats, flipOn) {
+  const picks = [...explore.picked];
+  const note = $("e-chart-note");
+  if (!picks.length) {
+    if (eChart) { eChart.destroy(); eChart = null; }
+    note.textContent = "tick factors in the table below";
+    return;
+  }
+  note.textContent = `${picks.length} selected`;
+  const data = await loadSeries(s.dataset, s.sort, s.rt, s.band, s.w);
+  const mask = windowMask(data.dates, explore.window);
+  const labels = data.dates.filter((_, i) => mask[i]);
+
+  const datasets = picks.map((f, i) => {
+    const flip = flipOn && isFlipped(stats, f, s.w, s.rt);
+    const full = cumulative(data.cols[f] || [], mask, flip);
+    return {
+      label: labelFor(f) + (flip ? " (sign-corrected)" : ""),
+      data: full.filter((v) => v !== null),
+      borderColor: PALETTE[i % PALETTE.length],
+      backgroundColor: PALETTE[i % PALETTE.length],
+    };
+  });
+  eChart = drawChart($("e-chart"), eChart, labels, datasets);
+}
+
+/* ------------------------------------------------------------- COMPARE UI */
+function sliceLabel(e) {
+  return [META.datasets[e.dataset].label, META.sorts[e.sort],
+          META.return_types[e.rt], META.bands[e.band],
+          e.w.toUpperCase()].join(" · ");
+}
+
+function cartKey(e) { return [e.dataset, e.sort, e.rt, e.band, e.w, e.factor].join("|"); }
+
+function currentPick() {
+  return { dataset: $("c-dataset").value, sort: $("c-sort").value, rt: $("c-rt").value,
+           band: $("c-band").value, w: $("c-w").value, factor: $("c-factor").value };
+}
+
+function factorName(base, sort, band) {
+  // The naming grammar, {base}[_wf][_ig|_hy] -- spec/factor_names.json -> compose.grammar.
+  // ❗Varying the SORT renames the factor: `cs` single is `cs_wf` within-firm. Adding the
+  // variant without renaming would look up a factor that does not exist in that product and
+  // silently add nothing, which reads as "the button is broken".
+  return base + (sort === "within_firm" ? "_wf" : "")
+              + (band === "ig" ? "_ig" : band === "nig" ? "_hy" : "");
+}
+
+const AXIS_VALUES = {
+  sort: () => Object.keys(META.sorts),
+  rt: () => Object.keys(META.return_types),
+  dataset: () => Object.keys(META.datasets),
+  band: () => Object.keys(META.bands),
+  w: () => Object.keys(META.weightings),
+};
+
+function addAcross(axis) {
+  const here = currentPick();
+  const base = baseName(here.factor);
+  const note = $("c-quick-note");
+  let added = 0, unavailable = [], full = false;
+
+  for (const v of AXIS_VALUES[axis]()) {
+    const e = { ...here, [axis]: v };
+    e.factor = factorName(base, e.sort, e.band);
+    const prod = META.products[`${e.dataset}_${e.sort}`];
+    // ❗Not every combination exists. Lehman-ICE sorts 83 of the 108 signals -- it is
+    // quote data with no trade prints, so every illiquidity and daily-volatility measure is
+    // absent. Say which were skipped rather than silently adding fewer than asked.
+    if (!prod || !prod.factors.includes(e.factor) || !prod.return_types.includes(e.rt)) {
+      unavailable.push(axis === "dataset" ? META.datasets[v].label : v);
+      continue;
+    }
+    if (compare.cart.some((x) => cartKey(x) === cartKey(e))) continue;
+    if (compare.cart.length >= 10) { full = true; break; }
+    compare.cart.push(e);
+    added++;
+  }
+
+  const bits = [];
+  if (added) bits.push(`added ${added}`);
+  if (unavailable.length) bits.push(`not available for ${unavailable.join(", ")}`);
+  if (full) bits.push("ten-series limit reached");
+  if (!added && !unavailable.length && !full) bits.push("already in the list");
+  note.textContent = bits.join(" · ");
+  renderCompare();
+}
+
+function renderChips() {
+  const el = $("c-chips");
+  if (!compare.cart.length) {
+    el.innerHTML = '<span class="muted" style="font-size:13px">No series yet &mdash; '
+                 + 'pick above and press <strong>Add series</strong>.</span>';
+    return;
+  }
+  el.innerHTML = compare.cart.map((e, i) => `
+    <span class="chip">
+      <span class="swatch" style="background:${PALETTE[i % PALETTE.length]}"></span>
+      <span><strong>${labelFor(e.factor)}</strong> &nbsp;<span class="muted">${sliceLabel(e)}</span></span>
+      <button data-i="${i}" title="remove">&times;</button>
+    </span>`).join("");
+  el.querySelectorAll("button").forEach((b) => {
+    b.onclick = () => { compare.cart.splice(Number(b.dataset.i), 1); renderCompare(); };
+  });
+}
+
+async function renderCompare() {
+  renderChips();
+  const table = $("c-table");
+  const flipOn = $("c-flip").checked;
+
+  if (!compare.cart.length) {
+    table.innerHTML = "";
+    if (cChart) { cChart.destroy(); cChart = null; }
+    $("c-hint").textContent = "";
+    return;
+  }
+
+  const rows = [];
+  const datasets = [];
+  let labels = null;
+  const alignOn = $("c-align").checked;
+
+  // Load every series first, so an aligned sample can be worked out across all of them.
+  const loaded = [];
+  for (const e of compare.cart) {
+    loaded.push({ e, data: await loadSeries(e.dataset, e.sort, e.rt, e.band, e.w) });
+  }
+
+  // ❗The aligned sample is the intersection of the months where EVERY selected series has a
+  // value, not merely the overlap of their date ranges. A factor can start early and still
+  // carry gaps -- the eight Lehman months, or an illiquidity signal that only begins with
+  // TRACE -- and lining up endpoints while leaving holes inside would look aligned and not be.
+  let common = null;
+  if (alignOn && loaded.length > 1) {
+    for (const { e, data } of loaded) {
+      const mask = windowMask(data.dates, compare.window);
+      const have = new Set();
+      const col = data.cols[e.factor] || [];
+      data.dates.forEach((d, j) => {
+        if (mask[j] && Number.isFinite(col[j])) have.add(d);
+      });
+      common = common === null ? have : new Set([...common].filter((d) => have.has(d)));
+    }
+  }
+  if (alignOn) await loadBenchmarks();
+
+  for (let i = 0; i < loaded.length; i++) {
+    const { e, data } = loaded[i];
+    const stats = await loadStats(e.dataset, e.sort);
+    const flip = flipOn && isFlipped(stats, e.factor, e.w, e.rt);
+
+    let raw;
+    if (common) {
+      // Recomputed, because the aligned window is not one of the four precomputed ones.
+      const col = data.cols[e.factor] || [];
+      const m = data.dates.map((d) => common.has(d));
+      const bcol = META.benchmarks.pairing[e.rt];
+      const x = data.dates.map((d) => {
+        const j = BENCH.index.get(d);
+        return j === undefined ? NaN : BENCH.cols[bcol][j];
+      });
+      raw = computeStats(col, x, m);
+    } else {
+      raw = statsRow(stats, e.factor, e.w, e.rt, compare.window);
+    }
+    if (raw) {
+      const r = applyFlip(raw, flip);
+      r.factor = e.factor;
+      r._key = cartKey(e);
+      r._label = labelFor(e.factor);
+      r._slice = sliceLabel(e);
+      r._color = PALETTE[i % PALETTE.length];
+      rows.push(r);
+    }
+    const mask = common
+      ? data.dates.map((d) => common.has(d))
+      : windowMask(data.dates, compare.window);
+    const dates = data.dates.filter((_, j) => mask[j]);
+    const vals = cumulative(data.cols[e.factor] || [], mask, flip).filter((v) => v !== null);
+    // ❗Series from different datasets have different spans. Use the LONGEST axis and pad
+    // the short ones at the FRONT: aligning them at index 0 would silently slide the TRACE
+    // era back to 1973 and make two different histories look like one.
+    datasets.push({ _dates: dates, _vals: vals,
+                    label: `${labelFor(e.factor)} — ${sliceLabel(e)}`
+                           + (flip ? " (sign-corrected)" : ""),
+                    borderColor: PALETTE[i % PALETTE.length],
+                    backgroundColor: PALETTE[i % PALETTE.length] });
+  }
+
+  const all = new Set();
+  datasets.forEach((d) => d._dates.forEach((x) => all.add(x)));
+  labels = [...all].sort();
+  const index = new Map(labels.map((d, i) => [d, i]));
+  datasets.forEach((d) => {
+    const arr = new Array(labels.length).fill(null);
+    d._dates.forEach((dt, j) => { arr[index.get(dt)] = d._vals[j]; });
+    d.data = arr;
+    d.spanGaps = false;
+    delete d._dates; delete d._vals;
+  });
+
+  cChart = drawChart($("c-chart"), cChart, labels, datasets);
+
+  renderTable(table, rows, {
+    sortBy: "sharpe", asc: false, showSlice: true,
+    onSort: () => {},
+  });
+
+  const spans = rows.map((r) => r.n).filter((n) => n);
+  if (common) {
+    const d = [...common].sort();
+    $("c-hint").textContent = d.length
+      ? `Aligned to ${d.length} months every series has, ${d[0].slice(0, 7)} to `
+        + `${d[d.length - 1].slice(0, 7)}. Statistics recomputed on that sample.`
+      : "These series share no month with data. Nothing to align.";
+  } else if (spans.length > 1 && Math.max(...spans) !== Math.min(...spans)) {
+    $("c-hint").textContent =
+      `Series cover different periods (${Math.min(...spans)}–${Math.max(...spans)} months), `
+      + "so the statistics below are not measured over the same sample. "
+      + "Tick Aligned sample to compare them like for like.";
+  } else {
+    $("c-hint").textContent = "";
+  }
+}
+
+function refreshCompareFactors() {
+  // ❗Grouped with <optgroup>, so the cluster a factor belongs to is visible while it is
+  // being chosen. A flat list of 108 names asks the reader to already know which is which.
+  const ds = $("c-dataset").value, sort = $("c-sort").value, band = $("c-band").value;
+  const prod = META.products[`${ds}_${sort}`];
+  const sel = $("c-factor");
+  const keep = sel.value;
+  const fs = prod.factors.filter((f) => bandOf(f) === band);
+  sel.innerHTML = "";
+  let found = null;
+  for (const g of groupsInUse(fs.map((f) => ({ _group: groupOf(f) })))) {
+    const mine = fs.filter((f) => groupOf(f) === g.key)
+                   .sort((a, b) => labelFor(a).localeCompare(labelFor(b)));
+    if (!mine.length) continue;
+    const og = document.createElement("optgroup");
+    og.label = groupTitle(g);
+    for (const f of mine) {
+      og.appendChild(option(f, `${labelFor(f)}  (${f})`));
+      if (f === keep) found = f;
+    }
+    sel.appendChild(og);
+  }
+  if (found) sel.value = found;
+}
+
+/* ------------------------------------------------- the info buttons
+
+   The text is DECLARED in spec/factorviz.json -> help and travels in meta.json. Each entry's
+   bold lead is composed from meta here rather than written there a second time, so a label
+   or a sample span cannot drift from the data it describes.                               */
+
+function helpLead(topic, key) {
+  if (topic === "dataset") {
+    const p = META.products[`${key}_single`];
+    const span = p ? ` <span class="muted">${p.span[0].slice(0, 7)} to `
+                   + `${p.span[1].slice(0, 7)}</span>` : "";
+    return META.datasets[key].label + span;
+  }
+  const maps = { sort: META.sorts, rt: META.return_types, band: META.bands,
+                 w: META.weightings };
+  const m = maps[topic];
+  return (m && m[key]) || key;
+}
+
+function helpHtml(topic) {
+  const h = META.help && META.help[topic];
+  if (!h) return "";
+  let body = `<h4>${h.title}</h4>`;
+  if (h.text) body += `<p>${h.text}</p>`;
+  if (h.items) {
+    body += "<dl>" + Object.keys(h.items).map((k) => {
+      // ❗An empty item falls back to the one-line definition the return type already
+      // carries. Writing those four lines here a second time is how they drift.
+      const d = META.return_type_detail && META.return_type_detail[k];
+      let txt = h.items[k] || (d && d.long) || "";
+      if (txt && !txt.endsWith(".")) txt += ".";
+      return `<dt>${helpLead(topic, k)}</dt><dd>${txt}</dd>`;
+    }).join("") + "</dl>";
+  }
+  if (h.note) body += `<p class="muted" style="margin-top:9px">${h.note}</p>`;
+  return body;
+}
+
+let openHelp = null;
+
+function closeHelp() {
+  if (!openHelp) return;
+  openHelp.el.remove();
+  openHelp.btn.setAttribute("aria-expanded", "false");
+  openHelp = null;
+}
+
+function toggleHelp(btn) {
+  const again = openHelp && openHelp.btn === btn;
+  closeHelp();
+  if (again) return;
+  const host = btn.closest(".field, .check-wrap");
+  if (!host) return;
+  const el = document.createElement("div");
+  el.className = "pop";
+  el.setAttribute("role", "note");
+  el.innerHTML = helpHtml(btn.dataset.help);
+  el.onclick = (ev) => ev.stopPropagation();
+  host.appendChild(el);
+  btn.setAttribute("aria-expanded", "true");
+  openHelp = { btn, el };
+}
+
+function mountHelp() {
+  document.querySelectorAll("button.info").forEach((b) => {
+    // ❗preventDefault, because five of these sit inside a <label>. Without it the click
+    // also activates the label and moves focus into the control behind the button.
+    b.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); toggleHelp(b); };
+  });
+  document.addEventListener("click", closeHelp);
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") closeHelp(); });
+}
+
+/* ------------------------------------------------------------------- boot */
+function segButtons(el, entries, current, onPick) {
+  el.innerHTML = "";
+  for (const [v, t] of entries) {
+    const b = document.createElement("button");
+    b.textContent = t;
+    b.setAttribute("aria-pressed", String(v === current));
+    b.onclick = () => {
+      [...el.children].forEach((c) => c.setAttribute("aria-pressed", "false"));
+      b.setAttribute("aria-pressed", "true");
+      onPick(v);
+    };
+    el.appendChild(b);
+  }
+}
+
+function productEntries() {
+  return Object.keys(META.datasets).map((k) => [k, META.datasets[k].label]);
+}
+
+function syncProductControls(prefix) {
+  const ds = $(`${prefix}-dataset`).value, sort = $(`${prefix}-sort`).value;
+  const prod = META.products[`${ds}_${sort}`];
+  fill($(`${prefix}-rt`), prod.return_types.map((r) => [r, META.return_types[r]]),
+       $(`${prefix}-rt`).value);
+  fill($(`${prefix}-band`), prod.bands.map((b) => [b, META.bands[b]]), $(`${prefix}-band`).value);
+  fill($(`${prefix}-w`), prod.weightings.map((w) => [w, META.weightings[w]]),
+       $(`${prefix}-w`).value);
+}
+
+function renderAbout() {
+  const p = META.products;
+  const rows = Object.keys(p).map((k) => {
+    const x = p[k];
+    return `<tr><td>${META.datasets[x.dataset].label}</td>
+            <td class="muted">${META.sorts[x.sort]}</td>
+            <td class="num">${x.span[0]} to ${x.span[1]}</td>
+            <td class="num">${x.months}</td>
+            <td class="num">${x.n_series.toLocaleString()}</td></tr>`;
+  }).join("");
+
+  // Return definitions, citations and equations are DECLARED in spec/factors.json and travel
+  // in meta.json. Nothing here is written twice.
+  const D = META.return_type_detail || {};
+  // id -> LaTeX, rendered after the HTML lands. The element keeps the plain-text equation
+  // until then, so a CDN failure leaves the page as it was rather than blank.
+  const math = [];
+  const returns = ["exc", "dur", "dbns", "dcls"].filter((k) => D[k]).map((k) => {
+    const d = D[k];
+    if (d.equation && d.equation_tex) math.push([`eq-${k}`, d.equation_tex]);
+    const eq = d.equation ? `<div class="eq" id="eq-${k}">${d.equation}</div>` : "";
+    const cite = d.cite_full ? `<div class="cite">${d.cite_full}</div>` : "";
+    // ❗Not "benchmark". On this tab that word already means the market a factor is
+    // regressed on. Here it is the series SUBTRACTED to build the return.
+    const bm = d.benchmark
+      ? ` In the data, the series subtracted is <code>${d.benchmark}</code>.` : "";
+    return `<h3>${d.short}</h3>
+            <p>${d.how}${bm}</p>${eq}${cite}`;
+  }).join("");
+
+  // Download links, built by make_factorviz.py from the same name templates the packager
+  // uses, so a link cannot point at a file that was never named that.
+  const D_ = META.downloads || {};
+  const mb = (b) => (b ? ` <span class="muted">(${(b / 1e6).toFixed(0)} MB)</span>` : "");
+  const dl = !D_.items || !Object.keys(D_.items).length
+    ? `<p class="muted">Download links are not available in this build.</p>`
+    : `<div class="scroll"><table>
+         <thead><tr><th>Dataset</th><th>Sort</th><th>Panel</th>
+                    <th>Time series</th></tr></thead><tbody>` +
+      Object.keys(D_.items).map((k) => {
+        const p = META.products[k], it = D_.items[k];
+        return `<tr><td>${META.datasets[p.dataset].label}</td>
+                <td class="muted">${META.sorts[p.sort]}</td>
+                <td><a href="${it.panel.url}">parquet</a>${mb(it.panel.bytes)}</td>
+                <td><a href="${it.csv.url}">CSV</a>${mb(it.csv.bytes)}</td></tr>`;
+      }).join("") +
+      `</tbody></table></div>
+       <p><a href="${D_.all_url}"><strong>All twelve archives in one place</strong></a></p>`;
+
+  const bm = Object.entries(META.benchmarks.pairing)
+    .map(([rt, b]) => `<tr><td>${(D[rt] && D[rt].short) || META.return_types[rt]}
+                       <span class="muted">(${rt})</span></td>
+                       <td><code>${b}</code></td></tr>`).join("");
+
+  math.push(["eq-capmb", "r_t = \\alpha + \\beta\\, MKT_t + \\varepsilon_t"]);
+  $("about-body").innerHTML = `<div class="prose">
+    <h2>What this data is</h2>
+    <p>At each month-end, bonds are ranked on a characteristic &mdash; a credit spread, a
+       measure of illiquidity, a past return, an estimated factor loading &mdash; and sorted
+       into portfolios. The factor return is the top portfolio minus the bottom, rebalanced
+       monthly.</p>
+    <p>The underlying bond panels are built by the
+       <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">TRACE Data Pipeline</a>, and the construction follows
+       <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>.
+       Factors are formed with
+       <a href="https://pypi.org/project/pybondlab/">PyBondLab</a>.</p>
+
+    <h2>Download the data</h2>
+    <p>Data is available for download as a wide-format time series or as a panel carrying
+       more than the page shows. The <strong>panel</strong> archive holds the long leg, the
+       short leg and the long&ndash;short for every factor, equal-weighted and value-weighted,
+       all four return definitions and all three universes, with two-way turnover and the
+       number of bonds in each portfolio every month. The <strong>time series</strong> archive
+       is the same long&ndash;short returns pivoted wide, one CSV per return definition,
+       universe and weighting.</p>
+    ${dl}
+    <p>Every archive carries a <code>MANIFEST.json</code> listing each file with its
+       SHA-256. The four market benchmarks
+       behind the alphas are one small monthly file,
+       <a href="./data/benchmarks.csv">benchmarks.csv</a>, running from 1973. The pipeline
+       that builds the underlying bond panels is public at
+       <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a>,
+       and more data is available at
+       <a href="https://openbondassetpricing.com">openbondassetpricing.com</a>.</p>
+
+    <h2>How the portfolios are formed</h2>
+    <p>The sorts are run with
+       <a href="https://pypi.org/project/pybondlab/">PyBondLab</a>, written by
+       <a href="https://giuliorossetti94.github.io/">Giulio Rossetti</a> and
+       <a href="https://www.alexdickerson.com/">Alex Dickerson</a>.</p>
+    <h3>Single sorts</h3>
+    <p>Bonds are ranked across the entire cross-section each month, into deciles over all
+       bonds and quintiles within a rating band. The factor is the extreme-decile (or quintile) spread,
+       computed both equal-weighted and value-weighted, where value weights are price times
+       amount outstanding.</p>
+    <h3>Within-firm sorts</h3>
+    <p>Bonds are ranked only against other bonds of the <em>same issuer</em>, identified by
+       CRSP <code>permno</code>, so firm-level determinants such as default risk, industry and
+       leverage are differenced out and what remains is the marginal price of the bond-level
+       characteristic.</p>
+    <p>A firm is included in a given month t only if it holds at least two bonds with both
+       a valid signal and a positive market value. The cutoffs are the 33rd and 67th
+       percentiles of the <em>distinct</em> signal values in that firm and rating group. Bonds
+       strictly above the upper cutoff form the firm's long leg and bonds strictly below the
+       lower one form its short leg. Each leg is value-weighted inside the firm, and firms
+       combine in proportion to the market value of the bonds in their two legs. The procedure
+       runs separately for all bonds, for investment grade and for high yield.</p>
+
+    <h2>Return definitions</h2>
+    <p>A corporate bond's total return contains compensation for interest-rate risk. The
+       four definitions below differ only in how the duration-hedged portfolio of Treasuries
+       is constructed, which is subtracted from the bond total return to isolate the credit
+       component.</p>
+    <p>Each definition is a separate build. The beta, momentum and reversal characteristics
+       are re-estimated against that definition's own benchmark, so a factor sorted on a beta
+       is not sorted on the same numbers across the four.</p>
+    ${returns}
+
+    <h2>Measurement error, and the one business day signal gap</h2>
+    <p>A month-end TRACE price is a volume-weighted average of actual trades rather than a
+       quote, so it carries noise. If the same price sets a signal and the denominator of the
+       following month's return, the same error enters both. A bond priced too high sorts
+       toward the short leg and its measured return comes out too low, a bond priced too low
+       sorts toward the long leg with its return too high, and the measured premium widens for
+       no economic reason. Noise alone does not do this. The bias needs the same price error to
+       both misrank the bond and contaminate its return, and it is first order in that noise.</p>
+    <p><strong>What we do about it.</strong> Every price-based signal in the TRACE era is
+       computed from a price observed at least one business day before the month-end price
+       used in the return denominator, capped at ten business days, with a median gap of one.
+       The two price errors then come from different dates and no longer share a disturbance.
+       Pre-2002 Lehman and ICE prices are indicative bid-side quotes and need no such
+       adjustment.</p>
+    <div class="cite"><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, A., Robotti, C. and Rossetti, G.
+      (2026). The Corporate Bond Factor Replication Crisis</a>, Section 3.<br>
+      Duarte, J., Jones, C.S. and Wang, J.L. (2024). Very noisy option prices and inference
+      regarding the volatility risk premium. Journal of Finance 79, 3581-3621.<br>
+      Blume, M.E. and Stambaugh, R.F. (1983). Biases in computed returns, an application to the
+      size effect. Journal of Financial Economics 12, 387-404.</div>
+
+    <h2>Risk adjustment</h2>
+    <p>Alpha and beta come from a time-series regression of the factor on a bond market
+       benchmark, the one-factor bond CAPM (CAPMB) of
+       <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson, Mueller and Robotti (2023)</a>. <strong>Each return
+       definition is paired with its own benchmark</strong>, so a duration-adjusted factor is
+       never regressed on an unadjusted market.</p>
+    <div class="scroll"><table><thead><tr><th>Return definition</th>
+      <th>Market benchmark</th></tr></thead><tbody>${bm}</tbody></table></div>
+    <div class="eq" id="eq-capmb">r_t = alpha + beta * MKT_t + e_t</div>
+    <p>Alpha is annualised and reported in percent, and the information ratio is the annualised
+       ratio of alpha to residual volatility. The t-statistics on both the average return and
+       alpha use Newey-West standard errors with lags = floor(T<sup>0.25</sup>), where T is the
+       number of months in the series. Alpha, its t-statistic and beta are shown as &mdash;
+       below ${META.benchmarks.min_months} overlapping monthly observations, which is why the
+       one-year window reports no alpha, because twelve observations is not an estimate.</p>
+    <p>The four benchmarks are downloadable as one monthly file,
+       <a href="./data/benchmarks.csv">benchmarks.csv</a>, running from 1973 to the end of the
+       sample.</p>
+
+    <h2>Sign convention</h2>
+    <p>These factors are <strong>not sign-corrected</strong>. The long leg is always the
+       high-characteristic portfolio, so a factor whose average return is negative keeps it.
+       Short-term reversal is the familiar example.</p>
+    <p>The usual alternative multiplies any factor with a negative full-sample average by minus
+       one. That correction reads the whole sample, including months later than the ones being
+       reported, so one more month of data can reverse a factor against last year's release and
+       swap which leg is called long.</p>
+    <p><strong>Orient to positive mean</strong> applies that correction for display only, using
+       the same mapping distributed with the data, and it is on by default. It negates the
+       return, so the average return, Sharpe ratio, both t-statistics, alpha, beta and the
+       information ratio negate with it. Volatility does not, and maximum drawdown is measured
+       again on the corrected path rather than negated, because the drawdown of a negated path
+       is a different quantity.</p>
+
+    <h2>Cumulative performance</h2>
+    <p>Charts plot the cumulative <em>sum</em> of monthly returns, in percent, and maximum
+       drawdown is measured on that path. A long&ndash;short portfolio is zero-cost and its
+       cumulative value can be negative, so geometric compounding is not well defined for it.</p>
+
+    <h2>Datasets</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Dataset</th><th>Sort</th><th>Sample</th><th>Months</th>
+                 <th>Series</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <ul>
+      <li><strong>${META.datasets.trace.label}</strong> &mdash; ${META.datasets.trace.blurb}</li>
+      <li><strong>${META.datasets.extended.label}</strong> &mdash; ${META.datasets.extended.blurb}</li>
+      <li><strong>${META.datasets.lehman_ice.label}</strong> &mdash; ${META.datasets.lehman_ice.blurb}</li>
+    </ul>
+    <p>Pre-2002 prices are indicative bid-side quotes from the Lehman Brothers Fixed Income
+       database and from ICE/BofA-ML index constituents. From August 2002 they are
+       transaction prices from TRACE. Because the two eras are different kinds of data, the
+       Lehman-ICE dataset sorts 83 of the 108 characteristics. Every measure needing trade
+       prints or daily returns, meaning illiquidity, daily volatility and daily betas, is
+       unavailable before TRACE.</p>
+
+    <h2>Known gaps</h2>
+    <ul>
+      <li>Factor returns are missing for eight months in which the Lehman database has no
+          prices, 1975-08 to 1975-11 and 1984-12 to 1985-03.</li>
+      <li>Illiquidity and daily-volatility characteristics are unavailable before 2002-08.</li>
+      <li>For long-sample work, 1985-06 is a sensible start. Before the mid-1980s the
+          high-yield market is small, and a non-investment-grade long&ndash;short leg rests on
+          roughly one hundred bonds.</li>
+    </ul>
+
+    <h2>Citation</h2>
+    <p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, A., Robotti, C. and Rossetti, G. (2026). <em>The
+       Corporate Bond Factor Replication Crisis.</em></a> Working Paper.</p>
+  </div>`;
+  renderMath(math);
+}
+
+function renderMath(queue) {
+  // ❗KaTeX is OPTIONAL. If the library did not load, every equation keeps the plain-text
+  // form it was written with, which is what the page showed before. A maths renderer failing
+  // must never cost a reader the equation.
+  if (typeof katex === "undefined") return;
+  for (const [id, tex] of queue) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    try {
+      katex.render(tex, el, { displayMode: true, throwOnError: false });
+      el.classList.add("tex");
+    } catch (err) {
+      /* leave the plain text in place */
+    }
+  }
+}
+
+async function boot() {
+  try {
+    META = await (await fetch(`${DATA}/meta.json`)).json();
+  } catch (err) {
+    document.querySelector(".wrap").innerHTML =
+      `<h1>FactorViz</h1><p class="warn">Could not load <code>data/meta.json</code>.
+       This page must be served over http(s) with its <code>data/</code> directory beside it
+       &mdash; opening the file directly from disk will not work.<br><small>${err}</small></p>`;
+    return;
+  }
+
+  for (const p of ["e", "c"]) {
+    fill($(`${p}-dataset`), productEntries(), "extended");
+    fill($(`${p}-sort`), Object.entries(META.sorts), "single");
+    syncProductControls(p);
+  }
+  $("e-rt").value = "exc"; $("e-band").value = "all"; $("e-w").value = "vw";
+  $("c-rt").value = "exc"; $("c-band").value = "all"; $("c-w").value = "vw";
+
+  const winEntries = [["full", "Full sample"], ["10y", "10Y"], ["5y", "5Y"], ["1y", "1Y"]];
+  segButtons($("e-window"), winEntries, "full", (v) => { explore.window = v; renderExplore(); });
+  segButtons($("c-window"), winEntries, "full", (v) => { compare.window = v; renderCompare(); });
+
+  for (const id of ["e-dataset", "e-sort"]) {
+    $(id).onchange = () => { syncProductControls("e"); explore.picked.clear(); renderExplore(); };
+  }
+  for (const id of ["e-rt", "e-band", "e-w", "e-flip", "e-group"]) {
+    $(id).onchange = () => { if (id === "e-band") explore.picked.clear(); renderExplore(); };
+  }
+  $("e-search").oninput = () => renderExplore();
+
+  for (const id of ["c-dataset", "c-sort"]) {
+    $(id).onchange = () => { syncProductControls("c"); refreshCompareFactors(); };
+  }
+  $("c-band").onchange = refreshCompareFactors;
+  $("c-flip").onchange = renderCompare;
+  $("c-align").onchange = renderCompare;
+  $("c-add").onclick = () => {
+    const e = currentPick();
+    $("c-quick-note").textContent = "";
+    if (compare.cart.some((x) => cartKey(x) === cartKey(e))) return;
+    if (compare.cart.length >= 10) { alert("Ten series at once is the limit."); return; }
+    compare.cart.push(e);
+    renderCompare();
+  };
+  $("c-clear").onclick = () => {
+    compare.cart = [];
+    $("c-quick-note").textContent = "";
+    renderCompare();
+  };
+  document.querySelectorAll(".controls.quick button[data-axis]").forEach((b) => {
+    b.onclick = () => addAcross(b.dataset.axis);
+  });
+
+  const tabs = { explore: "panel-explore", compare: "panel-compare", about: "panel-about" };
+  for (const [name, panel] of Object.entries(tabs)) {
+    $(`tab-${name}`).onclick = () => {
+      for (const [n, p] of Object.entries(tabs)) {
+        $(`tab-${n}`).setAttribute("aria-selected", String(n === name));
+        $(p).classList.toggle("hidden", n !== name);
+      }
+    };
+  }
+
+  $("foot-built").innerHTML =
+    `Built ${META.built_utc.replace("T", " ").replace("+00:00", " UTC")} &middot; `
+    + `factors published without sign-correction &middot; `
+    + `alpha from the one-factor bond CAPM, the factor regressed on the market benchmark `
+    + `matched to its return definition, excess or duration-adjusted &middot; `
+    + `t-statistics use Newey-West standard errors`;
+
+  mountHelp();
+  refreshCompareFactors();
+  renderChips();
+  renderAbout();
+  await renderExplore();
+}
+
+/* ------------------------------------------------- embedding (WordPress) */
+// The page is embedded in an <iframe> on openbondassetpricing.com. Post our height up so
+// the parent can size the frame and the visitor gets ONE scrollbar, not two. Sent on every
+// render and on resize; the parent ignores it if it is not listening.
+function postHeight() {
+  const h = Math.ceil(document.documentElement.getBoundingClientRect().height);
+  if (window.parent !== window) {
+    window.parent.postMessage({ factorviz: "height", height: h }, "*");
+  }
+}
+new ResizeObserver(postHeight).observe(document.documentElement);
+window.addEventListener("load", postHeight);
+
+boot();
+</script>
+</body>
+</html>
