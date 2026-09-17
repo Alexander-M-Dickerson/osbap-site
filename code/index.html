@@ -39,21 +39,8 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 var(--sans); }
   a { color: var(--accent); }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 72px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 4px 20px 28px; }
 
-  header.site { border-bottom: 1px solid var(--line); margin-bottom: 28px; background: var(--bg); }
-  header.site .inner { max-width: 1040px; margin: 0 auto; padding: 18px 20px 0;
-                       display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px; }
-  header.site .brand { font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
-                       color: var(--ink); text-decoration: none; }
-  header.site .brand span { color: var(--ink-soft); font-weight: 400; }
-  nav.site { max-width: 1040px; margin: 0 auto; padding: 10px 20px 0; display: flex; gap: 2px; }
-  nav.site a {
-    padding: 8px 14px; font-size: 14px; font-weight: 500; color: var(--ink-soft);
-    text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
-  }
-  nav.site a:hover { color: var(--ink); }
-  nav.site a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
 
   h1 { font-size: 27px; font-weight: 600; letter-spacing: -0.015em; margin: 8px 0 6px; }
   h2 { font-size: 17px; font-weight: 600; margin: 34px 0 10px; }
@@ -111,35 +98,28 @@
   label.pick select { font: inherit; font-size: 13px; text-transform: none;
                       letter-spacing: normal; color: var(--ink); background: var(--bg);
                       border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; }
+  .range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+           margin: 0 0 14px; }
+  .range-label { font-size: 12.5px; color: var(--ink-soft); min-width: 210px; }
+  .range-label strong { color: var(--ink); font-weight: 600; }
+  .range-tracks { flex: 1 1 260px; display: grid; gap: 2px; min-width: 220px; }
+  .range-tracks input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+  .range-reset { font: inherit; font-size: 12px; padding: 4px 10px; cursor: pointer;
+                 color: var(--accent); background: var(--bg); border: 1px solid var(--line);
+                 border-radius: 4px; }
+  .range-reset:hover { border-color: var(--accent); }
   .figure-box { position: relative; height: 380px; }
   .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
 
-  .people { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 0; list-style: none;
-            font-size: 14px; }
-  .people li { min-width: 200px; }
-  .people span { color: var(--ink-soft); font-size: 12.5px; }
-
-  .news { list-style: none; padding: 0; font-size: 14px; }
   .news li { display: flex; gap: 14px; padding: 5px 0; border-bottom: 1px solid var(--line); }
   .news time { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
                white-space: nowrap; }
 
-  footer.site { border-top: 1px solid var(--line); margin-top: 44px; padding-top: 16px;
-                font-size: 12.5px; color: var(--ink-soft); }
-  footer.site p { margin: 0 0 5px; }
 </style>
 </head>
 <body>
 
-<header class="site">
-  <div class="inner">
-    <a class="brand" href="../">Open Source Bond Asset Pricing</a>
-  </div>
-  <nav class="site"><a href="../">Home</a><a href="../data/">Data</a><a href="../code/" aria-current="page">Code</a><a href="../factorviz/">FactorViz</a></nav>
-</header>
-
 <div class="wrap">
-<h1>Code</h1>
 <p class="lead">
   Two pieces. A pipeline that turns raw TRACE, Lehman and ICE data into bond panels, and a
   library that turns those panels into factors. Both are public, and both are what produced
@@ -188,16 +168,21 @@
   The replication package for the co-pricing paper, including the traded bond, stock and
   nontraded factors, is at <a href="https://github.com/Alexander-M-Dickerson/co-pricing-factor-zoo/tree/main">the replication package</a>.
 </p>
-
-<h2>Contributors</h2>
-<ul class="people"><li><a href="https://www.alexdickerson.com/">Alex Dickerson</a> <span>UNSW</span></li><li><a href="https://www.wbs.ac.uk/about/person/philippe-mueller">Philippe Mueller</a> <span>Warwick</span></li><li><a href="https://www.cesarerobotti.com/">Cesare Robotti</a> <span>Warwick</span></li><li><a href="https://christianjulliard.net/">Christian Julliard</a> <span>LSE</span></li><li><a href="https://yoshionozawa.github.io/">Yoshio Nozawa</a> <span>Toronto</span></li><li><a href="https://giuliorossetti94.github.io/">Giulio Rossetti</a> <span>Warwick</span></li><li><a href="https://www.chuckfang.finance/">Chuck Fang</a> <span>Drexel</span></li></ul>
-
-<footer class="site">
-  <p>This website (design/layout) is based on work of Andrew Y. Chen and Tom Zimmermann.</p>
-  <p>Questions and corrections, <a href="mailto:alexander.dickerson1@unsw.edu.au">alexander.dickerson1@unsw.edu.au</a>.</p>
-  <p>&copy;2026 Open Source Bond Asset Pricing &middot; built 2026-09-17</p>
-</footer>
 </div>
+
+<script>
+// ❗The page is embedded in an <iframe> on openbondassetpricing.com. Post our height up so
+// the parent can size the frame and the visitor gets ONE scrollbar, not two. The `factorviz`
+// key is kept beside `osbap` so the listener already on the site works unchanged.
+function postHeight() {
+  var h = Math.ceil(document.documentElement.getBoundingClientRect().height);
+  if (window.parent !== window) {
+    window.parent.postMessage({osbap: "height", factorviz: "height", height: h}, "*");
+  }
+}
+new ResizeObserver(postHeight).observe(document.documentElement);
+window.addEventListener("load", postHeight);
+</script>
 
 </body>
 </html>

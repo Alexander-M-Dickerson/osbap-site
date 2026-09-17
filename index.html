@@ -39,21 +39,8 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 var(--sans); }
   a { color: var(--accent); }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 72px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 4px 20px 28px; }
 
-  header.site { border-bottom: 1px solid var(--line); margin-bottom: 28px; background: var(--bg); }
-  header.site .inner { max-width: 1040px; margin: 0 auto; padding: 18px 20px 0;
-                       display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px; }
-  header.site .brand { font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
-                       color: var(--ink); text-decoration: none; }
-  header.site .brand span { color: var(--ink-soft); font-weight: 400; }
-  nav.site { max-width: 1040px; margin: 0 auto; padding: 10px 20px 0; display: flex; gap: 2px; }
-  nav.site a {
-    padding: 8px 14px; font-size: 14px; font-weight: 500; color: var(--ink-soft);
-    text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
-  }
-  nav.site a:hover { color: var(--ink); }
-  nav.site a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
 
   h1 { font-size: 27px; font-weight: 600; letter-spacing: -0.015em; margin: 8px 0 6px; }
   h2 { font-size: 17px; font-weight: 600; margin: 34px 0 10px; }
@@ -111,54 +98,31 @@
   label.pick select { font: inherit; font-size: 13px; text-transform: none;
                       letter-spacing: normal; color: var(--ink); background: var(--bg);
                       border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; }
+  .range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+           margin: 0 0 14px; }
+  .range-label { font-size: 12.5px; color: var(--ink-soft); min-width: 210px; }
+  .range-label strong { color: var(--ink); font-weight: 600; }
+  .range-tracks { flex: 1 1 260px; display: grid; gap: 2px; min-width: 220px; }
+  .range-tracks input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+  .range-reset { font: inherit; font-size: 12px; padding: 4px 10px; cursor: pointer;
+                 color: var(--accent); background: var(--bg); border: 1px solid var(--line);
+                 border-radius: 4px; }
+  .range-reset:hover { border-color: var(--accent); }
   .figure-box { position: relative; height: 380px; }
   .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
 
-  .people { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 0; list-style: none;
-            font-size: 14px; }
-  .people li { min-width: 200px; }
-  .people span { color: var(--ink-soft); font-size: 12.5px; }
-
-  .news { list-style: none; padding: 0; font-size: 14px; }
   .news li { display: flex; gap: 14px; padding: 5px 0; border-bottom: 1px solid var(--line); }
   .news time { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
                white-space: nowrap; }
 
-  footer.site { border-top: 1px solid var(--line); margin-top: 44px; padding-top: 16px;
-                font-size: 12.5px; color: var(--ink-soft); }
-  footer.site p { margin: 0 0 5px; }
 </style>
 </head>
 <body>
 
-<header class="site">
-  <div class="inner">
-    <a class="brand" href="./">Open Source Bond Asset Pricing</a>
-  </div>
-  <nav class="site"><a href="./" aria-current="page">Home</a><a href="data/">Data</a><a href="code/">Code</a><a href="factorviz/">FactorViz</a></nav>
-</header>
-
 <div class="wrap">
-<h1>Open Source Bond Asset Pricing</h1>
-<p class="lead">
-  Corporate bond data, factors and the code that builds them. Everything here is produced by
-  a public pipeline from raw TRACE, Lehman and ICE data, and everything is free to download.
-</p>
-
 <div class="note">
   The paper behind this data is under Revise and Resubmit, so the data may change over the
   coming months. Every change is recorded in the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/CHANGELOG.md">changelog on GitHub</a>.
-</div>
-
-<div class="cards">
-  <a class="card" href="data/"><b>Data</b>
-    <span>The daily and monthly bond panels, the 108 factors, and the reports that show what
-    the cleaning did.</span></a>
-  <a class="card" href="factorviz/"><b>FactorViz</b>
-    <span>Explore every factor in the browser, across three datasets, four return definitions
-    and two sorts.</span></a>
-  <a class="card" href="code/"><b>Code</b>
-    <span>The pipeline that builds the data and the library that forms the factors.</span></a>
 </div>
 
 <h2>What is here</h2>
@@ -189,20 +153,17 @@
       panel.</li>
 </ul>
 
-<h2>Most of a bond's return is the Treasury inside it</h2>
+<h2>Credit and duration</h2>
 <p>
   Over the past twenty years the greater part of the total return to holding corporate bonds
   is the return on the duration-matched Treasury portfolio, not compensation for credit or
-  liquidity risk. That is the point of van Binsbergen, Nozawa and Schwert (2025), and the
-  figure below is it, measured on our own data. All three duration-matched benchmarks we
-  publish are here, because the split moves with the choice.
+  liquidity risk (<a href="https://academic.oup.com/rfs/article/38/1/158/7762644">vbns_paper</a>).
 </p>
 <div class="figure">
   <div class="figure-head">
     <div>
-      <strong>The corporate bond market, split into duration and credit</strong>
-      <span class="what">Cumulative log return, value-weighted, each series compounded on its
-      own. The Treasury leg is the duration-matched portfolio inside the market.</span>
+      <strong>Decomposing corporate bond returns</strong>
+      <span class="what">Cumulative log return, value-weighted.</span>
     </div>
     <label class="pick">Duration benchmark
       <select id="dec-bench">
@@ -212,6 +173,16 @@
       </select>
     </label>
   </div>
+
+  <div class="range">
+    <span class="range-label">Sample <strong id="dec-span"></strong></span>
+    <div class="range-tracks">
+      <input type="range" id="dec-from" min="0" value="0" step="1" aria-label="First month">
+      <input type="range" id="dec-to" min="0" value="0" step="1" aria-label="Last month">
+    </div>
+    <button type="button" class="range-reset" id="dec-reset">Full sample</button>
+  </div>
+
   <div class="figure-box"><canvas id="dec-chart"></canvas></div>
   <p class="figure-foot" id="dec-note"></p>
 </div>
@@ -221,44 +192,56 @@
 "use strict";
 /* The decomposition figure.
 
-   The series are built by osbap_data/tools/make_decomposition.py from our own monthly panel,
-   value-weighted on the previous month's market value -- the weighting that reproduces the
-   published bond market factor, corr 0.99996. The CSV beside this chart is exactly what is
-   plotted, which is the same rule FactorViz holds itself to. */
+   The series are built by osbap_data/tools/make_decomposition.py from the Lehman-ICE and
+   TRACE monthly panel, value-weighted on the previous month's market value -- the weighting
+   that reproduces the published bond market factor, corr 0.99996 in the TRACE era. The CSV
+   beside this chart is exactly what is plotted, which is the rule FactorViz holds too.
+
+   The sample control RE-CUMULATES from the chosen first month. It is a window on the data,
+   not a crop of a fixed picture, so every line starts at zero wherever the reader puts it. */
 (function () {
   const COLORS = {market: "#1f4e79", treasury: "#bc6c25", credit: "#2a9d8f", rf: "#8d99ae"};
   const NAMES = {bns: "BNS", cls: "CLS", apr: "APR"};
   let ROWS = null, chart = null;
 
-  function cum(xs) {          // cumulative log return in percent
+  const $ = (id) => document.getElementById(id);
+
+  function cum(xs) {          // cumulative log return in percent, from zero
     let a = 0;
     return xs.map((x) => { a += Math.log(1 + x); return a * 100; });
   }
 
+  function window_() {
+    let i = Number($("dec-from").value), j = Number($("dec-to").value);
+    if (i > j) { const t = i; i = j; j = t; }
+    if (j - i < 11) j = Math.min(ROWS.length - 1, i + 11);   // a year is the shortest window
+    return ROWS.slice(i, j + 1);
+  }
+
   function draw() {
-    const b = document.getElementById("dec-bench").value;
+    const b = $("dec-bench").value;
     const tcol = "treasury_" + b;
-    const dates = ROWS.map((r) => r.date);
-    const mkt = cum(ROWS.map((r) => r.market));
-    const tre = cum(ROWS.map((r) => r[tcol]));
-    const cre = cum(ROWS.map((r) => r.market - r[tcol]));
-    const rf = cum(ROWS.map((r) => r.rf));
+    const rows = window_();
+    const dates = rows.map((r) => r.date);
     const mk = (label, data, color) => ({
       label, data, borderColor: color, backgroundColor: color,
       borderWidth: 1.9, pointRadius: 0, tension: 0,
     });
     const datasets = [
-      mk("Bond market, total return", mkt, COLORS.market),
-      mk("Duration-matched Treasuries (" + NAMES[b] + ")", tre, COLORS.treasury),
-      mk("Credit component", cre, COLORS.credit),
-      mk("One-month T-bill", rf, COLORS.rf),
+      mk("Bond market, total return", cum(rows.map((r) => r.market)), COLORS.market),
+      mk("Duration-matched Treasuries (" + NAMES[b] + ")",
+         cum(rows.map((r) => r[tcol])), COLORS.treasury),
+      mk("Credit component", cum(rows.map((r) => r.market - r[tcol])), COLORS.credit),
+      mk("One-month T-bill", cum(rows.map((r) => r.rf)), COLORS.rf),
     ];
+    $("dec-span").textContent = dates[0].slice(0, 7) + " to "
+      + dates[dates.length - 1].slice(0, 7) + ", " + dates.length + " months";
     if (chart) chart.destroy();
-    chart = new Chart(document.getElementById("dec-chart"), {
+    chart = new Chart($("dec-chart"), {
       type: "line",
       data: {labels: dates, datasets},
       options: {
-        responsive: true, maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false, animation: false,
         interaction: {mode: "index", intersect: false},
         scales: {
           x: {ticks: {maxTicksLimit: 12, autoSkip: true}, grid: {display: false}},
@@ -271,12 +254,6 @@
         },
       },
     });
-    const last = (a) => a[a.length - 1];
-    document.getElementById("dec-note").textContent =
-      `Over ${ROWS.length} months, ${dates[0].slice(0, 7)} to ${last(dates).slice(0, 7)}, the `
-      + `market returned ${last(mkt).toFixed(0)}% cumulatively, of which `
-      + `${last(tre).toFixed(0)}% came from the Treasuries inside it and `
-      + `${last(cre).toFixed(0)}% from credit. The T-bill returned ${last(rf).toFixed(0)}%.`;
   }
 
   fetch("figures/decomposition.csv").then((r) => {
@@ -295,25 +272,34 @@
       return o;
     }).filter((r) => Number.isFinite(r.market) && Number.isFinite(r.rf));
     if (!ROWS.length) throw new Error("the data file parsed to no usable rows");
-    document.getElementById("dec-bench").onchange = draw;
+
+    const last = ROWS.length - 1;
+    for (const id of ["dec-from", "dec-to"]) $(id).max = String(last);
+    $("dec-from").value = "0";
+    $("dec-to").value = String(last);
+    for (const id of ["dec-from", "dec-to", "dec-bench"]) $(id).oninput = draw;
+    $("dec-reset").onclick = () => {
+      $("dec-from").value = "0";
+      $("dec-to").value = String(last);
+      draw();
+    };
     draw();
   }).catch((e) => {
-    document.getElementById("dec-note").textContent =
-      "The figure data could not be loaded. " + e;
+    $("dec-note").textContent = "The figure data could not be loaded. " + e;
   });
 })();
 </script>
 
 <p>
-  Every panel we publish carries all three duration-adjusted returns as columns, so this
-  choice is yours to make rather than ours to make for you. The definitions are in
-  <a href="factorviz/">FactorViz</a>, under the About tab.
+  Every panel we publish include all three treasury hedging portfolios, returns can be
+  decomposed with three methods. The definitions are in <a href="factorviz/">FactorViz</a>, under the About
+  tab.
 </p>
 
 <h2>Priced risk in corporate bonds</h2>
 <p>
   This site also hosts the corrected Bai, Bali and Wen (2019) four factors, with the code and
-  data to reproduce them, from Dickerson, Mueller and Robotti (2023).
+  data to reproduce them, from <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">dmr_paper</a>.
 </p>
 <p>
   The paper's central finding is that the bias-adjusted sample squared Sharpe ratio of the
@@ -330,20 +316,22 @@
   publisher = {Elsevier}}</code></pre>
 
 <h2>Papers</h2>
-<ul class="people"><li><strong>The Corporate Bond Factor Replication Crisis</strong><br><span class="what">Dickerson, Robotti and Rossetti (2026). Working paper, under Revise and Resubmit. <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">SSRN</a> &middot; <a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/corp-bond-replication-crisis-dickerson.pdf">PDF</a></span></li><li><strong>The Co-Pricing Factor Zoo</strong><br><span class="what">Dickerson, Julliard and Robotti (2026). Working paper.</span></li><li><strong>Priced risk in corporate bonds</strong><br><span class="what">Dickerson, Mueller and Robotti (2023). Journal of Financial Economics 150, article 103707. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">journal</a></span></li></ul>
-
-<h2>Contributors</h2>
-<ul class="people"><li><a href="https://www.alexdickerson.com/">Alex Dickerson</a> <span>UNSW</span></li><li><a href="https://www.wbs.ac.uk/about/person/philippe-mueller">Philippe Mueller</a> <span>Warwick</span></li><li><a href="https://www.cesarerobotti.com/">Cesare Robotti</a> <span>Warwick</span></li><li><a href="https://christianjulliard.net/">Christian Julliard</a> <span>LSE</span></li><li><a href="https://yoshionozawa.github.io/">Yoshio Nozawa</a> <span>Toronto</span></li><li><a href="https://giuliorossetti94.github.io/">Giulio Rossetti</a> <span>Warwick</span></li><li><a href="https://www.chuckfang.finance/">Chuck Fang</a> <span>Drexel</span></li></ul>
-
-<h2>News</h2>
-<ul class="news"><li><time>2026-09-17</time><span>The website is rebuilt and now serves the 2026 vintage of every dataset.</span></li><li><time>2026-09-16</time><span>FactorViz is live, an interactive explorer for all 108 long-short bond factors.</span></li><li><time>2025-12-11</time><span>Stage 1 of the trace-data-pipeline is in public beta. <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage1">Stage 1</a></span></li></ul>
-
-<footer class="site">
-  <p>This website (design/layout) is based on work of Andrew Y. Chen and Tom Zimmermann.</p>
-  <p>Questions and corrections, <a href="mailto:alexander.dickerson1@unsw.edu.au">alexander.dickerson1@unsw.edu.au</a>.</p>
-  <p>&copy;2026 Open Source Bond Asset Pricing &middot; built 2026-09-17</p>
-</footer>
+<ul class="people"><li><strong>The Corporate Bond Factor Replication Crisis</strong><br><span class="what">Dickerson, Robotti and Rossetti (2026). Working paper, under Revise and Resubmit. <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">SSRN</a> &middot; <a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/corp-bond-replication-crisis-dickerson.pdf">PDF</a></span></li><li><strong>The Co-Pricing Factor Zoo</strong><br><span class="what">Dickerson, Julliard and Robotti (2026). Working paper.</span></li><li><strong>Priced risk in corporate bonds</strong><br><span class="what">Dickerson, Mueller and Robotti (2023). Journal of Financial Economics 150, article 103707. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">journal</a></span></li><li><strong>Duration-Based Valuation of Corporate Bonds</strong><br><span class="what">van Binsbergen, Nozawa and Schwert (2025). Review of Financial Studies 38(1), 158-191. <a href="https://academic.oup.com/rfs/article/38/1/158/7762644">journal</a></span></li></ul>
 </div>
+
+<script>
+// ❗The page is embedded in an <iframe> on openbondassetpricing.com. Post our height up so
+// the parent can size the frame and the visitor gets ONE scrollbar, not two. The `factorviz`
+// key is kept beside `osbap` so the listener already on the site works unchanged.
+function postHeight() {
+  var h = Math.ceil(document.documentElement.getBoundingClientRect().height);
+  if (window.parent !== window) {
+    window.parent.postMessage({osbap: "height", factorviz: "height", height: h}, "*");
+  }
+}
+new ResizeObserver(postHeight).observe(document.documentElement);
+window.addEventListener("load", postHeight);
+</script>
 
 </body>
 </html>
