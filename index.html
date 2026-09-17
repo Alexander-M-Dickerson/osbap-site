@@ -98,16 +98,66 @@
   label.pick select { font: inherit; font-size: 13px; text-transform: none;
                       letter-spacing: normal; color: var(--ink); background: var(--bg);
                       border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; }
-  .range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
-           margin: 0 0 14px; }
-  .range-label { font-size: 12.5px; color: var(--ink-soft); min-width: 210px; }
-  .range-label strong { color: var(--ink); font-weight: 600; }
-  .range-tracks { flex: 1 1 260px; display: grid; gap: 2px; min-width: 220px; }
-  .range-tracks input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
-  .range-reset { font: inherit; font-size: 12px; padding: 4px 10px; cursor: pointer;
-                 color: var(--accent); background: var(--bg); border: 1px solid var(--line);
-                 border-radius: 4px; }
-  .range-reset:hover { border-color: var(--accent); }
+  /* One rail, two thumbs. The inputs are transparent and stacked on the rail, with
+     pointer events only on the thumbs, which is how a two-handled slider is built without
+     a library. Two separate sliders stacked vertically read as clunky, and they are. */
+  .range { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+           margin: 14px 0 2px; }
+  .slider { position: relative; flex: 1 1 320px; height: 26px; min-width: 240px; }
+  .slider-rail, .slider-fill { position: absolute; top: 11px; height: 4px; border-radius: 2px; }
+  .slider-rail { left: 0; right: 0; background: var(--line); }
+  .slider-fill { background: var(--accent); }
+  .slider input[type=range] {
+    position: absolute; left: 0; top: 0; width: 100%; height: 26px; margin: 0;
+    background: none; pointer-events: none; -webkit-appearance: none; appearance: none;
+  }
+  .slider input[type=range]:focus { outline: none; }
+  .slider input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; pointer-events: auto; width: 15px; height: 15px;
+    border-radius: 50%; background: var(--bg); border: 2px solid var(--accent);
+    cursor: grab; margin-top: 0;
+  }
+  .slider input[type=range]::-moz-range-thumb {
+    pointer-events: auto; width: 13px; height: 13px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--accent); cursor: grab;
+  }
+  .slider input[type=range]::-moz-range-track { background: none; }
+  .range-side { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .range-span { font-size: 12.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .presets { display: flex; gap: 4px; }
+  .presets button {
+    font: inherit; font-size: 12px; padding: 3px 9px; cursor: pointer; color: var(--accent);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 4px;
+  }
+  .presets button:hover { border-color: var(--accent); }
+
+  /* The info button, the same control FactorViz uses. */
+  button.info {
+    width: 15px; height: 15px; padding: 0; margin-left: 5px; vertical-align: middle;
+    border: 1px solid var(--line); border-radius: 50%; background: var(--bg);
+    color: var(--ink-soft); cursor: pointer;
+    font: italic 600 10px/1 Georgia, "Times New Roman", serif;
+  }
+  button.info:hover, button.info[aria-expanded="true"] {
+    border-color: var(--accent); color: var(--accent);
+  }
+  .pop {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 30;
+    width: 420px; max-width: 78vw; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 6px; padding: 13px 15px; font-size: 12.5px; line-height: 1.5;
+    color: var(--ink); text-align: left; text-transform: none; letter-spacing: normal;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+  }
+  .pop.hidden { display: none; }
+  .pop h4 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase;
+            letter-spacing: .06em; color: var(--ink-soft); }
+  .pop dl { margin: 0; }
+  .pop dt { font-weight: 600; margin-top: 9px; }
+  .pop dl > dt:first-child { margin-top: 0; }
+  .pop dd { margin: 2px 0 0; color: var(--ink-soft); }
+  .pop p { margin: 9px 0 0; }
+  .muted { color: var(--ink-soft); }
+  label.pick { position: relative; }
   .figure-box { position: relative; height: 380px; }
   .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
 
@@ -125,16 +175,17 @@
   coming months. Every change is recorded in the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/CHANGELOG.md">changelog on GitHub</a>.
 </div>
 
-<h2>What is here</h2>
+<h2>What can I download?</h2>
 <ul>
   <li><strong>A daily bond panel</strong> from 2002-07, Enhanced, Standard and 144A TRACE
-      combined, cleaned trade by trade, with no filter on par or dollar volume.</li>
-  <li><strong>A monthly bond panel</strong> built from it, carrying returns, credit spreads,
-      duration, ratings and the characteristics the literature sorts on.</li>
+      combined, cleaned and error-corrected following <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>. A monthly bond
+      asset pricing panel, including returns, credit spreads, duration, and the vast majority
+      of characteristics the literature has used to generate the corporate bond factor
+      zoo.</li>
   <li><strong>108 long-short factors</strong>, single sorted and within firm, published
       without sign correction and explorable in <a href="factorviz/">FactorViz</a>.</li>
-  <li><strong>Data reports</strong> that measure what each stage of the cleaning removed,
-      generated by the run they document.</li>
+  <li><strong>Detailed data reports</strong> that measure what each stage of the cleaning
+      procedure removed or corrected.</li>
 </ul>
 
 <h2>How the data is built</h2>
@@ -142,22 +193,22 @@
   The pipeline is public and runs in four stages, at <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a>.
 </p>
 <ul>
-  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage0">Stage 0</a> cleans the transaction tape, removing cancellations,
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage0">Stage 0</a> cleans the TRACE transaction data, removing cancellations,
       corrections, reversals, interdealer double counts, decimal-shifted prices and
       bounce-back errors.</li>
   <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage1">Stage 1</a> turns the cleaned trades into a daily panel with clean prices,
-      accrued interest, yields, credit spreads, duration and convexity.</li>
-  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage2">Stage 2</a> aggregates to the monthly panel and estimates the
-      characteristics, betas and momentum signals.</li>
-  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage3">Stage 3</a> reproduces every table and figure in the paper from that
-      panel.</li>
+      accrued interest, yields, credit spreads, duration and convexity, and many other
+      variables.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage2">Stage 2</a> aggregates to the monthly asset pricing panel and estimates
+      the characteristics, betas and other signals that comprise the bond factor zoo.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage3">Stage 3</a> reproduces every table and figure in <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>.</li>
 </ul>
 
 <h2>Credit and duration</h2>
 <p>
   Over the past twenty years the greater part of the total return to holding corporate bonds
   is the return on the duration-matched Treasury portfolio, not compensation for credit or
-  liquidity risk (<a href="https://academic.oup.com/rfs/article/38/1/158/7762644">vbns_paper</a>).
+  liquidity risk (<a href="https://academic.oup.com/rfs/article/38/1/158/7762644">van Binsbergen, Nozawa and Schwert (2025)</a>).
 </p>
 <div class="figure">
   <div class="figure-head">
@@ -165,25 +216,32 @@
       <strong>Decomposing corporate bond returns</strong>
       <span class="what">Cumulative log return, value-weighted.</span>
     </div>
-    <label class="pick">Duration benchmark
+    <label class="pick">Duration benchmark<button type="button" class="info" id="dec-info"
+        aria-expanded="false" aria-label="How each Treasury benchmark is built">i</button>
       <select id="dec-bench">
         <option value="bns">BNS, the bond's own cash flows</option>
         <option value="cls">CLS, cash flows on the Treasury zero curve</option>
         <option value="apr">APR, duration-interpolated key rates</option>
       </select>
+      <div class="pop hidden" id="dec-pop" role="note"><h4>How each Treasury benchmark is built</h4><dl><dt>BNS <span class="muted">van Binsbergen, Nozawa and Schwert (2025)</span></dt><dd>A synthetic Treasury carrying the bond's own cash flows, each weighted by its present value discounted at the bond's own yield. That yield is higher than the Treasury zero yields, so the weights sit further forward and the benchmark is shorter in duration, removing parallel shifts in the curve.</dd><dt>CLS <span class="muted">Cui, Lu and Song (2026)</span></dt><dd>The same synthetic Treasury, but each cash flow is weighted by its present value on the Treasury zero curve rather than the bond's own yield. That is the only difference from BNS. The weights sit further out, so this benchmark is longer in duration and removes slope and curvature as well as parallel shifts.</dd><dt>APR <span class="muted">Andreani, Palhares and Richardson (2024)</span></dt><dd>CRSP fixed-term Treasury index returns interpolated at the bond's modified duration across the nodes 1/12, 1, 2, 5, 7, 10, 20 and 30 years.</dd></dl><p class="muted">Each one is subtracted from the bond's total return to leave the credit component. All three travel as columns in every panel we publish.</p></div>
     </label>
   </div>
 
+  <div class="figure-box"><canvas id="dec-chart"></canvas></div>
+
   <div class="range">
-    <span class="range-label">Sample <strong id="dec-span"></strong></span>
-    <div class="range-tracks">
+    <div class="slider" id="dec-slider">
+      <div class="slider-rail"></div>
+      <div class="slider-fill" id="dec-fill"></div>
       <input type="range" id="dec-from" min="0" value="0" step="1" aria-label="First month">
       <input type="range" id="dec-to" min="0" value="0" step="1" aria-label="Last month">
     </div>
-    <button type="button" class="range-reset" id="dec-reset">Full sample</button>
+    <div class="range-side">
+      <span class="range-span" id="dec-span"></span>
+      <span class="presets" id="dec-presets"></span>
+    </div>
   </div>
 
-  <div class="figure-box"><canvas id="dec-chart"></canvas></div>
   <p class="figure-foot" id="dec-note"></p>
 </div>
 
@@ -198,10 +256,16 @@
    beside this chart is exactly what is plotted, which is the rule FactorViz holds too.
 
    The sample control RE-CUMULATES from the chosen first month. It is a window on the data,
-   not a crop of a fixed picture, so every line starts at zero wherever the reader puts it. */
+   not a crop of a fixed picture, so every line starts at zero wherever the reader puts it.
+
+   Two range inputs share one track, which is how a two-handled slider is built without a
+   library -- the track is drawn once, the inputs sit transparently on top of it, and only
+   their thumbs take pointer events. */
 (function () {
   const COLORS = {market: "#1f4e79", treasury: "#bc6c25", credit: "#2a9d8f", rf: "#8d99ae"};
   const NAMES = {bns: "BNS", cls: "CLS", apr: "APR"};
+  const PRESETS = [["Full", null], ["1985+", "1985-01"], ["2002+", "2002-08"],
+                   ["Last 20y", -240], ["Last 10y", -120]];
   let ROWS = null, chart = null;
 
   const $ = (id) => document.getElementById(id);
@@ -211,11 +275,23 @@
     return xs.map((x) => { a += Math.log(1 + x); return a * 100; });
   }
 
-  function window_() {
+  function bounds() {
     let i = Number($("dec-from").value), j = Number($("dec-to").value);
     if (i > j) { const t = i; i = j; j = t; }
     if (j - i < 11) j = Math.min(ROWS.length - 1, i + 11);   // a year is the shortest window
+    return [i, j];
+  }
+
+  function window_() {
+    const [i, j] = bounds();
     return ROWS.slice(i, j + 1);
+  }
+
+  function paintTrack() {
+    const [i, j] = bounds();
+    const n = ROWS.length - 1;
+    $("dec-fill").style.left = (100 * i / n) + "%";
+    $("dec-fill").style.width = (100 * (j - i) / n) + "%";
   }
 
   function draw() {
@@ -236,6 +312,7 @@
     ];
     $("dec-span").textContent = dates[0].slice(0, 7) + " to "
       + dates[dates.length - 1].slice(0, 7) + ", " + dates.length + " months";
+    paintTrack();
     if (chart) chart.destroy();
     chart = new Chart($("dec-chart"), {
       type: "line",
@@ -254,6 +331,20 @@
         },
       },
     });
+  }
+
+  function applyPreset(spec) {
+    const last = ROWS.length - 1;
+    let i = 0;
+    if (typeof spec === "string") {
+      i = ROWS.findIndex((r) => r.date >= spec + "-01");
+      if (i < 0) i = 0;
+    } else if (typeof spec === "number") {
+      i = Math.max(0, last + 1 + spec);
+    }
+    $("dec-from").value = String(i);
+    $("dec-to").value = String(last);
+    draw();
   }
 
   fetch("figures/decomposition.csv").then((r) => {
@@ -278,11 +369,32 @@
     $("dec-from").value = "0";
     $("dec-to").value = String(last);
     for (const id of ["dec-from", "dec-to", "dec-bench"]) $(id).oninput = draw;
-    $("dec-reset").onclick = () => {
-      $("dec-from").value = "0";
-      $("dec-to").value = String(last);
-      draw();
+
+    $("dec-presets").innerHTML = PRESETS
+      .map((p, k) => `<button type="button" data-k="${k}">${p[0]}</button>`).join("");
+    $("dec-presets").querySelectorAll("button").forEach((b) => {
+      b.onclick = () => applyPreset(PRESETS[Number(b.dataset.k)][1]);
+    });
+
+    const pop = $("dec-pop"), info = $("dec-info");
+    info.onclick = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const open = pop.classList.toggle("hidden");
+      info.setAttribute("aria-expanded", String(!open));
     };
+    pop.onclick = (ev) => ev.stopPropagation();
+    document.addEventListener("click", () => {
+      pop.classList.add("hidden");
+      info.setAttribute("aria-expanded", "false");
+    });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") {
+        pop.classList.add("hidden");
+        info.setAttribute("aria-expanded", "false");
+      }
+    });
+
     draw();
   }).catch((e) => {
     $("dec-note").textContent = "The figure data could not be loaded. " + e;
@@ -299,7 +411,7 @@
 <h2>Priced risk in corporate bonds</h2>
 <p>
   This site also hosts the corrected Bai, Bali and Wen (2019) four factors, with the code and
-  data to reproduce them, from <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">dmr_paper</a>.
+  data to reproduce them, from <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson, Mueller and Robotti (2023)</a>.
 </p>
 <p>
   The paper's central finding is that the bias-adjusted sample squared Sharpe ratio of the

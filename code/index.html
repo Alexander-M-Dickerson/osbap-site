@@ -98,16 +98,66 @@
   label.pick select { font: inherit; font-size: 13px; text-transform: none;
                       letter-spacing: normal; color: var(--ink); background: var(--bg);
                       border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; }
-  .range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
-           margin: 0 0 14px; }
-  .range-label { font-size: 12.5px; color: var(--ink-soft); min-width: 210px; }
-  .range-label strong { color: var(--ink); font-weight: 600; }
-  .range-tracks { flex: 1 1 260px; display: grid; gap: 2px; min-width: 220px; }
-  .range-tracks input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
-  .range-reset { font: inherit; font-size: 12px; padding: 4px 10px; cursor: pointer;
-                 color: var(--accent); background: var(--bg); border: 1px solid var(--line);
-                 border-radius: 4px; }
-  .range-reset:hover { border-color: var(--accent); }
+  /* One rail, two thumbs. The inputs are transparent and stacked on the rail, with
+     pointer events only on the thumbs, which is how a two-handled slider is built without
+     a library. Two separate sliders stacked vertically read as clunky, and they are. */
+  .range { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+           margin: 14px 0 2px; }
+  .slider { position: relative; flex: 1 1 320px; height: 26px; min-width: 240px; }
+  .slider-rail, .slider-fill { position: absolute; top: 11px; height: 4px; border-radius: 2px; }
+  .slider-rail { left: 0; right: 0; background: var(--line); }
+  .slider-fill { background: var(--accent); }
+  .slider input[type=range] {
+    position: absolute; left: 0; top: 0; width: 100%; height: 26px; margin: 0;
+    background: none; pointer-events: none; -webkit-appearance: none; appearance: none;
+  }
+  .slider input[type=range]:focus { outline: none; }
+  .slider input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; pointer-events: auto; width: 15px; height: 15px;
+    border-radius: 50%; background: var(--bg); border: 2px solid var(--accent);
+    cursor: grab; margin-top: 0;
+  }
+  .slider input[type=range]::-moz-range-thumb {
+    pointer-events: auto; width: 13px; height: 13px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--accent); cursor: grab;
+  }
+  .slider input[type=range]::-moz-range-track { background: none; }
+  .range-side { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .range-span { font-size: 12.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .presets { display: flex; gap: 4px; }
+  .presets button {
+    font: inherit; font-size: 12px; padding: 3px 9px; cursor: pointer; color: var(--accent);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 4px;
+  }
+  .presets button:hover { border-color: var(--accent); }
+
+  /* The info button, the same control FactorViz uses. */
+  button.info {
+    width: 15px; height: 15px; padding: 0; margin-left: 5px; vertical-align: middle;
+    border: 1px solid var(--line); border-radius: 50%; background: var(--bg);
+    color: var(--ink-soft); cursor: pointer;
+    font: italic 600 10px/1 Georgia, "Times New Roman", serif;
+  }
+  button.info:hover, button.info[aria-expanded="true"] {
+    border-color: var(--accent); color: var(--accent);
+  }
+  .pop {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 30;
+    width: 420px; max-width: 78vw; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 6px; padding: 13px 15px; font-size: 12.5px; line-height: 1.5;
+    color: var(--ink); text-align: left; text-transform: none; letter-spacing: normal;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+  }
+  .pop.hidden { display: none; }
+  .pop h4 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase;
+            letter-spacing: .06em; color: var(--ink-soft); }
+  .pop dl { margin: 0; }
+  .pop dt { font-weight: 600; margin-top: 9px; }
+  .pop dl > dt:first-child { margin-top: 0; }
+  .pop dd { margin: 2px 0 0; color: var(--ink-soft); }
+  .pop p { margin: 9px 0 0; }
+  .muted { color: var(--ink-soft); }
+  label.pick { position: relative; }
   .figure-box { position: relative; height: 380px; }
   .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
 
