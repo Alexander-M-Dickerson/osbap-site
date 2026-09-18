@@ -13,7 +13,7 @@
 
   Data contract, produced by osbap_data/tools/make_factorviz.py:
     data/meta.json                          controls, labels, product index, flip counts
-    data/stats_<dataset>_<sort>.json        every series x 4 windows, precomputed
+    data/stats_<dataset>_<sort>.json        every series x 5 windows, precomputed
     data/series/<dataset>_<sort>_<rt>_<band>_<w>.csv   wide time series, fetched on demand
 
   The CSVs are byte-for-byte the files the release archives ship, so what this page draws is
@@ -245,7 +245,9 @@
     <div class="field"><label for="e-w">Weighting<button type="button" class="info"
       data-help="w" aria-expanded="false" aria-label="About the weightings">i</button></label>
       <select id="e-w"></select></div>
-    <div class="field"><label>Window</label><div class="seg" id="e-window"></div></div>
+    <div class="field"><label>Window<button type="button" class="info"
+      data-help="window" aria-expanded="false" aria-label="About the windows">i</button></label>
+      <div class="seg" id="e-window"></div></div>
     <div class="field"><label for="e-search">Find a factor</label>
       <input type="search" id="e-search" placeholder="name or mnemonic"></div>
     <span class="check-wrap">
@@ -316,7 +318,9 @@
   </div>
 
   <div class="controls" style="padding-top:10px;padding-bottom:10px">
-    <div class="field"><label>Window</label><div class="seg" id="c-window"></div></div>
+    <div class="field"><label>Window<button type="button" class="info"
+      data-help="window" aria-expanded="false" aria-label="About the windows">i</button></label>
+      <div class="seg" id="c-window"></div></div>
     <span class="check-wrap">
       <label class="check"><input type="checkbox" id="c-flip" checked> Orient to positive mean</label>
       <button type="button" class="info" data-help="flip" aria-expanded="false"
@@ -497,13 +501,21 @@ function parseCsv(text) {
 
 /* ------------------------------------------------------------ computation */
 function windowMask(dates, win) {
-  // The window counts back from the LAST month of this product, matching how
-  // make_factorviz.py cut the same windows for stats.json.
-  if (win === "full") return dates.map(() => true);
-  const months = { "10y": 120, "5y": 60, "1y": 12 }[win];
-  const last = new Date(dates[dates.length - 1] + "T00:00:00Z");
-  const cut = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() - (months - 1), 1));
-  return dates.map((d) => new Date(d + "T00:00:00Z") >= cut);
+  // The windows are DECLARED once, in spec/factorviz.json, and arrive in meta.json as
+  // window_detail. `back` counts from the LAST month of this product, matching how
+  // make_factorviz.py cut the same window for stats.json; `start` is a fixed first month;
+  // neither is the full sample. tests/check_page_stats.mjs proves the two cuts agree.
+  const spec = (META.window_detail && META.window_detail[win]) || {};
+  if (spec.back) {
+    const last = new Date(dates[dates.length - 1] + "T00:00:00Z");
+    const cut = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() - (spec.back - 1), 1));
+    return dates.map((d) => new Date(d + "T00:00:00Z") >= cut);
+  }
+  if (spec.start) {
+    const cut = new Date(spec.start + "T00:00:00Z");
+    return dates.map((d) => new Date(d + "T00:00:00Z") >= cut);
+  }
+  return dates.map(() => true);
 }
 
 function cumulative(values, mask, flip) {
@@ -1118,7 +1130,9 @@ function helpLead(topic, key) {
     return META.datasets[key].label + span;
   }
   const maps = { sort: META.sorts, rt: META.return_types, band: META.bands,
-                 w: META.weightings };
+                 w: META.weightings,
+                 window: Object.fromEntries(
+                   Object.entries(META.window_detail || {}).map(([k, v]) => [k, v.label])) };
   const m = maps[topic];
   return (m && m[key]) || key;
 }
@@ -1455,7 +1469,7 @@ async function boot() {
   $("e-rt").value = "exc"; $("e-band").value = "all"; $("e-w").value = "vw";
   $("c-rt").value = "exc"; $("c-band").value = "all"; $("c-w").value = "vw";
 
-  const winEntries = [["full", "Full sample"], ["10y", "10Y"], ["5y", "5Y"], ["1y", "1Y"]];
+  const winEntries = META.windows.map((k) => [k, META.window_detail[k].label]);
   segButtons($("e-window"), winEntries, "full", (v) => { explore.window = v; renderExplore(); });
   segButtons($("c-window"), winEntries, "full", (v) => { compare.window = v; renderCompare(); });
 

@@ -16,7 +16,7 @@ from `osbap_data` in the private build repo, which is where `factorviz.html` liv
 |---|---|
 | `index.html` | the page. Self-contained but for Chart.js, pinned from cdnjs |
 | `data/meta.json` | controls, display names, product index |
-| `data/stats_<dataset>_<sort>.json` | every series x 4 windows, precomputed |
+| `data/stats_<dataset>_<sort>.json` | every series x 5 windows, precomputed |
 | `data/series/*.csv` | the wide time series, fetched on demand |
 
 The CSVs are **byte-for-byte the files inside the published release archives**, so what the

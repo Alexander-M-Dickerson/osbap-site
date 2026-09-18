@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-18T07:00:12+00:00",
+  "built_utc": "2026-09-18T07:34:14+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -15,10 +15,32 @@
   },
   "windows": [
     "full",
+    "trace",
     "10y",
     "5y",
     "1y"
   ],
+  "window_detail": {
+    "full": {
+      "label": "Full sample"
+    },
+    "trace": {
+      "label": "TRACE",
+      "start": "2002-08-31"
+    },
+    "10y": {
+      "label": "10Y",
+      "back": 120
+    },
+    "5y": {
+      "label": "5Y",
+      "back": 60
+    },
+    "1y": {
+      "label": "1Y",
+      "back": 12
+    }
+  },
   "fields": [
     "n",
     "mean_ann",
@@ -242,6 +264,17 @@
     "align": {
       "title": "Aligned sample",
       "text": "Selected series can cover different months, because datasets start in different years and some characteristics only exist after 2002. With this on, every series is cut to the months they all have and the statistics are recomputed on that sample, so the comparison is like for like."
+    },
+    "window": {
+      "title": "Window",
+      "source": "window_detail",
+      "items": {
+        "full": "Every month the dataset carries.",
+        "trace": "From 2002-08, the first month of TRACE transaction data, so every dataset is measured over the same era. On the TRACE-only dataset this is the full sample.",
+        "10y": "The last ten years of the dataset, counted back from its final month.",
+        "5y": "The last five years.",
+        "1y": "The last twelve months. Too short for an alpha, so that column stays blank."
+      }
     }
   },
   "groups": [
