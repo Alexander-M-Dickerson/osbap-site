@@ -13,7 +13,8 @@
 
   Data contract, produced by osbap_data/tools/make_factorviz.py:
     data/meta.json                          controls, labels, product index, flip counts
-    data/stats_<dataset>_<sort>.json        every series x 5 windows, precomputed
+    data/stats_<dataset>_<sort>.json        every series x 5 windows, precomputed; any
+                                            other sample is recomputed in the browser
     data/series/<dataset>_<sort>_<rt>_<band>_<w>.csv   wide time series, fetched on demand
 
   The CSVs are byte-for-byte the files the release archives ship, so what this page draws is
@@ -107,6 +108,37 @@
   .seg button:last-child { border-right: none; }
   .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
   .check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-soft); }
+
+  /* The sample slider. ❗MIRRORED from site/shell.html, the decomposition figure's control,
+     and tests/test_factorviz_contract.py holds the two blocks equal -- this page is
+     self-contained, so it cannot share the file, and a copy that can drift needs a gate. */
+  .range { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+           margin: 14px 0 2px; }
+  .slider { position: relative; flex: 1 1 320px; height: 26px; min-width: 240px; }
+  .slider-rail, .slider-fill { position: absolute; top: 11px; height: 4px; border-radius: 2px; }
+  .slider-rail { left: 0; right: 0; background: var(--line); }
+  .slider-fill { background: var(--accent); }
+  .slider input[type=range] {
+    position: absolute; left: 0; top: 0; width: 100%; height: 26px; margin: 0;
+    background: none; pointer-events: none; -webkit-appearance: none; appearance: none;
+  }
+  .slider input[type=range]:focus { outline: none; }
+  .slider input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; pointer-events: auto; width: 15px; height: 15px;
+    border-radius: 50%; background: var(--bg); border: 2px solid var(--accent);
+    cursor: grab; margin-top: 0;
+  }
+  .slider input[type=range]::-moz-range-thumb {
+    pointer-events: auto; width: 13px; height: 13px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--accent); cursor: grab;
+  }
+  .slider input[type=range]::-moz-range-track { background: none; }
+  .range-side { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .range-span { font-size: 12.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .range { margin: 16px 0 0; }
+  .sample-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+                  color: var(--ink-soft); }
+  .slider.empty { opacity: .35; pointer-events: none; }
 
   .btn {
     font: inherit; font-size: 13px; font-weight: 500; padding: 7px 14px; cursor: pointer;
@@ -226,7 +258,8 @@
   <div class="warn">
     Pick a dataset, a sort, a return definition, a universe and a weighting. The table
     below ranks every factor in that slice selection, grouped by factor cluster. Tick up to
-    ten factors to chart them.
+    ten factors to chart them, then drag the sample handles under the chart and watch every
+    line and every number follow.
   </div>
 
   <div class="controls">
@@ -245,9 +278,6 @@
     <div class="field"><label for="e-w">Weighting<button type="button" class="info"
       data-help="w" aria-expanded="false" aria-label="About the weightings">i</button></label>
       <select id="e-w"></select></div>
-    <div class="field"><label>Window<button type="button" class="info"
-      data-help="window" aria-expanded="false" aria-label="About the windows">i</button></label>
-      <div class="seg" id="e-window"></div></div>
     <div class="field"><label for="e-search">Find a factor</label>
       <input type="search" id="e-search" placeholder="name or mnemonic"></div>
     <span class="check-wrap">
@@ -264,6 +294,20 @@
     <h2>Cumulative performance
       <span class="note" id="e-chart-note">tick factors in the table below</span></h2>
     <div class="chartbox"><canvas id="e-chart"></canvas></div>
+    <div class="range">
+      <span class="check-wrap sample-label">Sample<button type="button" class="info"
+        data-help="window" aria-expanded="false" aria-label="About the sample">i</button></span>
+      <div class="slider" id="e-slider">
+        <div class="slider-rail"></div>
+        <div class="slider-fill" id="e-fill"></div>
+        <input type="range" id="e-from" min="0" value="0" step="1" aria-label="First month">
+        <input type="range" id="e-to" min="0" value="0" step="1" aria-label="Last month">
+      </div>
+      <div class="range-side">
+        <span class="range-span" id="e-span"></span>
+        <div class="seg" id="e-presets"></div>
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -318,9 +362,6 @@
   </div>
 
   <div class="controls" style="padding-top:10px;padding-bottom:10px">
-    <div class="field"><label>Window<button type="button" class="info"
-      data-help="window" aria-expanded="false" aria-label="About the windows">i</button></label>
-      <div class="seg" id="c-window"></div></div>
     <span class="check-wrap">
       <label class="check"><input type="checkbox" id="c-flip" checked> Orient to positive mean</label>
       <button type="button" class="info" data-help="flip" aria-expanded="false"
@@ -337,6 +378,20 @@
   <div class="card">
     <h2>Cumulative performance</h2>
     <div class="chartbox"><canvas id="c-chart"></canvas></div>
+    <div class="range">
+      <span class="check-wrap sample-label">Sample<button type="button" class="info"
+        data-help="window" aria-expanded="false" aria-label="About the sample">i</button></span>
+      <div class="slider" id="c-slider">
+        <div class="slider-rail"></div>
+        <div class="slider-fill" id="c-fill"></div>
+        <input type="range" id="c-from" min="0" value="0" step="1" aria-label="First month">
+        <input type="range" id="c-to" min="0" value="0" step="1" aria-label="Last month">
+      </div>
+      <div class="range-side">
+        <span class="range-span" id="c-span"></span>
+        <div class="seg" id="c-presets"></div>
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -379,8 +434,11 @@ const SERIES = new Map();    // "<ds>_<sort>_<rt>_<band>_<w>"   -> {dates:[], co
 const PALETTE = ["#1f4e79", "#c1121f", "#2a9d8f", "#e76f51", "#6a4c93", "#606c38",
                  "#457b9d", "#bc6c25", "#8d99ae", "#d62828"];
 
-const explore = { picked: new Set(), window: "full", sortBy: "sharpe", asc: false };
-const compare = { cart: [], window: "full" };
+// `range` is the sample as DATES, {from, to}, so it survives a change of dataset -- the
+// slider re-clamps it to the new product's months rather than keeping a meaningless index.
+const explore = { picked: new Set(), range: null, sortBy: "sharpe", asc: false };
+const compare = { cart: [], range: null };
+let exploreCtl = null, compareCtl = null;
 
 /* ------------------------------------------------------------ small utils */
 const $ = (id) => document.getElementById(id);
@@ -450,35 +508,53 @@ function fill(sel, entries, keep) {
 }
 
 /* --------------------------------------------------------------- fetching */
-async function loadStats(dataset, sort) {
+// ❗The caches hold the PROMISE, not the result. The slider asks for a slice the moment it
+// moves, and the render asks for the same slice a frame later; caching only the result would
+// fetch it twice.
+const STATS_DONE = new Map();
+function loadStats(dataset, sort) {
   const key = `${dataset}_${sort}`;
-  if (STATS.has(key)) return STATS.get(key);
-  const r = await fetch(`${DATA}/stats_${key}.json`);
-  if (!r.ok) throw new Error(`stats_${key}.json: ${r.status}`);
-  const j = await r.json();
-  STATS.set(key, j);
-  return j;
+  if (!STATS.has(key)) {
+    STATS.set(key, fetch(`${DATA}/stats_${key}.json`).then(async (r) => {
+      if (!r.ok) throw new Error(`stats_${key}.json: ${r.status}`);
+      const j = await r.json();
+      STATS_DONE.set(key, j);
+      return j;
+    }));
+  }
+  return STATS.get(key);
 }
 
-let BENCH = null;
-async function loadBenchmarks() {
-  if (BENCH) return BENCH;
-  const r = await fetch(`${DATA}/benchmarks.csv`);
-  if (!r.ok) throw new Error(`benchmarks.csv: ${r.status}`);
-  BENCH = parseCsv(await r.text());
-  BENCH.index = new Map(BENCH.dates.map((d, i) => [d, i]));
-  return BENCH;
+let BENCH = null, BENCH_P = null;
+function loadBenchmarks() {
+  if (!BENCH_P) {
+    BENCH_P = fetch(`${DATA}/benchmarks.csv`).then(async (r) => {
+      if (!r.ok) throw new Error(`benchmarks.csv: ${r.status}`);
+      BENCH = parseCsv(await r.text());
+      BENCH.index = new Map(BENCH.dates.map((d, i) => [d, i]));
+      return BENCH;
+    });
+  }
+  return BENCH_P;
 }
 
-async function loadSeries(dataset, sort, rt, band, w) {
+const SERIES_DONE = new Map();     // key -> parsed, once the fetch has landed
+function loadSeries(dataset, sort, rt, band, w) {
   const key = `${dataset}_${sort}_${rt}_${band}_${w}`;
-  if (SERIES.has(key)) return SERIES.get(key);
-  const file = `${dataset}_${sort}_${rt}_${band}_${w}.csv`;
-  const r = await fetch(`${DATA}/series/${file}`);
-  if (!r.ok) throw new Error(`${file}: ${r.status}`);
-  const parsed = parseCsv(await r.text());
-  SERIES.set(key, parsed);
-  return parsed;
+  if (!SERIES.has(key)) {
+    const file = `${dataset}_${sort}_${rt}_${band}_${w}.csv`;
+    SERIES.set(key, fetch(`${DATA}/series/${file}`).then(async (r) => {
+      if (!r.ok) throw new Error(`${file}: ${r.status}`);
+      const parsed = parseCsv(await r.text());
+      SERIES_DONE.set(key, parsed);
+      return parsed;
+    }));
+  }
+  return SERIES.get(key);
+}
+
+function seriesIfLoaded(dataset, sort, rt, band, w) {
+  return SERIES_DONE.get(`${dataset}_${sort}_${rt}_${band}_${w}`) || null;
 }
 
 function parseCsv(text) {
@@ -518,6 +594,109 @@ function windowMask(dates, win) {
   return dates.map(() => true);
 }
 
+function rangeMask(dates, from, to) {
+  // The sample between two months, inclusive; a null bound is open. Dates are ISO strings,
+  // so string order is date order.
+  return dates.map((d) => (!from || d >= from) && (!to || d <= to));
+}
+
+function maskBounds(mask) {
+  const i = mask.indexOf(true);
+  return i < 0 ? null : [i, mask.lastIndexOf(true)];
+}
+
+function presetFor(dates, range) {
+  // The declared window whose months on THIS axis are exactly the range, or null. Used to
+  // read the precomputed row instead of recomputing, and to light the matching preset.
+  const cur = maskBounds(rangeMask(dates, range && range.from, range && range.to));
+  if (!cur) return null;
+  for (const k of META.windows) {
+    const b = maskBounds(windowMask(dates, k));
+    if (b && b[0] === cur[0] && b[1] === cur[1]) return k;
+  }
+  return null;
+}
+
+/* ------------------------------------------------------- the sample control
+
+   The decomposition figure's two-handled slider, one per tab. Two range inputs share one
+   track; only their thumbs take pointer events. The declared windows are its presets --
+   pressed only while the handles sit exactly on one, so a drag off a preset unpresses it.
+   Every move is coalesced to one animation frame and handed to the owner as a date range;
+   the owner recomputes the table in place and moves the chart, so the numbers follow the
+   handles at the frame rate. A year is the shortest sample, which is also the 1Y preset. */
+function sampleControl(prefix, onInput) {
+  const from = $(`${prefix}-from`), to = $(`${prefix}-to`), fill = $(`${prefix}-fill`),
+        span = $(`${prefix}-span`), presets = $(`${prefix}-presets`),
+        slider = $(`${prefix}-slider`);
+  const MIN = 12;
+  let dates = [];
+  let raf = 0;
+
+  function bounds() {
+    let i = Number(from.value), j = Number(to.value);
+    if (i > j) { const t = i; i = j; j = t; }
+    if (j - i < MIN - 1) j = Math.min(dates.length - 1, i + MIN - 1);
+    if (j - i < MIN - 1) i = Math.max(0, j - MIN + 1);
+    return [i, j];
+  }
+  function current() {
+    if (!dates.length) return null;
+    const [i, j] = bounds();
+    return { from: dates[i], to: dates[j] };
+  }
+  function paint() {
+    if (!dates.length) return;
+    const [i, j] = bounds();
+    const n = Math.max(1, dates.length - 1);
+    fill.style.left = (100 * i / n) + "%";
+    fill.style.width = (100 * (j - i) / n) + "%";
+    span.textContent = `${dates[i].slice(0, 7)} to ${dates[j].slice(0, 7)}, ${j - i + 1} months`;
+    const key = presetFor(dates, { from: dates[i], to: dates[j] });
+    for (const b of presets.children) b.setAttribute("aria-pressed", String(b.dataset.k === key));
+  }
+  function emit() {
+    if (raf) return;
+    raf = requestAnimationFrame(() => { raf = 0; paint(); onInput(current()); });
+  }
+  function place(i, j) {
+    from.value = String(i); to.value = String(j);
+    paint();
+  }
+  function setRange(range) {
+    // Put the handles on a date range, clamped to this axis; a range with no month here,
+    // or none at all, is the full sample.
+    const b = (range && maskBounds(rangeMask(dates, range.from, range.to))) || [0, dates.length - 1];
+    place(b[0], b[1]);
+  }
+  function setDates(axis, range) {
+    dates = axis || [];
+    slider.classList.toggle("empty", !dates.length);
+    if (!dates.length) { span.textContent = ""; for (const b of presets.children) b.setAttribute("aria-pressed", "false"); return; }
+    const last = dates.length - 1;
+    from.max = String(last); to.max = String(last);
+    setRange(range);
+  }
+
+  presets.innerHTML = "";
+  for (const k of META.windows) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.k = k;
+    b.textContent = META.window_detail[k].label;
+    b.onclick = () => {
+      const m = dates.length ? maskBounds(windowMask(dates, k)) : null;
+      if (!m) return;
+      place(m[0], m[1]);
+      onInput(current());
+    };
+    presets.appendChild(b);
+  }
+  from.oninput = emit;
+  to.oninput = emit;
+  return { setDates, current, dates: () => dates };
+}
+
 function cumulative(values, mask, flip) {
   // Cumulative SUM of monthly returns, in percent. A long-short factor is zero-cost, so
   // compounding it is not meaningful; the sum is the standard factor-chart convention and
@@ -542,8 +721,9 @@ function cumulative(values, mask, flip) {
    against stats.json, field by field. If a formula here changes and the Python does not,
    that check fails.
 
-   Only used when the window is not one of the four precomputed ones, which today means the
-   aligned sample. Everything else reads stats.json.                                        */
+   Used whenever the sample is not one of the precomputed windows -- a slider position of
+   the reader's own, or the aligned sample. On a preset the page reads stats.json instead,
+   which is the same number to six decimals and is the reference the check compares to.    */
 
 function nwLags(T) {
   // floor(T^0.25) -- the paper's one lag convention, and tools/make_factorviz.py `_nw_lags`.
@@ -718,14 +898,8 @@ const COLUMNS = [
 // The columns where a sign is information rather than an artefact of the definition.
 const SIGNED = new Set(["mean_ann", "tstat", "sharpe", "alpha_ann", "alpha_t", "beta", "ir"]);
 
-function renderTable(el, rows, opts) {
-  const { sortBy, asc, onSort, onPick, picked, showSlice, grouped } = opts;
-  // ❗No "Slice" column. It was the widest thing on the page and it repeated what the chips
-  // above already say. The slice now sits as a muted second line under the factor name, so a
-  // row is still identifiable without spending a column on it.
-  const cols = COLUMNS;
-
-  const order = (a, b) => {
+function rowOrder(sortBy, asc) {
+  return (a, b) => {
     const x = a[sortBy], y = b[sortBy];
     if (typeof x === "string" || typeof y === "string") {
       return (asc ? 1 : -1) * String(x).localeCompare(String(y));
@@ -734,6 +908,15 @@ function renderTable(el, rows, opts) {
     const ny = (y === null || y === undefined || Number.isNaN(y)) ? -Infinity : y;
     return asc ? nx - ny : ny - nx;
   };
+}
+
+function renderTable(el, rows, opts) {
+  const { sortBy, asc, onSort, onPick, picked, showSlice, grouped } = opts;
+  // ❗No "Slice" column. It was the widest thing on the page and it repeated what the chips
+  // above already say. The slice now sits as a muted second line under the factor name, so a
+  // row is still identifiable without spending a column on it.
+  const cols = COLUMNS;
+  const order = rowOrder(sortBy, asc);
 
   const thead = cols.map(([k, t]) => {
     const cls = k === sortBy ? `sorted${asc ? " asc" : ""}` : "";
@@ -757,9 +940,10 @@ function renderTable(el, rows, opts) {
       // ❗Colour only where the SIGN means something. A month count and a volatility are
       // positive by construction, and painting them green reads as a verdict on a number
       // that cannot be negative. Max drawdown is negative by construction, same argument.
-      return `<td class="num ${SIGNED.has(k) ? signClass(v) : ""}">${fmt(v, dp)}</td>`;
+      return `<td data-k="${k}" class="num ${SIGNED.has(k) ? signClass(v) : ""}">${fmt(v, dp)}</td>`;
     }).join("");
-    return `<tr>${tds}</tr>`;
+    // Keyed, so the slider can rewrite the numbers in place instead of rebuilding the table.
+    return `<tr data-f="${r._key}">${tds}</tr>`;
   };
 
   // ❗Grouped, the column sort ranks WITHIN each cluster. Ranking across clusters and then
@@ -769,7 +953,7 @@ function renderTable(el, rows, opts) {
     ? groupsInUse(rows).map((g) => {
         const rs = rows.filter((r) => r._group === g.key).sort(order);
         if (!rs.length) return "";
-        return `<tr class="grouphead"><td colspan="${cols.length}">${groupTitle(g)}`
+        return `<tr class="grouphead" data-g="${g.key}"><td colspan="${cols.length}">${groupTitle(g)}`
              + ` <span class="muted">${rs.length}</span></td></tr>` + rs.map(rowHtml).join("");
       }).join("")
     : [...rows].sort(order).map(rowHtml).join("");
@@ -786,7 +970,67 @@ function renderTable(el, rows, opts) {
   }
 }
 
+function patchTable(el, rows, opts) {
+  // The slider's path: the same rows, new numbers. Cells are rewritten where they stand and
+  // the rows are re-ordered by moving nodes, so a drag never rebuilds the table's HTML.
+  // Membership never changes on this path -- a factor with no month in the sample keeps its
+  // row and shows dashes, which is also how it sorts to the bottom.
+  const { sortBy, asc, grouped } = opts;
+  const byKey = new Map(rows.map((r) => [r._key, r]));
+  const dp = new Map(COLUMNS.map(([k, , d]) => [k, d]));
+  for (const tr of el.querySelectorAll("tr[data-f]")) {
+    const r = byKey.get(tr.dataset.f);
+    if (!r) continue;
+    for (const td of tr.querySelectorAll("td[data-k]")) {
+      const k = td.dataset.k, v = r[k];
+      td.textContent = fmt(v, dp.get(k));
+      td.className = `num ${SIGNED.has(k) ? signClass(v) : ""}`;
+    }
+    const star = tr.querySelector("td:first-child .muted[title]");
+    if (Boolean(star) !== Boolean(r._flipped)) {
+      if (star) star.remove();
+      else {
+        const strong = tr.querySelector("td:first-child strong");
+        strong.insertAdjacentHTML("afterend",
+          ' <span class="muted" title="sign-corrected for display">&minus;</span>');
+      }
+    }
+  }
+  const order = rowOrder(sortBy, asc);
+  const tbody = el.tBodies[0];
+  if (!tbody) return;
+  const trs = [...tbody.querySelectorAll("tr[data-f]")];
+  const sortTrs = (list) => list
+    .map((tr) => [byKey.get(tr.dataset.f) || {}, tr])
+    .sort((a, b) => order(a[0], b[0]))
+    .map(([, tr]) => tr);
+  if (grouped) {
+    for (const head of tbody.querySelectorAll("tr.grouphead")) {
+      const block = [];
+      let n = head.nextElementSibling;
+      while (n && !n.classList.contains("grouphead")) { block.push(n); n = n.nextElementSibling; }
+      let after = head;
+      for (const tr of sortTrs(block)) { after.after(tr); after = tr; }
+    }
+  } else {
+    for (const tr of sortTrs(trs)) tbody.appendChild(tr);
+  }
+}
+
 let eChart = null, cChart = null;
+
+function setChart(existing, canvas, labels, datasets) {
+  // Move an existing chart rather than rebuild it, when the same series are on it. A
+  // rebuild is fine for a click; at the slider's frame rate it is the difference between a
+  // line that follows the handle and one that stutters behind it.
+  if (existing && existing.data.datasets.length === datasets.length) {
+    existing.data.labels = labels;
+    datasets.forEach((d, i) => { Object.assign(existing.data.datasets[i], d); });
+    existing.update("none");
+    return existing;
+  }
+  return drawChart(canvas, existing, labels, datasets);
+}
 
 function drawChart(canvas, existing, labels, datasets) {
   if (existing) existing.destroy();
@@ -794,7 +1038,7 @@ function drawChart(canvas, existing, labels, datasets) {
     type: "line",
     data: { labels, datasets },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false, animation: false,
       interaction: { mode: "index", intersect: false },
       elements: { point: { radius: 0 }, line: { borderWidth: 1.8, tension: 0 } },
       scales: {
@@ -818,6 +1062,55 @@ function exploreSlice() {
   };
 }
 
+function exploreLive(s) {
+  // The slice's wide CSV and the benchmarks, if both have landed; else null and the caller
+  // paints from stats.json while they load.
+  const data = seriesIfLoaded(s.dataset, s.sort, s.rt, s.band, s.w);
+  if (!data || !BENCH) return null;
+  const bcol = META.benchmarks.pairing[s.rt];
+  const x = data.dates.map((d) => {
+    const j = BENCH.index.get(d);
+    return j === undefined ? NaN : BENCH.cols[bcol][j];
+  });
+  return { data, x };
+}
+
+function exploreRows(s, prod, stats, live, preset, flipOn, q) {
+  // One row per factor in the slice. On a preset with nothing loaded, the precomputed row;
+  // otherwise the live recomputation on the reader's own months. A factor is kept even when
+  // its numbers are not there yet, so the table's shape does not jump when they arrive.
+  const mask = live ? rangeMask(live.data.dates, explore.range.from, explore.range.to) : null;
+  const rows = [];
+  for (const f of prod.factors) {
+    if (bandOf(f) !== s.band) continue;
+    if (q && !(`${f} ${labelFor(f)}`.toLowerCase().includes(q))) continue;
+    let raw = null;
+    if (live) raw = computeStats(live.data.cols[f] || [], live.x, mask);
+    else if (preset) raw = statsRow(stats, f, s.w, s.rt, preset);
+    const flip = flipOn && isFlipped(stats, f, s.w, s.rt);
+    const r = raw ? applyFlip(raw, flip) : { n: null };
+    r.factor = f;
+    r._key = f;
+    r._label = labelFor(f);
+    r._group = groupOf(f);
+    rows.push(r);
+  }
+  return rows;
+}
+
+let exploreLoading = null;
+function ensureExploreLive(s) {
+  // Kick off the slice's CSV and the benchmarks, once, and re-render when they land -- if
+  // the reader is still on the same slice by then.
+  const key = `${s.dataset}_${s.sort}_${s.rt}_${s.band}_${s.w}`;
+  if (exploreLoading === key) return;
+  exploreLoading = key;
+  Promise.all([loadSeries(s.dataset, s.sort, s.rt, s.band, s.w), loadBenchmarks()])
+    .then(() => { exploreLoading = null; const t = exploreSlice();
+                  if (`${t.dataset}_${t.sort}_${t.rt}_${t.band}_${t.w}` === key) renderExplore(); })
+    .catch((err) => { exploreLoading = null; $("e-table-note").textContent = `could not load the series (${err})`; });
+}
+
 async function renderExplore() {
   const s = exploreSlice();
   const key = `${s.dataset}_${s.sort}`;
@@ -826,25 +1119,20 @@ async function renderExplore() {
   const flipOn = $("e-flip").checked;
   const q = $("e-search").value.trim().toLowerCase();
 
-  const factors = prod.factors.filter((f) => bandOf(f) === s.band);
-  const rows = [];
-  for (const f of factors) {
-    const raw = statsRow(stats, f, s.w, s.rt, explore.window);
-    if (!raw) continue;
-    const flip = flipOn && isFlipped(stats, f, s.w, s.rt);
-    const r = applyFlip(raw, flip);
-    r.factor = f;
-    r._key = f;
-    r._label = labelFor(f);
-    r._group = groupOf(f);
-    if (q && !(`${f} ${r._label}`.toLowerCase().includes(q))) continue;
-    rows.push(r);
-  }
+  // The slider's axis is this product's months; the reader's range carries across products.
+  if (exploreCtl.dates() !== prod.dates) exploreCtl.setDates(prod.dates, explore.range);
+  explore.range = exploreCtl.current();
+  const preset = presetFor(prod.dates, explore.range);
+  const live = exploreLive(s);
+  if (!live) ensureExploreLive(s);
+
+  const rows = exploreRows(s, prod, stats, live, preset, flipOn, q);
 
   // ❗No column mnemonics on a public page. This line used to end "alpha vs mktb", which
   // names an internal column and answers a question nobody outside the build repo asked.
-  $("e-table-note").textContent =
-    `${rows.length} factors · ${prod.span[0]} to ${prod.span[1]}`;
+  $("e-table-note").textContent = (live || preset)
+    ? `${rows.length} factors · ${prod.span[0]} to ${prod.span[1]}`
+    : `${rows.length} factors · loading the months`;
 
   renderTable($("e-table"), rows, {
     sortBy: explore.sortBy, asc: explore.asc,
@@ -864,6 +1152,22 @@ async function renderExplore() {
   await drawExploreChart(s, stats, flipOn);
 }
 
+function exploreDatasets(s, stats, flipOn, data) {
+  const mask = rangeMask(data.dates, explore.range.from, explore.range.to);
+  const labels = data.dates.filter((_, i) => mask[i]);
+  const datasets = [...explore.picked].map((f, i) => {
+    const flip = flipOn && isFlipped(stats, f, s.w, s.rt);
+    const full = cumulative(data.cols[f] || [], mask, flip);
+    return {
+      label: labelFor(f) + (flip ? " (sign-corrected)" : ""),
+      data: full.filter((v) => v !== null),
+      borderColor: PALETTE[i % PALETTE.length],
+      backgroundColor: PALETTE[i % PALETTE.length],
+    };
+  });
+  return { labels, datasets };
+}
+
 async function drawExploreChart(s, stats, flipOn) {
   const picks = [...explore.picked];
   const note = $("e-chart-note");
@@ -874,20 +1178,29 @@ async function drawExploreChart(s, stats, flipOn) {
   }
   note.textContent = `${picks.length} selected`;
   const data = await loadSeries(s.dataset, s.sort, s.rt, s.band, s.w);
-  const mask = windowMask(data.dates, explore.window);
-  const labels = data.dates.filter((_, i) => mask[i]);
+  const { labels, datasets } = exploreDatasets(s, stats, flipOn, data);
+  eChart = setChart(eChart, $("e-chart"), labels, datasets);
+}
 
-  const datasets = picks.map((f, i) => {
-    const flip = flipOn && isFlipped(stats, f, s.w, s.rt);
-    const full = cumulative(data.cols[f] || [], mask, flip);
-    return {
-      label: labelFor(f) + (flip ? " (sign-corrected)" : ""),
-      data: full.filter((v) => v !== null),
-      borderColor: PALETTE[i % PALETTE.length],
-      backgroundColor: PALETTE[i % PALETTE.length],
-    };
-  });
-  eChart = drawChart($("e-chart"), eChart, labels, datasets);
+function onExploreSample(range) {
+  // The slider moved. Numbers and lines follow it in place; if the slice is still loading,
+  // the render that follows the load reads the range from the control anyway.
+  explore.range = range;
+  const s = exploreSlice();
+  const live = exploreLive(s);
+  const stats = STATS_DONE.get(`${s.dataset}_${s.sort}`);
+  if (!live || !stats) return;
+  const flipOn = $("e-flip").checked;
+  const prod = META.products[`${s.dataset}_${s.sort}`];
+  const q = $("e-search").value.trim().toLowerCase();
+  const rows = exploreRows(s, prod, stats, live, null, flipOn, q);
+  patchTable($("e-table"), rows, { sortBy: explore.sortBy, asc: explore.asc,
+                                   grouped: $("e-group").checked });
+  $("e-table-note").textContent = `${rows.length} factors · ${prod.span[0]} to ${prod.span[1]}`;
+  if (explore.picked.size && eChart) {
+    const { labels, datasets } = exploreDatasets(s, stats, flipOn, live.data);
+    eChart = setChart(eChart, $("e-chart"), labels, datasets);
+  }
 }
 
 /* ------------------------------------------------------------- COMPARE UI */
@@ -971,6 +1284,18 @@ function renderChips() {
   });
 }
 
+async function syncCompareAxis() {
+  // The slider spans every month any series in the cart has, which is also the chart's
+  // axis; the reader's range carries across changes to the cart.
+  const all = new Set();
+  for (const e of compare.cart) {
+    const data = await loadSeries(e.dataset, e.sort, e.rt, e.band, e.w);
+    data.dates.forEach((d) => all.add(d));
+  }
+  compareCtl.setDates([...all].sort(), compare.range);
+  compare.range = compareCtl.current();
+}
+
 async function renderCompare() {
   renderChips();
   const table = $("c-table");
@@ -980,8 +1305,10 @@ async function renderCompare() {
     table.innerHTML = "";
     if (cChart) { cChart.destroy(); cChart = null; }
     $("c-hint").textContent = "";
+    compareCtl.setDates([], compare.range);
     return;
   }
+  await syncCompareAxis();
 
   const rows = [];
   const datasets = [];
@@ -998,10 +1325,11 @@ async function renderCompare() {
   // value, not merely the overlap of their date ranges. A factor can start early and still
   // carry gaps -- the eight Lehman months, or an illiquidity signal that only begins with
   // TRACE -- and lining up endpoints while leaving holes inside would look aligned and not be.
+  const range = compare.range || {};
   let common = null;
   if (alignOn && loaded.length > 1) {
     for (const { e, data } of loaded) {
-      const mask = windowMask(data.dates, compare.window);
+      const mask = rangeMask(data.dates, range.from, range.to);
       const have = new Set();
       const col = data.cols[e.factor] || [];
       data.dates.forEach((d, j) => {
@@ -1010,26 +1338,31 @@ async function renderCompare() {
       common = common === null ? have : new Set([...common].filter((d) => have.has(d)));
     }
   }
-  if (alignOn) await loadBenchmarks();
+  await loadBenchmarks();
 
   for (let i = 0; i < loaded.length; i++) {
     const { e, data } = loaded[i];
     const stats = await loadStats(e.dataset, e.sort);
     const flip = flipOn && isFlipped(stats, e.factor, e.w, e.rt);
 
+    // A series reads its precomputed row only when the sample is one of the declared
+    // windows ON ITS OWN AXIS -- "10Y" is the same ten years for every series, but "TRACE"
+    // on a Lehman-ICE series is a different set of months than on a TRACE one. Anything
+    // else, the reader's own sample or the aligned one, is recomputed.
+    const preset = common ? null : presetFor(data.dates, range);
     let raw;
-    if (common) {
-      // Recomputed, because the aligned window is not one of the four precomputed ones.
+    if (preset) {
+      raw = statsRow(stats, e.factor, e.w, e.rt, preset);
+    } else {
       const col = data.cols[e.factor] || [];
-      const m = data.dates.map((d) => common.has(d));
+      const m = common ? data.dates.map((d) => common.has(d))
+                       : rangeMask(data.dates, range.from, range.to);
       const bcol = META.benchmarks.pairing[e.rt];
       const x = data.dates.map((d) => {
         const j = BENCH.index.get(d);
         return j === undefined ? NaN : BENCH.cols[bcol][j];
       });
       raw = computeStats(col, x, m);
-    } else {
-      raw = statsRow(stats, e.factor, e.w, e.rt, compare.window);
     }
     if (raw) {
       const r = applyFlip(raw, flip);
@@ -1042,7 +1375,7 @@ async function renderCompare() {
     }
     const mask = common
       ? data.dates.map((d) => common.has(d))
-      : windowMask(data.dates, compare.window);
+      : rangeMask(data.dates, range.from, range.to);
     const dates = data.dates.filter((_, j) => mask[j]);
     const vals = cumulative(data.cols[e.factor] || [], mask, flip).filter((v) => v !== null);
     // ❗Series from different datasets have different spans. Use the LONGEST axis and pad
@@ -1067,7 +1400,7 @@ async function renderCompare() {
     delete d._dates; delete d._vals;
   });
 
-  cChart = drawChart($("c-chart"), cChart, labels, datasets);
+  cChart = setChart(cChart, $("c-chart"), labels, datasets);
 
   renderTable(table, rows, {
     sortBy: "sharpe", asc: false, showSlice: true,
@@ -1192,21 +1525,6 @@ function mountHelp() {
 }
 
 /* ------------------------------------------------------------------- boot */
-function segButtons(el, entries, current, onPick) {
-  el.innerHTML = "";
-  for (const [v, t] of entries) {
-    const b = document.createElement("button");
-    b.textContent = t;
-    b.setAttribute("aria-pressed", String(v === current));
-    b.onclick = () => {
-      [...el.children].forEach((c) => c.setAttribute("aria-pressed", "false"));
-      b.setAttribute("aria-pressed", "true");
-      onPick(v);
-    };
-    el.appendChild(b);
-  }
-}
-
 function productEntries() {
   return Object.keys(META.datasets).map((k) => [k, META.datasets[k].label]);
 }
@@ -1469,9 +1787,8 @@ async function boot() {
   $("e-rt").value = "exc"; $("e-band").value = "all"; $("e-w").value = "vw";
   $("c-rt").value = "exc"; $("c-band").value = "all"; $("c-w").value = "vw";
 
-  const winEntries = META.windows.map((k) => [k, META.window_detail[k].label]);
-  segButtons($("e-window"), winEntries, "full", (v) => { explore.window = v; renderExplore(); });
-  segButtons($("c-window"), winEntries, "full", (v) => { compare.window = v; renderCompare(); });
+  exploreCtl = sampleControl("e", onExploreSample);
+  compareCtl = sampleControl("c", (range) => { compare.range = range; renderCompare(); });
 
   for (const id of ["e-dataset", "e-sort"]) {
     $(id).onchange = () => { syncProductControls("e"); explore.picked.clear(); renderExplore(); };
