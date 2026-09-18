@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-18T08:00:02+00:00",
+  "built_utc": "2026-09-18T08:12:16+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -264,18 +264,6 @@
     "align": {
       "title": "Aligned sample",
       "text": "Selected series can cover different months, because datasets start in different years and some characteristics only exist after 2002. With this on, every series is cut to the months they all have and the statistics are recomputed on that sample, so the comparison is like for like."
-    },
-    "window": {
-      "title": "Sample",
-      "source": "window_detail",
-      "text": "Drag either handle to choose the months. Every line starts again from zero at the first month you pick, and every statistic in the table is measured on exactly those months, as you move. A year is the shortest sample. The buttons are shortcuts to these samples, and light up while the handles sit on one.",
-      "items": {
-        "full": "Every month the dataset carries.",
-        "trace": "From 2002-08, the first month of TRACE transaction data, so every dataset is measured over the same era. On the TRACE-only dataset this is the full sample.",
-        "10y": "The last ten years of the dataset, counted back from its final month.",
-        "5y": "The last five years.",
-        "1y": "The last twelve months. Too short for an alpha, so that column stays blank."
-      }
     }
   },
   "groups": [
