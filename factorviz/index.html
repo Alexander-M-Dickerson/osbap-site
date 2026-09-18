@@ -290,6 +290,11 @@
               aria-label="About grouping by cluster">i</button></span>
   </div>
 
+  <div class="card" id="e-picked-card" hidden>
+    <h2>Selected factors <span class="note" id="e-picked-note"></span></h2>
+    <div class="scroll"><table id="e-picked"></table></div>
+  </div>
+
   <div class="card">
     <h2>Cumulative performance
       <span class="note" id="e-chart-note">tick factors in the table below</span></h2>
@@ -924,9 +929,12 @@ function renderTable(el, rows, opts) {
   const rowHtml = (r) => {
     const tds = cols.map(([k, , dp]) => {
       if (k === "factor") {
-        const tick = onPick
+        // A swatch when the row has a line on the chart, a checkbox when it can be picked --
+        // the selected-factors table above the chart has both.
+        const swatch = r._color ? `<span class="swatch" style="background:${r._color}"></span>` : "";
+        const tick = (onPick
           ? `<input type="checkbox" data-f="${r._key}" ${picked && picked.has(r._key) ? "checked" : ""}> `
-          : `<span class="swatch" style="background:${r._color}"></span>`;
+          : "") + swatch;
         const star = r._flipped
           ? ' <span class="muted" title="sign-corrected for display">&minus;</span>' : "";
         const sub = showSlice && r._slice
@@ -1073,6 +1081,14 @@ function exploreLive(s) {
   return { data, x };
 }
 
+function pickedRows(rows) {
+  // The ticked factors as their own table, in the chart's order with the chart's colours.
+  // Built from the UNSEARCHED rows: a factor stays selected when the search box hides it.
+  const byKey = new Map(rows.map((r) => [r._key, r]));
+  return [...explore.picked].filter((f) => byKey.has(f)).map((f, i) => (
+    { ...byKey.get(f), _color: PALETTE[i % PALETTE.length] }));
+}
+
 function exploreRows(s, prod, stats, live, preset, flipOn, q) {
   // One row per factor in the slice. On a preset with nothing loaded, the precomputed row;
   // otherwise the live recomputation on the reader's own months. A factor is kept even when
@@ -1124,7 +1140,8 @@ async function renderExplore() {
   const live = exploreLive(s);
   if (!live) ensureExploreLive(s);
 
-  const rows = exploreRows(s, prod, stats, live, preset, flipOn, q);
+  const all = exploreRows(s, prod, stats, live, preset, flipOn, "");
+  const rows = q ? all.filter((r) => `${r.factor} ${r._label}`.toLowerCase().includes(q)) : all;
 
   // ❗No column mnemonics on a public page. This line used to end "alpha vs mktb", which
   // names an internal column and answers a question nobody outside the build repo asked.
@@ -1132,19 +1149,31 @@ async function renderExplore() {
     ? `${rows.length} factors · ${prod.span[0]} to ${prod.span[1]}`
     : `${rows.length} factors · loading the months`;
 
+  const onSort = (k) => {
+    if (explore.sortBy === k) explore.asc = !explore.asc;
+    else { explore.sortBy = k; explore.asc = false; }
+    renderExplore();
+  };
+  const onPick = (f, on) => {
+    if (on) { if (explore.picked.size >= 10) { alert("Ten series at once is the limit -- untick one first."); renderExplore(); return; } explore.picked.add(f); }
+    else explore.picked.delete(f);
+    renderExplore();
+  };
+
+  // The selected factors, above the chart, so a line and its numbers sit in one view. The
+  // full table below is unchanged; this is the same rows, filtered, sorted the same way.
+  const picked = pickedRows(all);
+  $("e-picked-card").hidden = !picked.length;
+  $("e-picked-note").textContent = picked.length ? `${picked.length} of ${all.length}` : "";
+  renderTable($("e-picked"), picked, {
+    sortBy: explore.sortBy, asc: explore.asc, picked: explore.picked, grouped: false,
+    onSort, onPick,
+  });
+
   renderTable($("e-table"), rows, {
     sortBy: explore.sortBy, asc: explore.asc,
     picked: explore.picked, grouped: $("e-group").checked,
-    onSort: (k) => {
-      if (explore.sortBy === k) explore.asc = !explore.asc;
-      else { explore.sortBy = k; explore.asc = false; }
-      renderExplore();
-    },
-    onPick: (f, on) => {
-      if (on) { if (explore.picked.size >= 10) { alert("Ten series at once is the limit -- untick one first."); renderExplore(); return; } explore.picked.add(f); }
-      else explore.picked.delete(f);
-      renderExplore();
-    },
+    onSort, onPick,
   });
 
   await drawExploreChart(s, stats, flipOn);
@@ -1191,9 +1220,12 @@ function onExploreSample(range) {
   const flipOn = $("e-flip").checked;
   const prod = META.products[`${s.dataset}_${s.sort}`];
   const q = $("e-search").value.trim().toLowerCase();
-  const rows = exploreRows(s, prod, stats, live, null, flipOn, q);
+  const all = exploreRows(s, prod, stats, live, null, flipOn, "");
+  const rows = q ? all.filter((r) => `${r.factor} ${r._label}`.toLowerCase().includes(q)) : all;
   patchTable($("e-table"), rows, { sortBy: explore.sortBy, asc: explore.asc,
                                    grouped: $("e-group").checked });
+  patchTable($("e-picked"), pickedRows(all),
+             { sortBy: explore.sortBy, asc: explore.asc, grouped: false });
   $("e-table-note").textContent = `${rows.length} factors · ${prod.span[0]} to ${prod.span[1]}`;
   if (explore.picked.size && eChart) {
     const { labels, datasets } = exploreDatasets(s, stats, flipOn, live.data);
