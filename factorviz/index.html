@@ -470,7 +470,8 @@
           aria-expanded="false" aria-label="About the frontier">i</button>
         <span class="note" id="m-frontier-note"></span></h2>
       <div class="chartbox"><canvas id="m-frontier"></canvas></div>
-      <div class="range" style="margin-top:12px">
+      <p class="method" id="m-frontier-foot" style="margin-top:10px"></p>
+      <div class="range" style="margin-top:6px">
         <span class="check-wrap"><span class="sample-label">Frontier of</span>
           <select id="m-universe" style="min-width:220px;margin-left:8px"></select></span>
       </div>
@@ -2168,7 +2169,8 @@ function simpleTable(el, cols, rows) {
   const head = cols.map(([, t]) => `<th>${t}</th>`).join("");
   const body = rows.map((r) => {
     const first = `<td>${r._color ? `<span class="swatch" style="background:${r._color}"></span>` : ""}`
-                + `<strong>${r._label}</strong>${r._sub ? ` <span class="muted">${r._sub}</span>` : ""}</td>`;
+                + `<strong>${r._label}</strong>${r._flipped ? ' <span class="muted" title="sign reversed for display">&minus;</span>' : ""}`
+                + `${r._sub ? ` <span class="muted">${r._sub}</span>` : ""}</td>`;
     const rest = cols.slice(1).map(([k, , dp, signed]) => {
       const v = r[k];
       if (typeof v === "string") return `<td class="num">${v}</td>`;
@@ -2193,6 +2195,67 @@ function cumSum(series) {
   return series.map((v) => { acc += v; return acc * 100; });
 }
 
+// ❗Labels ON the figure, not in a legend. A frontier chart with six lines from the origin is
+// unreadable through a legend of colour swatches; each line is named where it ends, and the
+// two portfolios and the model's factors are named where they sit. A line that leaves the
+// top of the chart is labelled where it crosses it.
+const endLabels = {
+  id: "endLabels",
+  afterDatasetsDraw(chart) {
+    const { ctx, chartArea: area, scales: { x, y } } = chart;
+    ctx.save();
+    ctx.font = "600 11px " + getComputedStyle(document.body).fontFamily;
+    ctx.textBaseline = "middle";
+    const placed = [];
+    const settle = (py) => {          // nudge a label off any earlier one within 13px
+      let yy = py;
+      for (let pass = 0; pass < 8; pass++) {
+        const hit = placed.find((p) => Math.abs(p - yy) < 13);
+        if (hit === undefined) break;
+        yy = hit - 13;
+      }
+      placed.push(yy);
+      return yy;
+    };
+    chart.data.datasets.forEach((d) => {
+      if (!d._endLabel || !d.data.length) return;
+      const last = d.data[d.data.length - 1];
+      let px = x.getPixelForValue(last.x), py = y.getPixelForValue(last.y);
+      let align = "right", text = d._endLabel;
+      if (py < area.top) {                        // leaves through the top: label at the crossing
+        const first = d.data[0];
+        const slope = (last.y - first.y) / (last.x - first.x || 1e-9);
+        const xTop = first.x + (y.getValueForPixel(area.top) - first.y) / slope;
+        px = Math.min(x.getPixelForValue(xTop), area.right);
+        py = area.top + 9;
+        align = px > area.right - 90 ? "right" : "left";
+      }
+      px = Math.min(px, area.right - 4);
+      py = settle(Math.max(area.top + 9, Math.min(py, area.bottom - 9)));
+      ctx.textAlign = align;
+      ctx.fillStyle = d.borderColor;
+      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--bg").trim() || "#fff";
+      ctx.lineWidth = 3;
+      ctx.strokeText(text, px, py);
+      ctx.fillText(text, px, py);
+    });
+    chart.data.datasets.forEach((d) => {
+      if (!d._pointLabels) return;
+      d.data.forEach((p, i) => {
+        const px = x.getPixelForValue(p.x), py = y.getPixelForValue(p.y);
+        if (px < area.left || px > area.right || py < area.top || py > area.bottom) return;
+        ctx.textAlign = "left";
+        ctx.fillStyle = d._labelColor || d.backgroundColor;
+        ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--bg").trim() || "#fff";
+        ctx.lineWidth = 3;
+        ctx.strokeText(d._pointLabels[i], px + 8, py - 1);
+        ctx.fillText(d._pointLabels[i], px + 8, py - 1);
+      });
+    });
+    ctx.restore();
+  },
+};
+
 function setScatter(existing, canvas, datasets, opts) {
   if (existing && existing.data.datasets.length === datasets.length) {
     datasets.forEach((d, i) => { Object.assign(existing.data.datasets[i], d); });
@@ -2205,6 +2268,7 @@ function setScatter(existing, canvas, datasets, opts) {
   return new Chart(canvas, {
     type: "scatter",
     data: { datasets },
+    plugins: [endLabels],
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       interaction: { mode: "nearest", intersect: true },
@@ -2215,8 +2279,7 @@ function setScatter(existing, canvas, datasets, opts) {
              grid: { color: "rgba(128,128,128,.18)" }, ...opts.y },
       },
       plugins: {
-        legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 11 },
-                  filter: (item) => !item.text.startsWith("_") } },
+        legend: { display: false },
         tooltip: { callbacks: { label: (c) => {
           const d = c.dataset;
           if (d._names) return `${d._names[c.dataIndex]}  ${fmt(c.parsed.y, 1)}% at ${fmt(c.parsed.x, 1)}% vol`;
@@ -2314,7 +2377,15 @@ async function renderModels() {
   const span = `${common[0].slice(0, 7)} to ${common[T - 1].slice(0, 7)}, ${T} months`;
 
   // --- the model
-  const F = columns(X, myIdx);
+  // ❗Oriented to a positive mean over THIS sample, for display. A factor's sign changes
+  // nothing that matters here -- the frontier, the model's squared Sharpe ratio and its
+  // tangency portfolio are all invariant to it, the weight simply flips with the factor --
+  // so the table reads "weight 40%, return +5%" instead of two minus signs, the cumulative
+  // lines rise, and the frontier's dots sit above zero. A flipped factor is marked, as on
+  // the Explore tab.
+  const Fraw = columns(X, myIdx);
+  const signs = meanVec(Fraw).map((m) => (m < 0 ? -1 : 1));
+  const F = Fraw.map((row) => row.map((v, j) => v * signs[j]));
   const mine = squaredSharpe(F);
   if (!Number.isFinite(mine.theta2) || collinear(mine.cov)) {
     clearModels("the factors in this model are linear combinations of each other, drop one");
@@ -2327,6 +2398,7 @@ async function renderModels() {
     const y = F.map((row) => row[i]);
     const st = computeStats(y, null, y.map(() => true));
     const r = { _label: labelFor(e.factor), _sub: shortSlice(e), _color: PALETTE[(i + 1) % PALETTE.length],
+                _flipped: signs[i] < 0,
                 weight: 100 * tp.weights[i] / gross, mean_ann: st.mean_ann, tstat: st.tstat,
                 vol_ann: st.vol_ann, sharpe: st.sharpe };
     if (first) {
@@ -2345,7 +2417,8 @@ async function renderModels() {
     `Weights are the tangency portfolio's, V⁻¹μ, as a share of gross exposure. The model's `
     + `bias-adjusted squared Sharpe ratio is ${fmt(mine.adjusted, 3)} per month `
     + `(p = ${fmt(mine.p, 3)} against zero), an annualised Sharpe ratio of ${fmt(srAnn, 2)}. `
-    + `t-statistics use Newey-West with ${lag} lag${lag === 1 ? "" : "s"}.`;
+    + `t-statistics use Newey-West with ${lag} lag${lag === 1 ? "" : "s"}.`
+    + (signs.some((x) => x < 0) ? " A factor marked \u2212 is shown with its sign reversed so its mean is positive, which changes nothing about the model." : "");
 
   // --- the comparison
   const cmpRows = [], verdicts = [];
@@ -2357,7 +2430,7 @@ async function renderModels() {
     const ir = o.residSd > 0 ? (o.alpha / o.residSd) * Math.sqrt(12) : null;
     cmpRows.push({ _label: r.label, _sub: r.idx.map((i) => reg[i].label).join(", "),
                    k: r.idx.length, theta: theirs.adjusted, p0: theirs.p, diff: cmp.difference,
-                   test: cmp.nested ? "nested, GRS" : (cmp.pretestHetero > 0.05 ? "non-nested, spanned" : "non-nested, normal"),
+                   test: cmp.nested ? "GRS, nested" : (cmp.pretestHetero > 0.05 ? "spanning pretest" : "BKRS normal test"),
                    p: cmp.decisionP, alpha: o.alpha * 12 * 100, alpha_t: o.t, ir });
     verdicts.push(verdict(name, r.label, cmp, T));
   }
@@ -2393,13 +2466,15 @@ async function renderModels() {
   // so it climbs out of the top of the chart -- which is the point of the picture.
   const fr = frontier(R, [0]);
   const A = 12 * 100, S = Math.sqrt(12) * 100;                      // annualising, mean and vol
-  const assetPts = fr.means.map((m, i) => ({ x: S * Math.sqrt(fr.cov[i][i]), y: A * m }));
+  // dots at |mean|: the frontier of a set of factors does not depend on their signs, and a
+  // dot below zero is the same factor held the other way round
+  const assetPts = fr.means.map((m, i) => ({ x: S * Math.sqrt(fr.cov[i][i]), y: A * Math.abs(m) }));
   const xMax = Math.max(...assetPts.map((p) => p.x)) * 1.06;
   const rivalTheta = rivals.map((r) => squaredSharpe(columns(X, r.idx)));
   const slopes = [Math.sqrt(Math.max(mine.theta2, 0)), ...rivalTheta.map((t) => Math.sqrt(Math.max(t.theta2, 0)))];
   const lineTop = Math.max(...slopes) * Math.sqrt(12) * xMax;
   const yMax = Math.max(...assetPts.map((p) => p.y), lineTop) * 1.12;
-  const yMin = Math.min(0, ...assetPts.map((p) => p.y)) * 1.12 - (yMax * 0.02);
+  const yMin = -yMax * 0.02;
   // the upper branch, from the minimum-variance mean to the mean where the curve meets the
   // right edge (the larger root of A mu^2 - 2 B mu + D - Delta sigma^2 = 0)
   const delta = fr.A * fr.D - fr.B * fr.B;
@@ -2414,35 +2489,41 @@ async function renderModels() {
   const sr = (theta2) => fmt(Math.sqrt(Math.max(theta2, 0)) * Math.sqrt(12), 2);
   const inkSoft = "#5a5a5a";
   const datasets = [
-    { label: `Frontier, Sharpe ${fmt(fr.slope * Math.sqrt(12), 2)}`, data: curve, showLine: true, pointRadius: 0,
-      borderColor: inkSoft, borderWidth: 2, backgroundColor: inkSoft, tension: 0.25 },
-    { label: "_frontier line", data: lineTo(fr.slope), showLine: true, pointRadius: 0, borderDash: [5, 4],
-      borderColor: inkSoft, borderWidth: 1.1, backgroundColor: inkSoft },
-    { label: `${name}, Sharpe ${sr(mine.theta2)}`,
+    { label: "Frontier", _endLabel: `Frontier, Sharpe ${fmt(fr.slope * Math.sqrt(12), 2)}`, data: curve,
+      showLine: true, pointRadius: 0, borderColor: inkSoft, borderWidth: 2, backgroundColor: inkSoft, tension: 0.25 },
+    { label: name, _endLabel: `${name}, Sharpe ${sr(mine.theta2)}`,
       data: lineTo(Math.sqrt(Math.max(mine.theta2, 0))), showLine: true, pointRadius: 0,
       borderColor: PALETTE[0], borderWidth: 2.6, backgroundColor: PALETTE[0] },
   ];
   rivals.forEach((r, i) => {
-    datasets.push({ label: `${r.label}, Sharpe ${sr(rivalTheta[i].theta2)}`,
+    datasets.push({ label: r.label, _endLabel: `${r.label}, Sharpe ${sr(rivalTheta[i].theta2)}`,
                     data: lineTo(slopes[i + 1]), showLine: true, pointRadius: 0,
                     borderColor: PALETTE[(i + 3) % PALETTE.length], borderWidth: 1.6, borderDash: [4, 3],
                     backgroundColor: PALETTE[(i + 3) % PALETTE.length] });
   });
-  datasets.push({ label: "_assets", data: assetPts.filter((_, i) => !myPts.has(names[i])), _names: names.filter((n) => !myPts.has(n)),
+  const otherNames = names.filter((n) => !myPts.has(n)), mineNames = names.filter((n) => myPts.has(n));
+  datasets.push({ label: "_assets", data: assetPts.filter((_, i) => !myPts.has(names[i])), _names: otherNames,
                   pointRadius: 3, backgroundColor: "rgba(128,128,128,.35)", borderColor: "rgba(128,128,128,.35)" });
-  datasets.push({ label: "_mine", data: assetPts.filter((_, i) => myPts.has(names[i])), _names: names.filter((n) => myPts.has(n)),
+  datasets.push({ label: "_mine", data: assetPts.filter((_, i) => myPts.has(names[i])), _names: mineNames,
+                  _pointLabels: mineNames, _labelColor: PALETTE[0],
                   pointRadius: 5.5, backgroundColor: PALETTE[0], borderColor: "#fff", borderWidth: 1.2 });
-  // the two portfolios that anchor the curve
-  const marks = [{ x: S * Math.sqrt(1 / fr.A), y: A * muMv, _n: `Minimum-variance portfolio, ${fmt(A * muMv, 1)}% at ${fmt(S * Math.sqrt(1 / fr.A), 1)}% vol` }];
+  // the two portfolios that anchor the curve, named on the plot
+  const marks = [{ x: S * Math.sqrt(1 / fr.A), y: A * muMv, _short: "Minimum variance",
+                   _n: `Minimum-variance portfolio, ${fmt(A * muMv, 1)}% at ${fmt(S * Math.sqrt(1 / fr.A), 1)}% vol` }];
   if (fr.source === "budget_tangency") {
-    marks.push({ x: S * fr.tangentVol, y: A * fr.tangentMean,
+    marks.push({ x: S * fr.tangentVol, y: A * fr.tangentMean, _short: "Tangency",
                  _n: `Tangency portfolio, Sharpe ${fmt(fr.slope * Math.sqrt(12), 2)}, ${fmt(A * fr.tangentMean, 1)}% at ${fmt(S * fr.tangentVol, 1)}% vol` });
   }
   const shown = marks.filter((m) => m.x <= xMax && m.y <= yMax);
-  datasets.push({ label: "_marks", data: shown, _names: shown.map((m) => m._n),
-                  pointRadius: 6, pointStyle: "rectRot", backgroundColor: "#e9c46a", borderColor: inkSoft, borderWidth: 1.2 });
+  datasets.push({ label: "_marks", data: shown, _names: shown.map((m) => m._n), _pointLabels: shown.map((m) => m._short),
+                  _labelColor: inkSoft, pointRadius: 6, pointStyle: "rectRot", backgroundColor: "#e9c46a",
+                  borderColor: inkSoft, borderWidth: 1.2 });
   mFrontier = setScatter(mFrontier, $("m-frontier"), datasets, { x: { min: 0, max: xMax }, y: { min: yMin, max: yMax } });
   $("m-frontier-note").textContent = `${uniLabel} · ${span}`;
+  $("m-frontier-foot").textContent =
+    `Each line from the origin has the slope of a model's maximum Sharpe ratio, named where it ends. `
+    + `The curve is the efficient frontier of the ${uniLabel}, with its minimum-variance and tangency `
+    + `portfolios marked. Grey dots are the factors, blue dots the model's, each drawn with the sign that makes its mean positive, all in annualised terms.`;
 
   // --- cumulative return of the tangency portfolio, beside its constituents
   const raw = $("m-raw").checked;
@@ -2455,7 +2536,8 @@ async function renderModels() {
                    borderWidth: 1.4 });
   });
   mCum = setChart(mCum, $("m-cum"), common, cumSets);
-  $("m-cum-note").textContent = raw ? `raw monthly returns, summed · ${span}` : `every line scaled to ${VOL_TARGET * 100}% volatility per year · ${span}`;
+  $("m-cum-note").textContent = (raw ? `raw monthly returns, summed` : `every line scaled to ${VOL_TARGET * 100}% volatility per year`)
+    + (signs.some((x) => x < 0) ? ", factors oriented to a positive mean" : "") + ` · ${span}`;
 }
 
 function collinear(V) {
@@ -2781,10 +2863,12 @@ function renderAbout() {
        variance from the influence function below, estimated with Newey-West and the same
        lags as the rest of the page.</p>
     <div class="eq" id="eq-dt">d_t = 2 (u_At - u_Bt) - (u_At^2 - u_Bt^2)</div>
-    <p>The frontier figure draws the mean-variance frontier of every factor in a slice that
-       has a value in every month of the sample, and a line from the origin for each model
-       with the slope of its maximum Sharpe ratio. A model near the frontier's own line is
-       near mean-variance efficient. The benchmark models are the bond CAPM, the credit
+    <p>The frontier figure draws the efficient frontier of every factor in a slice that
+       has a value in every month of the sample, with its minimum-variance and tangency
+       portfolios marked, and a line from the origin for each model with the slope of its
+       maximum Sharpe ratio, named where it ends. Factors are drawn with the sign that makes
+       their mean positive, which changes nothing about a frontier or a model. A model whose
+       line hugs the frontier is near mean-variance efficient. The benchmark models are the bond CAPM, the credit
        component of the bond market, a two-factor credit-and-Treasury model in the spirit of
        van Binsbergen, Nozawa and Schwert (2025), and the Fama and French (1993) five-factor
        model, whose three stock factors are read from French's three-factor file and whose
@@ -2871,14 +2955,43 @@ async function boot() {
   modelsCtl = sampleControl("m", onModelsSample);
   if (META.models) META.models.presets.forEach((p) => models.against.add(p.key));
 
+  // ❗A picker change moves the WHOLE model when every factor in it shares the old value --
+  // a reader who built a model on one dataset and switches the dataset means "the same model
+  // on that dataset", not "the next factor I add". A model that deliberately mixes datasets
+  // is left alone and told so.
+  models.pickerPrev = modelPick();
+  const moveModel = (axis) => {
+    const now = modelPick();
+    const prev = models.pickerPrev;
+    models.pickerPrev = now;
+    if (!models.cart.length || now[axis] === prev[axis]) return;
+    if (!models.cart.every((e) => e[axis] === prev[axis])) {
+      $("m-quick-note").textContent = `the model mixes ${axis === "dataset" ? "datasets" : axis === "w" ? "weightings" : axis + "s"}, so the picker only sets the next factor added`;
+      return;
+    }
+    const moved = [], dropped = [];
+    for (const e of models.cart) {
+      const n = { ...e, [axis]: now[axis] };
+      n.factor = factorName(baseName(e.factor), n.sort, n.band);
+      const prod = META.products[`${n.dataset}_${n.sort}`];
+      if (prod && prod.factors.includes(n.factor) && prod.return_types.includes(n.rt)) moved.push(n);
+      else dropped.push(labelFor(e.factor));
+    }
+    models.cart = moved;
+    $("m-quick-note").textContent = `moved the model to ${axis === "dataset" ? META.datasets[now.dataset].label : axis === "sort" ? META.sorts[now.sort] : axis === "rt" ? META.return_types[now.rt] : axis === "band" ? META.bands[now.band] : now.w.toUpperCase()}`
+      + (dropped.length ? `, dropped ${dropped.join(", ")} which it does not carry` : "");
+    renderModels();
+  };
   for (const id of ["m-dataset", "m-sort"]) {
-    $(id).onchange = () => { syncProductControls("m"); refreshFactorList("m"); };
+    $(id).onchange = () => { syncProductControls("m"); refreshFactorList("m"); moveModel(id.slice(2)); };
   }
-  $("m-band").onchange = () => refreshFactorList("m");
+  $("m-band").onchange = () => { refreshFactorList("m"); moveModel("band"); };
+  $("m-rt").onchange = () => moveModel("rt");
+  $("m-w").onchange = () => moveModel("w");
   $("m-add").onclick = () => {
     const e = modelPick();
     $("m-quick-note").textContent = "";
-    if (models.cart.some((x) => cartKey(x) === cartKey(e))) return;
+    if (models.cart.some((x) => cartKey(x) === cartKey(e))) { $("m-quick-note").textContent = "already in the model"; return; }
     if (models.cart.length >= 10) { alert("Ten factors in one model is the limit."); return; }
     models.cart.push(e);
     renderModels();
@@ -2898,7 +3011,7 @@ async function boot() {
     $("m-name").value = `Model ${models.saved.length + 1}`;
     renderModels();
   };
-  $("m-name").oninput = () => renderModels();
+  $("m-name").onchange = () => renderModels();
   $("m-universe").onchange = () => { models.universe = $("m-universe").value; renderModels(); };
   $("m-raw").onchange = () => renderModels();
 

@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-19T01:18:16+00:00",
+  "built_utc": "2026-09-19T01:33:00+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -384,7 +384,7 @@
     },
     "m_frontier": {
       "title": "The frontier",
-      "text": "The mean-variance frontier of every factor in the chosen slice that has a value in every month of the sample, in annualised terms. The grey dashed line from the origin is the highest Sharpe ratio any combination of them attains. Each model's line has the slope of its own maximum Sharpe ratio, the square root of its squared Sharpe ratio, so a model close to the grey line is close to mean-variance efficient and one far below is far from it. The dots are the factors, yours in colour. When the fully invested tangency portfolio sits on the inefficient branch the frontier line shows the upper asymptote instead, following Gospodinov and Robotti (2021)."
+      "text": "The efficient frontier of every factor in the chosen slice that has a value in every month of the sample, in annualised terms, from its minimum-variance portfolio up, with that portfolio and the tangency portfolio marked. Each line from the origin has the slope of a model's maximum Sharpe ratio, the square root of its squared Sharpe ratio, and is named where it ends, so a model whose line hugs the frontier is close to mean-variance efficient and one far below is far from it. The dots are the factors, yours in colour, each drawn with the sign that makes its mean positive, which changes nothing about the frontier. The axes follow the factors and the model lines, so a frontier of a hundred factors, whose in-sample Sharpe ratio is several times any model's, climbs out of the top of the chart. When the fully invested tangency portfolio sits on the inefficient branch the frontier's Sharpe ratio is the upper asymptote instead, following Gospodinov and Robotti (2021)."
     },
     "m_cum": {
       "title": "Optimally weighted",
