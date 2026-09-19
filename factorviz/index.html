@@ -149,7 +149,7 @@
   .btn:disabled { opacity: .45; cursor: not-allowed; }
   .controls.quick { gap: 8px; align-items: center; padding: 10px 16px; margin-bottom: 14px; }
   .quick-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
-                 color: var(--ink-soft); margin-right: 2px; }
+                 color: var(--ink-soft); margin-right: 2px; position: relative; }
 
   .card {
     border: 1px solid var(--line); border-radius: 6px; padding: 16px;
@@ -159,6 +159,10 @@
   .card h2 .note { font-weight: 400; color: var(--ink-soft); font-size: 13px; margin-left: 8px; }
 
   .chartbox { position: relative; height: 380px; }
+  .two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 900px) { .two-up { grid-template-columns: 1fr; } }
+  .card h2 button.info { margin-left: 7px; }
+  .card h2 { position: relative; }
 
   .scroll { overflow-x: auto; }
   table { border-collapse: collapse; width: 100%; font-size: 13px; }
@@ -250,6 +254,7 @@
 <div class="tabs" role="tablist">
   <button role="tab" id="tab-explore" aria-selected="true">Explore</button>
   <button role="tab" id="tab-compare" aria-selected="false">Compare</button>
+  <button role="tab" id="tab-models" aria-selected="false">Models</button>
   <button role="tab" id="tab-about" aria-selected="false">About the data/Downloads</button>
 </div>
 
@@ -400,6 +405,117 @@
   <div class="card">
     <h2>Statistics</h2>
     <div class="scroll"><table id="c-table"></table></div>
+  </div>
+</section>
+
+<!-- ===================== MODELS ===================== -->
+<section id="panel-models" class="hidden">
+  <div class="warn">
+    Build a factor model from any factors, from any dataset, sort, return definition,
+    universe or weighting, then see how far it sits from the mean-variance frontier and
+    whether it beats the bond market. The statistics are the ones in Dickerson, Mueller and
+    Robotti (2023), the bias-adjusted squared Sharpe ratio and the pairwise model tests of
+    Barillas, Kan, Robotti and Shanken (2019), computed on the months every series has.
+  </div>
+
+  <div class="controls">
+    <div class="field"><label for="m-dataset">Dataset<button type="button" class="info"
+      data-help="dataset" aria-expanded="false" aria-label="About the datasets">i</button></label>
+      <select id="m-dataset"></select></div>
+    <div class="field"><label for="m-sort">Sort<button type="button" class="info"
+      data-help="sort" aria-expanded="false" aria-label="About the sorts">i</button></label>
+      <select id="m-sort"></select></div>
+    <div class="field"><label for="m-rt">Return definition<button type="button" class="info"
+      data-help="rt" aria-expanded="false" aria-label="About the return definitions">i</button></label>
+      <select id="m-rt"></select></div>
+    <div class="field"><label for="m-band">Universe<button type="button" class="info"
+      data-help="band" aria-expanded="false" aria-label="About the universes">i</button></label>
+      <select id="m-band"></select></div>
+    <div class="field"><label for="m-w">Weighting<button type="button" class="info"
+      data-help="w" aria-expanded="false" aria-label="About the weightings">i</button></label>
+      <select id="m-w"></select></div>
+    <div class="field"><label for="m-factor">Factor</label><select id="m-factor"></select></div>
+    <button class="btn" id="m-add">Add factor</button>
+    <button class="btn ghost" id="m-clear">Clear</button>
+  </div>
+
+  <div class="controls quick">
+    <span class="quick-label">Add this factor across &rarr;</span>
+    <button class="btn ghost sm" data-maxis="sort">Both sorts</button>
+    <button class="btn ghost sm" data-maxis="rt">All return definitions</button>
+    <button class="btn ghost sm" data-maxis="dataset">All datasets</button>
+    <button class="btn ghost sm" data-maxis="band">All universes</button>
+    <button class="btn ghost sm" data-maxis="w">EW and VW</button>
+    <span class="muted" id="m-quick-note" style="font-size:12.5px"></span>
+  </div>
+
+  <div class="chips" id="m-chips"></div>
+
+  <div class="controls" style="padding-top:10px;padding-bottom:10px">
+    <div class="field"><label for="m-name">Model name</label>
+      <input type="search" id="m-name" value="My model" maxlength="40"></div>
+    <button class="btn ghost" id="m-save">Save as model</button>
+    <span class="check-wrap" style="gap:8px" id="m-saved"></span>
+  </div>
+
+  <div class="controls" style="padding-top:10px;padding-bottom:10px">
+    <span class="quick-label">Compare against<button type="button" class="info"
+      data-help="m_against" aria-expanded="false" aria-label="About the benchmark models">i</button></span>
+    <span class="check-wrap" style="gap:14px;flex-wrap:wrap" id="m-against"></span>
+  </div>
+
+  <div class="two-up">
+    <div class="card">
+      <h2>Mean-variance frontier<button type="button" class="info" data-help="m_frontier"
+          aria-expanded="false" aria-label="About the frontier">i</button>
+        <span class="note" id="m-frontier-note"></span></h2>
+      <div class="chartbox"><canvas id="m-frontier"></canvas></div>
+      <div class="range" style="margin-top:12px">
+        <span class="check-wrap"><span class="sample-label">Frontier of</span>
+          <select id="m-universe" style="min-width:220px;margin-left:8px"></select></span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Cumulative return, optimally weighted<button type="button" class="info" data-help="m_cum"
+          aria-expanded="false" aria-label="About the cumulative return figure">i</button>
+        <span class="note" id="m-cum-note"></span></h2>
+      <div class="chartbox"><canvas id="m-cum"></canvas></div>
+      <div class="range" style="margin-top:12px">
+        <span class="check-wrap"><label class="check"><input type="checkbox" id="m-raw"> Raw returns, not scaled to one volatility</label></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding-top:12px;padding-bottom:12px">
+    <div class="range" style="margin:0">
+      <span class="sample-label">Sample</span>
+      <div class="slider" id="m-slider">
+        <div class="slider-rail"></div>
+        <div class="slider-fill" id="m-fill"></div>
+        <input type="range" id="m-from" min="0" value="0" step="1" aria-label="First month">
+        <input type="range" id="m-to" min="0" value="0" step="1" aria-label="Last month">
+      </div>
+      <div class="range-side">
+        <span class="range-span" id="m-span"></span>
+        <div class="seg" id="m-presets"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>The model<button type="button" class="info" data-help="m_model"
+        aria-expanded="false" aria-label="About the model table">i</button>
+      <span class="note" id="m-model-note"></span></h2>
+    <div class="scroll"><table id="m-model"></table></div>
+    <p class="method" id="m-model-foot"></p>
+  </div>
+
+  <div class="card">
+    <h2>Model comparison<button type="button" class="info" data-help="m_tests"
+        aria-expanded="false" aria-label="About the tests">i</button>
+      <span class="note" id="m-compare-note"></span></h2>
+    <div class="scroll"><table id="m-compare"></table></div>
+    <div id="m-verdicts"></div>
   </div>
 </section>
 
@@ -880,6 +996,418 @@ function applyFlip(row, flip) {
   o.maxdd = (o.maxdd_flip === undefined) ? null : o.maxdd_flip;
   o._flipped = true;
   return o;
+}
+
+/* ------------------------------------------------- models, in the browser
+
+   The Models tab's statistics: the bias-adjusted squared Sharpe ratio and the
+   Barillas-Kan-Robotti-Shanken (2019) pairwise tests, the GRS spanning test, and the
+   mean-variance frontier, as Dickerson, Mueller and Robotti (2023) use them.
+
+   ❗These reproduce `robust-asset-pricing/src/robust_asset_pricing/statistics/squared_sharpe.py`
+   line for line: biased covariances (1/T), the (T-K-2)/T - K/T bias adjustment, the
+   uncentred Newey-West variance of the influence function, the heteroskedastic GRS
+   statistic. `tests/page/check_page_models.mjs` replays `tests/fixtures/models_reference.json`,
+   which that package wrote on real payload series, through these functions. A formula that
+   drifts from the reference fails there, not on a reader's screen.
+
+   Everything works on plain arrays: a matrix is an array of rows.                        */
+
+// --- small dense linear algebra --------------------------------------------------------
+function matT(A) {
+  const n = A.length, m = n ? A[0].length : 0;
+  const out = Array.from({ length: m }, () => new Array(n));
+  for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) out[j][i] = A[i][j];
+  return out;
+}
+
+function matMul(A, B) {
+  const n = A.length, k = B.length, m = k ? B[0].length : 0;
+  const out = Array.from({ length: n }, () => new Array(m).fill(0));
+  for (let i = 0; i < n; i++) {
+    const Ai = A[i], Oi = out[i];
+    for (let p = 0; p < k; p++) {
+      const a = Ai[p], Bp = B[p];
+      if (a === 0) continue;
+      for (let j = 0; j < m; j++) Oi[j] += a * Bp[j];
+    }
+  }
+  return out;
+}
+
+function matVec(A, v) {
+  return A.map((row) => row.reduce((s, a, j) => s + a * v[j], 0));
+}
+
+function meanVec(X) {
+  const T = X.length, K = T ? X[0].length : 0;
+  const mu = new Array(K).fill(0);
+  for (const row of X) for (let j = 0; j < K; j++) mu[j] += row[j];
+  return mu.map((s) => s / T);
+}
+
+function covBiased(X) {
+  // (1/T) sum (x - mu)(x - mu)', the reference's `_biased_covariance`.
+  const T = X.length, K = T ? X[0].length : 0;
+  const mu = meanVec(X);
+  const V = Array.from({ length: K }, () => new Array(K).fill(0));
+  for (const row of X) {
+    for (let i = 0; i < K; i++) {
+      const di = row[i] - mu[i];
+      for (let j = i; j < K; j++) V[i][j] += di * (row[j] - mu[j]);
+    }
+  }
+  for (let i = 0; i < K; i++) for (let j = 0; j < i; j++) V[i][j] = V[j][i];
+  for (let i = 0; i < K; i++) for (let j = i; j < K; j++) { V[i][j] /= T; V[j][i] = V[i][j]; }
+  return V;
+}
+
+function solveLinear(A, b) {
+  // Cholesky first (the matrices here are covariances), Gaussian elimination with partial
+  // pivoting if that fails -- the reference's cho_solve then solve fallback.
+  const n = A.length;
+  if (!n) return [];
+  const L = Array.from({ length: n }, () => new Array(n).fill(0));
+  let ok = true;
+  for (let i = 0; i < n && ok; i++) {
+    for (let j = 0; j <= i; j++) {
+      let s = A[i][j];
+      for (let k = 0; k < j; k++) s -= L[i][k] * L[j][k];
+      if (i === j) {
+        if (s <= 0 || !Number.isFinite(s)) { ok = false; break; }
+        L[i][i] = Math.sqrt(s);
+      } else {
+        L[i][j] = s / L[j][j];
+      }
+    }
+  }
+  if (ok) {
+    const y = new Array(n);
+    for (let i = 0; i < n; i++) {
+      let s = b[i];
+      for (let k = 0; k < i; k++) s -= L[i][k] * y[k];
+      y[i] = s / L[i][i];
+    }
+    const x = new Array(n);
+    for (let i = n - 1; i >= 0; i--) {
+      let s = y[i];
+      for (let k = i + 1; k < n; k++) s -= L[k][i] * x[k];
+      x[i] = s / L[i][i];
+    }
+    return x;
+  }
+  const M = A.map((row, i) => [...row, b[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    if (Math.abs(M[p][c]) < 1e-300) return new Array(n).fill(NaN);
+    [M[c], M[p]] = [M[p], M[c]];
+    for (let r = c + 1; r < n; r++) {
+      const f = M[r][c] / M[c][c];
+      for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k];
+    }
+  }
+  const x = new Array(n);
+  for (let r = n - 1; r >= 0; r--) {
+    let s = M[r][n];
+    for (let k = r + 1; k < n; k++) s -= M[r][k] * x[k];
+    x[r] = s / M[r][r];
+  }
+  return x;
+}
+
+function quadForm(V, m) {
+  if (!m.length) return 0;
+  const s = solveLinear(V, m);
+  return m.reduce((acc, mi, i) => acc + mi * s[i], 0);
+}
+
+function columns(X, idx) {
+  return X.map((row) => idx.map((j) => row[j]));
+}
+
+// --- distributions ---------------------------------------------------------------------
+function lgamma(x) {
+  // Lanczos, g = 7, n = 9: 1e-15 relative over the reals we need.
+  const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+             -176.61502916214059, 12.507343278686905, -0.13857109526572012,
+             9.9843695780195716e-6, 1.5056327351493116e-7];
+  if (x < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * x)) - lgamma(1 - x);
+  x -= 1;
+  let a = c[0];
+  const t = x + 7.5;
+  for (let i = 1; i < 9; i++) a += c[i] / (x + i);
+  return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
+}
+
+function gammaincP(a, x) {
+  // Regularised lower incomplete gamma P(a, x): series for x < a + 1, continued fraction
+  // above (Numerical Recipes gser / gcf), to ~1e-14.
+  if (x <= 0) return 0;
+  if (x < a + 1) {
+    let ap = a, sum = 1 / a, del = sum;
+    for (let n = 0; n < 500; n++) {
+      ap += 1; del *= x / ap; sum += del;
+      if (Math.abs(del) < Math.abs(sum) * 1e-16) break;
+    }
+    return sum * Math.exp(-x + a * Math.log(x) - lgamma(a));
+  }
+  let b = x + 1 - a, c = 1 / 1e-300, d = 1 / b, h = d;
+  for (let i = 1; i < 500; i++) {
+    const an = -i * (i - a);
+    b += 2;
+    d = an * d + b; if (Math.abs(d) < 1e-300) d = 1e-300;
+    c = b + an / c; if (Math.abs(c) < 1e-300) c = 1e-300;
+    d = 1 / d;
+    const del = d * c;
+    h *= del;
+    if (Math.abs(del - 1) < 1e-16) break;
+  }
+  return 1 - Math.exp(-x + a * Math.log(x) - lgamma(a)) * h;
+}
+
+function betaincI(a, b, x) {
+  // Regularised incomplete beta I_x(a, b), Lentz continued fraction (Numerical Recipes betacf).
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const bt = Math.exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+  const cf = (aa, bb, xx) => {
+    const qab = aa + bb, qap = aa + 1, qam = aa - 1;
+    let c = 1, d = 1 - qab * xx / qap;
+    if (Math.abs(d) < 1e-300) d = 1e-300;
+    d = 1 / d;
+    let h = d;
+    for (let m = 1; m <= 500; m++) {
+      const m2 = 2 * m;
+      let an = m * (bb - m) * xx / ((qam + m2) * (aa + m2));
+      d = 1 + an * d; if (Math.abs(d) < 1e-300) d = 1e-300;
+      c = 1 + an / c; if (Math.abs(c) < 1e-300) c = 1e-300;
+      d = 1 / d; h *= d * c;
+      an = -(aa + m) * (qab + m) * xx / ((aa + m2) * (qap + m2));
+      d = 1 + an * d; if (Math.abs(d) < 1e-300) d = 1e-300;
+      c = 1 + an / c; if (Math.abs(c) < 1e-300) c = 1e-300;
+      d = 1 / d;
+      const del = d * c;
+      h *= del;
+      if (Math.abs(del - 1) < 1e-16) break;
+    }
+    return h;
+  };
+  if (x < (a + 1) / (a + b + 2)) return bt * cf(a, b, x) / a;
+  return 1 - bt * cf(b, a, 1 - x) / b;
+}
+
+function chi2cdf(x, k) { return x <= 0 ? 0 : gammaincP(k / 2, x / 2); }
+
+function fcdf(x, d1, d2) {
+  if (x <= 0) return 0;
+  return betaincI(d1 / 2, d2 / 2, d1 * x / (d1 * x + d2));
+}
+
+function normcdf(z) {
+  // Phi(z) through the regularised incomplete gamma: erfc(|z|/sqrt 2) = Q(1/2, z^2/2).
+  const q = 1 - gammaincP(0.5, z * z / 2);
+  return z >= 0 ? 1 - q / 2 : q / 2;
+}
+
+// --- the squared Sharpe ratio ----------------------------------------------------------
+function biasAdjust(theta2, n, k) {
+  return ((n - k - 2) / n) * theta2 - k / n;
+}
+
+function squaredSharpe(F) {
+  // Eq. (2) of BKRS on the sample: mu' V^-1 mu, its small-sample adjustment, and the
+  // chi-square test of theta^2 = 0 with K degrees of freedom.
+  const n = F.length, k = n ? F[0].length : 0;
+  const means = meanVec(F), cov = covBiased(F);
+  const theta2 = quadForm(cov, means);
+  return { n, k, means, cov, theta2, adjusted: biasAdjust(theta2, n, k),
+           chi2: n * theta2, p: 1 - chi2cdf(n * theta2, k) };
+}
+
+function nwVar(d, lag) {
+  // The reference's newey_west_covariance for one column with a fixed lag: uncentred,
+  // Bartlett weights 1 - j/(lag+1).
+  const T = d.length;
+  let v = 0;
+  for (let t = 0; t < T; t++) v += d[t] * d[t];
+  v /= T;
+  for (let j = 1; j <= lag; j++) {
+    let c = 0;
+    for (let t = j; t < T; t++) c += d[t] * d[t - j];
+    v += 2 * (1 - j / (lag + 1)) * (c / T);
+  }
+  return v;
+}
+
+// --- GRS -------------------------------------------------------------------------------
+function olsFit(design, Y) {
+  // Coefficients of Y (T x N) on `design` (T x P) by the normal equations, one solve per
+  // column; returns {coef: P x N, resid: T x N, xtx}.
+  const xtx = matMul(matT(design), design);
+  const xty = matMul(matT(design), Y);
+  const N = Y[0].length, P = design[0].length;
+  const coef = Array.from({ length: P }, () => new Array(N).fill(0));
+  for (let c = 0; c < N; c++) {
+    const b = solveLinear(xtx, xty.map((row) => row[c]));
+    for (let p = 0; p < P; p++) coef[p][c] = b[p];
+  }
+  const fitted = matMul(design, coef);
+  const resid = Y.map((row, t) => row.map((y, c) => y - fitted[t][c]));
+  return { coef, resid, xtx };
+}
+
+function grsTest(B, Y) {
+  // Gibbons-Ross-Shanken on the alphas of Y (T x N) against the traded factors B (T x K),
+  // homoskedastic and the heteroskedastic version BKRS use. B may have zero columns.
+  const T = Y.length, N = Y[0].length, K = B.length && B[0] ? B[0].length : 0;
+  if (!N) return { fHomo: 0, fHetero: 0, pHomo: 1, pHetero: 1, alphas: [] };
+  const srB = 1 + (K ? quadForm(covBiased(B), meanVec(B)) : 0);
+  const C = Y.map((row, t) => (K ? [...B[t], ...row] : [...row]));
+  const srC = 1 + quadForm(covBiased(C), meanVec(C));
+  const dfDen = T - K - N;
+  const fHomo = (dfDen / N) * (srC / srB - 1);
+  const pHomo = 1 - fcdf(fHomo, N, dfDen);
+  const design = Y.map((_, t) => (K ? [1, ...B[t]] : [1]));
+  const { coef, resid, xtx } = olsFit(design, Y);
+  const alphas = coef[0];
+  const e1 = new Array(K + 1).fill(0); e1[0] = 1;
+  const u = matVec(design, solveLinear(xtx, e1));
+  const ga = Array.from({ length: N }, () => new Array(N).fill(0));
+  for (let t = 0; t < T; t++) {
+    const r = resid[t], w = u[t];
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) ga[i][j] += r[i] * w * r[j] * w;
+  }
+  const fHetero = (dfDen / (N * T)) * quadForm(ga, alphas);
+  const pHetero = 1 - fcdf(fHetero, N, dfDen);
+  return { fHomo, fHetero, pHomo, pHetero, alphas };
+}
+
+// --- the pairwise comparison ------------------------------------------------------------
+function compareModels(X, idxA, idxB, lag) {
+  // BKRS pairwise theory, as `compare_traded_models`: nested models through the GRS bridge
+  // on the excluded factors, non-nested through the spanning pretest on the common factors
+  // and the direct normal test on the influence function d_t.
+  const setA = new Set(idxA), setB = new Set(idxB);
+  const nested = idxA.every((i) => setB.has(i)) || idxB.every((i) => setA.has(i));
+  const thetaA = squaredSharpe(columns(X, idxA)), thetaB = squaredSharpe(columns(X, idxB));
+  const difference = thetaA.adjusted - thetaB.adjusted;
+  if (nested) {
+    const [small, large] = idxA.length <= idxB.length ? [idxA, idxB] : [idxB, idxA];
+    const smallSet = new Set(small);
+    const extra = large.filter((i) => !smallSet.has(i));
+    const g = grsTest(columns(X, small), columns(X, extra));
+    return { family: "nested", nested: true, difference, thetaA, thetaB,
+             decisionP: g.pHetero, pretestHomo: g.pHomo, pretestHetero: g.pHetero,
+             pRelaxed: g.pHetero, pImposed: g.pHetero,
+             test: "GRS test of the excluded factors' alphas on the smaller model" };
+  }
+  const common = idxA.filter((i) => setB.has(i));
+  const uniqueA = idxA.filter((i) => !setB.has(i)), uniqueB = idxB.filter((i) => !setA.has(i));
+  const pre = grsTest(columns(X, common), columns(X, [...uniqueA, ...uniqueB]));
+  const fa = columns(X, [...common, ...uniqueA]), fb = columns(X, [...common, ...uniqueB]);
+  const T = X.length;
+  const ma = meanVec(fa), mb = meanVec(fb), va = covBiased(fa), vb = covBiased(fb);
+  const ta = biasAdjust(quadForm(va, ma), T, fa[0].length);
+  const tb = biasAdjust(quadForm(vb, mb), T, fb[0].length);
+  const sa = solveLinear(va, ma), sb = solveLinear(vb, mb);
+  const scaleA = (T - fa[0].length - 2) / T, scaleB = (T - fb[0].length - 2) / T;
+  const dRelaxed = new Array(T), dImposed = new Array(T);
+  for (let t = 0; t < T; t++) {
+    let ua = 0, ub = 0;
+    for (let j = 0; j < ma.length; j++) ua += (fa[t][j] - ma[j]) * sa[j];
+    for (let j = 0; j < mb.length; j++) ub += (fb[t][j] - mb[j]) * sb[j];
+    ua *= scaleA; ub *= scaleB;
+    dRelaxed[t] = 2 * (ua - ub) - (ua * ua - ub * ub);
+    dImposed[t] = dRelaxed[t] + (ta - tb);
+  }
+  const diff = ta - tb;
+  const pRelaxed = 2 * (1 - normcdf(Math.abs(diff) / Math.sqrt(nwVar(dRelaxed, lag) / T)));
+  const pImposed = 2 * (1 - normcdf(Math.abs(diff) / Math.sqrt(nwVar(dImposed, lag) / T)));
+  const decisionP = pre.pHetero > 0.05 ? pre.pHetero : pRelaxed;
+  return { family: "nonnested", nested: false, difference: diff, thetaA, thetaB,
+           decisionP, pretestHomo: pre.pHomo, pretestHetero: pre.pHetero, pRelaxed, pImposed,
+           test: pre.pHetero > 0.05
+             ? "spanning pretest, the factors the models do not share are spanned by the ones they do"
+             : "direct normal test on the difference, Newey-West" };
+}
+
+// --- the frontier and the tangency portfolio -------------------------------------------
+function frontier(R, targets) {
+  // The mean-variance frontier of the assets in R (T x N), `compute_mean_std_frontier`:
+  // A, B, D from the biased covariance; variance at each target; the fully invested
+  // tangency portfolio and its slope, or the upper asymptote when that portfolio sits on
+  // the inefficient branch (Gospodinov and Robotti 2021, footnote 7).
+  const N = R[0].length;
+  const means = meanVec(R), V = covBiased(R);
+  const ones = new Array(N).fill(1);
+  const invMu = solveLinear(V, means), invOne = solveLinear(V, ones);
+  const A = ones.reduce((s, o, i) => s + o * invOne[i], 0);
+  const B = ones.reduce((s, o, i) => s + o * invMu[i], 0);
+  const D = means.reduce((s, m, i) => s + m * invMu[i], 0);
+  const delta = A * D - B * B;
+  const vols = targets.map((m) => Math.sqrt(Math.max((A * m * m - 2 * B * m + D) / delta, 0)));
+  let weights, tMean = NaN, tVol = NaN, budgetSlope = NaN;
+  if (Math.abs(B) > Number.EPSILON) {
+    weights = invMu.map((w) => w / B);
+    const port = R.map((row) => row.reduce((s, r, i) => s + r * weights[i], 0));
+    tMean = port.reduce((s, v) => s + v, 0) / port.length;
+    tVol = Math.sqrt(port.reduce((s, v) => s + (v - tMean) ** 2, 0) / port.length);
+    budgetSlope = tMean / tVol;
+  } else {
+    weights = new Array(N).fill(NaN);
+  }
+  const asymptoteSlope = Math.sqrt(Math.max(D - B * B / A, 0));
+  const useBudget = Number.isFinite(budgetSlope) && budgetSlope > 0;
+  return { A, B, D, means, cov: V, vols, weights, tangentMean: tMean, tangentVol: tVol,
+           budgetSlope, asymptoteSlope, slope: useBudget ? budgetSlope : asymptoteSlope,
+           source: useBudget ? "budget_tangency" : "upper_frontier_asymptote" };
+}
+
+function tangencyPortfolio(F) {
+  // Weights V^-1 mu of the maximum-Sharpe combination of the model's factors, and the
+  // portfolio's series. The scale of the weights is arbitrary for zero-cost factors; the
+  // caller sets the volatility.
+  const means = meanVec(F), V = covBiased(F);
+  const w = solveLinear(V, means);
+  const series = F.map((row) => row.reduce((s, r, i) => s + r * w[i], 0));
+  return { weights: w, series };
+}
+
+function olsNW(y, X, lag) {
+  // y on a constant and the columns of X, with Newey-West standard errors for every
+  // coefficient (the sandwich on x_t e_t, uncentred, Bartlett weights). Returns the alpha,
+  // its t, the betas, the residual standard deviation and R^2.
+  const T = y.length, K = X.length && X[0] ? X[0].length : 0;
+  const design = y.map((_, t) => (K ? [1, ...X[t]] : [1]));
+  const { coef, resid, xtx } = olsFit(design, y.map((v) => [v]));
+  const b = coef.map((row) => row[0]);
+  const e = resid.map((row) => row[0]);
+  const P = K + 1;
+  const S = Array.from({ length: P }, () => new Array(P).fill(0));
+  const g = design.map((row, t) => row.map((x) => x * e[t]));
+  for (let j = 0; j <= lag; j++) {
+    const w = j === 0 ? 1 : 1 - j / (lag + 1);
+    for (let t = j; t < T; t++) {
+      for (let p = 0; p < P; p++) for (let q = 0; q < P; q++) {
+        const term = g[t][p] * g[t - j][q];
+        S[p][q] += w * term;
+        if (j > 0) S[q][p] += w * term;        // Gamma_j + Gamma_j'
+      }
+    }
+  }
+  // (X'X)^-1 S (X'X)^-1
+  const inv = Array.from({ length: P }, (_, i) => {
+    const e1 = new Array(P).fill(0); e1[i] = 1; return solveLinear(xtx, e1);
+  });
+  const cov = matMul(matMul(inv, S), inv);
+  const se = Math.sqrt(Math.max(cov[0][0], 0));
+  const sd = Math.sqrt(e.reduce((s, v) => s + v * v, 0) / Math.max(T - P, 1));
+  const ybar = y.reduce((s, v) => s + v, 0) / T;
+  const sst = y.reduce((s, v) => s + (v - ybar) ** 2, 0);
+  const sse = e.reduce((s, v) => s + v * v, 0);
+  return { alpha: b[0], betas: b.slice(1), t: se > 0 ? b[0] / se : NaN, residSd: sd,
+           r2: sst > 0 ? 1 - sse / sst : NaN };
 }
 
 /* ------------------------------------------------------------- rendering */
@@ -1469,12 +1997,14 @@ async function renderCompare() {
   }
 }
 
-function refreshCompareFactors() {
+function refreshCompareFactors() { refreshFactorList("c"); }
+
+function refreshFactorList(prefix) {
   // ❗Grouped with <optgroup>, so the cluster a factor belongs to is visible while it is
   // being chosen. A flat list of 108 names asks the reader to already know which is which.
-  const ds = $("c-dataset").value, sort = $("c-sort").value, band = $("c-band").value;
+  const ds = $(`${prefix}-dataset`).value, sort = $(`${prefix}-sort`).value, band = $(`${prefix}-band`).value;
   const prod = META.products[`${ds}_${sort}`];
-  const sel = $("c-factor");
+  const sel = $(`${prefix}-factor`);
   const keep = sel.value;
   const fs = prod.factors.filter((f) => bandOf(f) === band);
   sel.innerHTML = "";
@@ -1492,6 +2022,443 @@ function refreshCompareFactors() {
     sel.appendChild(og);
   }
   if (found) sel.value = found;
+}
+
+/* --------------------------------------------------------------- MODELS UI
+
+   A reader assembles a K-factor model from any factors (the Compare picker, with its own
+   prefix), names it, saves it, and reads it against benchmark models: the frontier of a
+   slice's factors with every model's tangency line, the cumulative return of the optimally
+   weighted model beside its constituents, the per-factor table, and the pairwise tests.
+   One common sample for everything, inside the slider range, so every number on the tab
+   is measured on the same months.                                                        */
+
+const models = { cart: [], saved: [], against: new Set(), range: null, universe: null };
+let modelsCtl = null, mFrontier = null, mCum = null;
+const VOL_TARGET = 0.10;          // annualised, the volatility every cumulative line is scaled to
+
+function modelPick() {
+  return { dataset: $("m-dataset").value, sort: $("m-sort").value, rt: $("m-rt").value,
+           band: $("m-band").value, w: $("m-w").value, factor: $("m-factor").value };
+}
+
+function sliceKey(e) { return `${e.dataset}_${e.sort}_${e.rt}_${e.band}_${e.w}`; }
+
+function shortSlice(e) {
+  return [META.datasets[e.dataset].label, META.sorts[e.sort], META.return_types[e.rt],
+          META.bands[e.band], e.w.toUpperCase()].join(" · ");
+}
+
+function presetColumns(preset, rt) {
+  return preset.columns[rt] || preset.columns["*"] || [];
+}
+
+const BENCH_LABELS = {
+  mktb: "MKTB (r - rf)", mktbx: "MKTB (credit, APR)", mktb_bns: "MKTB (credit, BNS)",
+  mktb_cls: "MKTB (credit, CLS)", term_x: "TERM (APR, over the bill)",
+  term_x_bns: "TERM (BNS, over the bill)", term_x_cls: "TERM (CLS, over the bill)",
+  defb: "DEF", termb: "TERM", mktrf3: "Mkt-RF", smb3: "SMB", hml3: "HML",
+  drf: "DRF", crf: "CRF", lrf: "LRF", drfx: "DRF (APR)", crfx: "CRF (APR)", lrfx: "LRF (APR)",
+  drf_bns: "DRF (BNS)", crf_bns: "CRF (BNS)", lrf_bns: "LRF (BNS)",
+  drf_cls: "DRF (CLS)", crf_cls: "CRF (CLS)", lrf_cls: "LRF (CLS)", rf: "RF",
+};
+function benchLabel(col) { return BENCH_LABELS[col] || col; }
+
+function rivalList() {
+  // Everything the model can be compared against, in display order: the presets, then the
+  // saved models.
+  const out = (META.models ? META.models.presets : []).map((p) => ({ key: p.key, label: p.label, preset: p }));
+  models.saved.forEach((sm, i) => out.push({ key: `saved:${i}`, label: sm.name, saved: sm }));
+  return out;
+}
+
+function renderModelChips() {
+  const el = $("m-chips");
+  if (!models.cart.length) {
+    el.innerHTML = '<span class="muted" style="font-size:13px">No factors yet &mdash; pick '
+                 + 'above and press <strong>Add factor</strong>. Two to five is the usual model.</span>';
+    return;
+  }
+  el.innerHTML = models.cart.map((e, i) => `
+    <span class="chip">
+      <span class="swatch" style="background:${PALETTE[(i + 1) % PALETTE.length]}"></span>
+      <span><strong>${labelFor(e.factor)}</strong> &nbsp;<span class="muted">${shortSlice(e)}</span></span>
+      <button data-i="${i}" title="remove">&times;</button>
+    </span>`).join("");
+  el.querySelectorAll("button").forEach((b) => {
+    b.onclick = () => { models.cart.splice(Number(b.dataset.i), 1); renderModels(); };
+  });
+}
+
+function renderSaved() {
+  const el = $("m-saved");
+  if (!models.saved.length) { el.innerHTML = '<span class="muted" style="font-size:12.5px">nothing saved yet</span>'; return; }
+  el.innerHTML = models.saved.map((sm, i) => `
+    <span class="chip"><span><strong>${sm.name}</strong> <span class="muted">${sm.cart.length} factor${sm.cart.length === 1 ? "" : "s"}</span></span>
+      <button data-i="${i}" title="forget">&times;</button></span>`).join("");
+  el.querySelectorAll("button").forEach((b) => {
+    b.onclick = () => {
+      const i = Number(b.dataset.i);
+      models.saved.splice(i, 1);
+      // re-key the survivors' comparison ticks
+      const keep = new Set();
+      for (const k of models.against) {
+        if (!k.startsWith("saved:")) { keep.add(k); continue; }
+        const j = Number(k.slice(6));
+        if (j < i) keep.add(k); else if (j > i) keep.add(`saved:${j - 1}`);
+      }
+      models.against = keep;
+      renderModels();
+    };
+  });
+}
+
+function renderAgainst() {
+  const el = $("m-against");
+  el.innerHTML = rivalList().map((r) => `
+    <label class="check"><input type="checkbox" data-k="${r.key}" ${models.against.has(r.key) ? "checked" : ""}> ${r.label}</label>`).join("");
+  el.querySelectorAll("input").forEach((cb) => {
+    cb.onchange = () => { if (cb.checked) models.against.add(cb.dataset.k); else models.against.delete(cb.dataset.k); renderModels(); };
+  });
+}
+
+function fillUniverse() {
+  // The frontier is drawn over one slice's factors. The candidates are the slices the
+  // model's factors come from; the first is the default.
+  const sel = $("m-universe");
+  const seen = new Map();
+  for (const e of models.cart) if (!seen.has(sliceKey(e))) seen.set(sliceKey(e), e);
+  const keep = models.universe && seen.has(models.universe) ? models.universe : (seen.size ? [...seen.keys()][0] : null);
+  sel.innerHTML = "";
+  for (const [k, e] of seen) sel.appendChild(option(k, shortSlice(e)));
+  if (keep) sel.value = keep;
+  models.universe = keep;
+}
+
+function addModelAcross(axis) {
+  const here = modelPick();
+  const base = baseName(here.factor);
+  const note = $("m-quick-note");
+  let added = 0, unavailable = [], full = false;
+  for (const v of AXIS_VALUES[axis]()) {
+    const e = { ...here, [axis]: v };
+    e.factor = factorName(base, e.sort, e.band);
+    const prod = META.products[`${e.dataset}_${e.sort}`];
+    if (!prod || !prod.factors.includes(e.factor) || !prod.return_types.includes(e.rt)) {
+      unavailable.push(axis === "dataset" ? META.datasets[v].label : v);
+      continue;
+    }
+    if (models.cart.some((x) => cartKey(x) === cartKey(e))) continue;
+    if (models.cart.length >= 10) { full = true; break; }
+    models.cart.push(e);
+    added++;
+  }
+  const bits = [];
+  if (added) bits.push(`added ${added}`);
+  if (unavailable.length) bits.push(`not available for ${unavailable.join(", ")}`);
+  if (full) bits.push("ten-factor limit reached");
+  if (!added && !unavailable.length && !full) bits.push("already in the model");
+  note.textContent = bits.join(" · ");
+  renderModels();
+}
+
+function simpleTable(el, cols, rows) {
+  // A statistics table with its own columns: [key, title, decimals, signed]. `_label` is
+  // the first cell, `_sub` a muted second line, `_color` a swatch, `_strong` bolds the row.
+  const head = cols.map(([, t]) => `<th>${t}</th>`).join("");
+  const body = rows.map((r) => {
+    const first = `<td>${r._color ? `<span class="swatch" style="background:${r._color}"></span>` : ""}`
+                + `<strong>${r._label}</strong>${r._sub ? ` <span class="muted">${r._sub}</span>` : ""}</td>`;
+    const rest = cols.slice(1).map(([k, , dp, signed]) => {
+      const v = r[k];
+      if (typeof v === "string") return `<td class="num">${v}</td>`;
+      return `<td class="num ${signed ? signClass(v) : ""}">${fmt(v, dp)}</td>`;
+    }).join("");
+    return `<tr${r._strong ? ' class="grouphead"' : ""}>${first}${rest}</tr>`;
+  }).join("");
+  el.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}</tbody>`;
+}
+
+function scaleTo(series, vol) {
+  // The series rescaled so its annualised volatility is `vol` (null keeps it raw).
+  if (!vol) return series;
+  const mean = series.reduce((s, v) => s + v, 0) / series.length;
+  const sd = Math.sqrt(series.reduce((s, v) => s + (v - mean) ** 2, 0) / series.length);
+  const k = sd > 0 ? (vol / Math.sqrt(12)) / sd : 1;
+  return series.map((v) => v * k);
+}
+
+function cumSum(series) {
+  let acc = 0;
+  return series.map((v) => { acc += v; return acc * 100; });
+}
+
+function setScatter(existing, canvas, datasets, opts) {
+  if (existing && existing.data.datasets.length === datasets.length) {
+    datasets.forEach((d, i) => { Object.assign(existing.data.datasets[i], d); });
+    Object.assign(existing.options.scales.x, opts.x);
+    Object.assign(existing.options.scales.y, opts.y);
+    existing.update("none");
+    return existing;
+  }
+  if (existing) existing.destroy();
+  return new Chart(canvas, {
+    type: "scatter",
+    data: { datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: "nearest", intersect: true },
+      scales: {
+        x: { type: "linear", title: { display: true, text: "Volatility, % per year" },
+             grid: { color: "rgba(128,128,128,.18)" }, ...opts.x },
+        y: { type: "linear", title: { display: true, text: "Mean return, % per year" },
+             grid: { color: "rgba(128,128,128,.18)" }, ...opts.y },
+      },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 11 },
+                  filter: (item) => !item.text.startsWith("_") } },
+        tooltip: { callbacks: { label: (c) => {
+          const d = c.dataset;
+          if (d._names) return `${d._names[c.dataIndex]}  ${fmt(c.parsed.y, 1)}% at ${fmt(c.parsed.x, 1)}% vol`;
+          return `${d.label}  ${fmt(c.parsed.y, 1)}% at ${fmt(c.parsed.x, 1)}% vol`;
+        } } },
+      },
+    },
+  });
+}
+
+function verdict(mine, rival, cmp, T) {
+  const p = cmp.decisionP;
+  const ps = `p = ${fmt(p, 3)}`;
+  if (cmp.nested) {
+    const sameSet = cmp.thetaA.k === cmp.thetaB.k;
+    if (sameSet) return `${mine} and ${rival} are the same factors, so there is nothing to test.`;
+    const mineLarger = cmp.thetaA.k > cmp.thetaB.k;
+    if (mineLarger) {
+      return p <= 0.05
+        ? `${mine} improves on ${rival} on this sample. The factors it adds are not spanned by ${rival} (${ps}).`
+        : `Not enough evidence that ${mine} improves on ${rival}. The factors it adds are spanned by ${rival} (${ps}).`;
+    }
+    return p <= 0.05
+      ? `${rival} improves on ${mine} on this sample. The factors it adds are not spanned by ${mine} (${ps}).`
+      : `Not enough evidence that ${rival} improves on ${mine}. The factors it adds are spanned by ${mine} (${ps}).`;
+  }
+  if (cmp.pretestHetero > 0.05) {
+    return `${mine} and ${rival} are economically very similar on this sample. The factors they do not share are spanned by the ones they do (spanning ${ps}), so the squared Sharpe ratios are not distinguishable.`;
+  }
+  if (p <= 0.05) {
+    return cmp.difference > 0
+      ? `${mine} delivers a better attainable mean-variance trade-off than ${rival} on this sample (${ps}).`
+      : `${rival} delivers a better attainable mean-variance trade-off than ${mine} on this sample (${ps}).`;
+  }
+  return `Not enough evidence that either of ${mine} and ${rival} dominates the other (${ps}). The steeper line is only marginally above the other.`;
+}
+
+function clearModels(msg) {
+  for (const id of ["m-model", "m-compare"]) $(id).innerHTML = "";
+  $("m-verdicts").innerHTML = "";
+  $("m-model-foot").textContent = "";
+  for (const id of ["m-frontier-note", "m-cum-note", "m-model-note", "m-compare-note"]) $(id).textContent = msg || "";
+  if (mFrontier) { mFrontier.destroy(); mFrontier = null; }
+  if (mCum) { mCum.destroy(); mCum = null; }
+}
+
+async function renderModels() {
+  renderModelChips(); renderSaved(); renderAgainst(); fillUniverse();
+  const name = ($("m-name").value || "My model").trim() || "My model";
+  if (!models.cart.length) {
+    modelsCtl.setDates([], models.range);
+    clearModels("add factors above");
+    return;
+  }
+  await loadBenchmarks();
+  const loaded = await Promise.all(models.cart.map((e) => loadSeries(e.dataset, e.sort, e.rt, e.band, e.w)));
+
+  // One column per distinct series. The model's factors first, then every rival's, so a
+  // factor shared with a rival is ONE column and the nesting test can see it.
+  const reg = [];
+  const add = (key, label, dates, values) => {
+    let i = reg.findIndex((r) => r.key === key);
+    if (i < 0) { reg.push({ key, label, dates, values, lookup: new Map(dates.map((d, j) => [d, values[j]])) }); i = reg.length - 1; }
+    return i;
+  };
+  const myIdx = models.cart.map((e, i) => add(cartKey(e), labelFor(e.factor), loaded[i].dates, loaded[i].cols[e.factor] || []));
+  const rt0 = models.cart[0].rt;
+  const rivals = [];
+  for (const r of rivalList()) {
+    if (!models.against.has(r.key)) continue;
+    if (r.preset) {
+      const cols = presetColumns(r.preset, rt0).filter((c) => c in BENCH.cols);
+      if (!cols.length) continue;
+      rivals.push({ ...r, idx: cols.map((c) => add(`bench:${c}`, benchLabel(c), BENCH.dates, BENCH.cols[c])) });
+    } else {
+      const ld = await Promise.all(r.saved.cart.map((e) => loadSeries(e.dataset, e.sort, e.rt, e.band, e.w)));
+      rivals.push({ ...r, idx: r.saved.cart.map((e, j) => add(cartKey(e), labelFor(e.factor), ld[j].dates, ld[j].cols[e.factor] || [])) });
+    }
+  }
+
+  // The axis is every month any FACTOR has (the benchmark file runs past the factors, on
+  // the macro columns' frontier, and must not stretch the slider there); the sample is the
+  // slider range on it; the common months are those every series has a value for.
+  const all = new Set();
+  reg.forEach((r) => { if (!r.key.startsWith("bench:")) r.dates.forEach((d) => all.add(d)); });
+  const axis = [...all].sort();
+  modelsCtl.setDates(axis, models.range);
+  models.range = modelsCtl.current();
+  const inRange = axis.filter((d) => d >= models.range.from && d <= models.range.to);
+  const common = inRange.filter((d) => reg.every((r) => Number.isFinite(r.lookup.get(d))));
+  const T = common.length;
+  if (T < 24) { clearModels(`only ${T} months are shared by every series, twenty-four is the least`); return; }
+  const X = common.map((d) => reg.map((r) => r.lookup.get(d)));
+  const lag = nwLags(T);
+  const span = `${common[0].slice(0, 7)} to ${common[T - 1].slice(0, 7)}, ${T} months`;
+
+  // --- the model
+  const F = columns(X, myIdx);
+  const mine = squaredSharpe(F);
+  if (!Number.isFinite(mine.theta2) || collinear(mine.cov)) {
+    clearModels("the factors in this model are linear combinations of each other, drop one");
+    return;
+  }
+  const tp = tangencyPortfolio(F);
+  const gross = tp.weights.reduce((s, w) => s + Math.abs(w), 0);
+  const first = rivals[0];
+  const rows = models.cart.map((e, i) => {
+    const y = F.map((row) => row[i]);
+    const st = computeStats(y, null, y.map(() => true));
+    const r = { _label: labelFor(e.factor), _sub: shortSlice(e), _color: PALETTE[(i + 1) % PALETTE.length],
+                weight: 100 * tp.weights[i] / gross, mean_ann: st.mean_ann, tstat: st.tstat,
+                vol_ann: st.vol_ann, sharpe: st.sharpe };
+    if (first) {
+      const o = olsNW(y, columns(X, first.idx), lag);
+      r.alpha_ann = o.alpha * 12 * 100; r.alpha_t = o.t;
+    }
+    return r;
+  });
+  const cols = [["_label", "Factor"], ["weight", "Weight %", 1, true], ["mean_ann", "Return % p.a.", 2, true],
+                ["tstat", "t-stat", 2, true], ["vol_ann", "Vol % p.a.", 2, false], ["sharpe", "Sharpe", 2, true]];
+  if (first) cols.push(["alpha_ann", `Alpha % p.a. on ${first.label}`, 2, true], ["alpha_t", "t(alpha)", 2, true]);
+  simpleTable($("m-model"), cols, rows);
+  const srAnn = Math.sqrt(Math.max(mine.adjusted, 0) * 12);
+  $("m-model-note").textContent = `${name} · ${span}`;
+  $("m-model-foot").textContent =
+    `Weights are the tangency portfolio's, V⁻¹μ, as a share of gross exposure. The model's `
+    + `bias-adjusted squared Sharpe ratio is ${fmt(mine.adjusted, 3)} per month `
+    + `(p = ${fmt(mine.p, 3)} against zero), an annualised Sharpe ratio of ${fmt(srAnn, 2)}. `
+    + `t-statistics use Newey-West with ${lag} lag${lag === 1 ? "" : "s"}.`;
+
+  // --- the comparison
+  const cmpRows = [], verdicts = [];
+  for (const r of rivals) {
+    const theirs = squaredSharpe(columns(X, r.idx));
+    if (collinear(theirs.cov)) { verdicts.push(`${r.label} could not be tested, its factors are collinear on this sample.`); continue; }
+    const cmp = compareModels(X, myIdx, r.idx, lag);
+    const o = olsNW(tp.series, columns(X, r.idx), lag);
+    const ir = o.residSd > 0 ? (o.alpha / o.residSd) * Math.sqrt(12) : null;
+    cmpRows.push({ _label: r.label, _sub: r.idx.map((i) => reg[i].label).join(", "),
+                   k: r.idx.length, theta: theirs.adjusted, p0: theirs.p, diff: cmp.difference,
+                   test: cmp.nested ? "nested, GRS" : (cmp.pretestHetero > 0.05 ? "non-nested, spanned" : "non-nested, normal"),
+                   p: cmp.decisionP, alpha: o.alpha * 12 * 100, alpha_t: o.t, ir });
+    verdicts.push(verdict(name, r.label, cmp, T));
+  }
+  simpleTable($("m-compare"), [["_label", "Model"], ["k", "K", 0, false], ["theta", "θ̂² per month", 3, true],
+                                ["p0", "p (θ² = 0)", 3, false], ["diff", `${name} minus this`, 3, true],
+                                ["test", "Test"], ["p", "p", 3, false],
+                                ["alpha", `Alpha of ${name} % p.a.`, 2, true], ["alpha_t", "t(alpha)", 2, true],
+                                ["ir", "Info. ratio", 2, true]], cmpRows);
+  $("m-compare-note").textContent = rivals.length ? `${name}, θ̂² ${fmt(mine.adjusted, 3)}, against ${rivals.length} model${rivals.length === 1 ? "" : "s"}` : "tick a model to compare against";
+  $("m-verdicts").innerHTML = verdicts.map((v) => `<p class="method" style="margin-top:8px">${v}</p>`).join("");
+
+  // --- the frontier, over the chosen slice's factors that have every month of the sample
+  let uniLabel = "the model's factors", R = F, names = models.cart.map((e) => labelFor(e.factor));
+  const uniEntry = models.cart.find((e) => sliceKey(e) === models.universe);
+  if (uniEntry) {
+    const data = await loadSeries(uniEntry.dataset, uniEntry.sort, uniEntry.rt, uniEntry.band, uniEntry.w);
+    const lk = new Map(data.dates.map((d, i) => [d, i]));
+    const rowsIdx = common.map((d) => lk.get(d));
+    const ok = rowsIdx.every((i) => i !== undefined);
+    const keep = ok ? Object.keys(data.cols).filter((f) => rowsIdx.every((i) => Number.isFinite(data.cols[f][i]))) : [];
+    if (keep.length >= 2 && T > keep.length + 10) {
+      R = rowsIdx.map((i) => keep.map((f) => data.cols[f][i]));
+      names = keep.map((f) => labelFor(f));
+      uniLabel = `${keep.length} of ${Object.keys(data.cols).length} factors of ${shortSlice(uniEntry)}`;
+    } else if (keep.length >= 2) {
+      uniLabel = `the model's factors (${keep.length} factors need more than ${keep.length + 10} months, the sample has ${T})`;
+    }
+  }
+  const fr = frontier(R, [0]);
+  const A = 12 * 100, S = Math.sqrt(12) * 100;                      // annualising, mean and vol
+  const assetPts = fr.means.map((m, i) => ({ x: S * Math.sqrt(fr.cov[i][i]), y: A * m }));
+  const xMax = Math.max(...assetPts.map((p) => p.x)) * 1.08;
+  const yAbs = Math.max(...assetPts.map((p) => Math.abs(p.y)));
+  const targets = Array.from({ length: 81 }, (_, i) => (-1.2 * yAbs + 2.4 * yAbs * i / 80) / A);
+  const curve = frontier(R, targets).vols.map((v, i) => ({ x: S * v, y: A * targets[i] })).filter((p) => p.x <= xMax * 1.5);
+  const lineTo = (slope) => [{ x: 0, y: 0 }, { x: xMax, y: xMax * slope * Math.sqrt(12) }];
+  const myPts = new Set(models.cart.map((e) => labelFor(e.factor)));
+  const datasets = [
+    { label: `Frontier, Sharpe ${fmt(fr.slope * Math.sqrt(12), 2)}`, data: curve, showLine: true, pointRadius: 0,
+      borderColor: "#8d99ae", borderWidth: 1.6, backgroundColor: "#8d99ae", tension: 0.3 },
+    { label: `Frontier line`, data: lineTo(fr.slope), showLine: true, pointRadius: 0, borderDash: [5, 4],
+      borderColor: "#8d99ae", borderWidth: 1.2, backgroundColor: "#8d99ae" },
+    { label: `${name}, Sharpe ${fmt(Math.sqrt(Math.max(mine.theta2, 0)) * Math.sqrt(12), 2)}, θ̂² ${fmt(mine.adjusted, 3)}`,
+      data: lineTo(Math.sqrt(Math.max(mine.theta2, 0))), showLine: true, pointRadius: 0,
+      borderColor: PALETTE[0], borderWidth: 2.4, backgroundColor: PALETTE[0] },
+  ];
+  rivals.forEach((r, i) => {
+    const th = squaredSharpe(columns(X, r.idx));
+    datasets.push({ label: `${r.label}, Sharpe ${fmt(Math.sqrt(Math.max(th.theta2, 0)) * Math.sqrt(12), 2)}, θ̂² ${fmt(th.adjusted, 3)}`,
+                    data: lineTo(Math.sqrt(Math.max(th.theta2, 0))), showLine: true, pointRadius: 0,
+                    borderColor: PALETTE[(i + 3) % PALETTE.length], borderWidth: 1.6, borderDash: [3, 3],
+                    backgroundColor: PALETTE[(i + 3) % PALETTE.length] });
+  });
+  datasets.push({ label: "_assets", data: assetPts.filter((_, i) => !myPts.has(names[i])), _names: names.filter((n) => !myPts.has(n)),
+                  pointRadius: 3, backgroundColor: "rgba(128,128,128,.35)", borderColor: "rgba(128,128,128,.35)" });
+  datasets.push({ label: "_mine", data: assetPts.filter((_, i) => myPts.has(names[i])), _names: names.filter((n) => myPts.has(n)),
+                  pointRadius: 5.5, backgroundColor: PALETTE[0], borderColor: "#fff", borderWidth: 1.2 });
+  mFrontier = setScatter(mFrontier, $("m-frontier"), datasets,
+    { x: { min: 0, max: xMax }, y: { min: -1.25 * yAbs, max: 1.25 * yAbs } });
+  $("m-frontier-note").textContent = `${uniLabel} · ${span}`;
+
+  // --- cumulative return of the tangency portfolio, beside its constituents
+  const raw = $("m-raw").checked;
+  const vol = raw ? null : VOL_TARGET;
+  const cumSets = [{ label: `${name}, optimally weighted`, data: cumSum(scaleTo(tp.series, vol)),
+                     borderColor: PALETTE[0], backgroundColor: PALETTE[0], borderWidth: 2.6 }];
+  models.cart.forEach((e, i) => {
+    cumSets.push({ label: labelFor(e.factor), data: cumSum(scaleTo(F.map((row) => row[i]), vol)),
+                   borderColor: PALETTE[(i + 1) % PALETTE.length], backgroundColor: PALETTE[(i + 1) % PALETTE.length],
+                   borderWidth: 1.4 });
+  });
+  mCum = setChart(mCum, $("m-cum"), common, cumSets);
+  $("m-cum-note").textContent = raw ? `raw monthly returns, summed · ${span}` : `every line scaled to ${VOL_TARGET * 100}% volatility per year · ${span}`;
+}
+
+function collinear(V) {
+  // The factors are linear combinations of each other when the covariance's smallest
+  // Cholesky pivot is a negligible share of its diagonal. Such a model has no tangency
+  // portfolio and no test; say so rather than print a number.
+  const n = V.length;
+  const L = Array.from({ length: n }, () => new Array(n).fill(0));
+  let worst = Infinity;
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j <= i; j++) {
+      let s = V[i][j];
+      for (let k = 0; k < j; k++) s -= L[i][k] * L[j][k];
+      if (i === j) {
+        if (!(s > 0)) return true;
+        L[i][i] = Math.sqrt(s);
+        worst = Math.min(worst, s / V[i][i]);
+      } else {
+        L[i][j] = s / L[j][j];
+      }
+    }
+  }
+  return worst < 1e-8;
+}
+
+function onModelsSample(range) {
+  models.range = range;
+  renderModels();
 }
 
 /* ------------------------------------------------- the info buttons
@@ -1547,7 +2514,7 @@ function toggleHelp(btn) {
   const again = openHelp && openHelp.btn === btn;
   closeHelp();
   if (again) return;
-  const host = btn.closest(".field, .check-wrap");
+  const host = btn.closest(".field, .check-wrap, h2, .quick-label");
   if (!host) return;
   const el = document.createElement("div");
   el.className = "pop";
@@ -1639,6 +2606,10 @@ function renderAbout() {
                        <td><code>${b}</code></td></tr>`).join("");
 
   math.push(["eq-capmb", "r_t = \\alpha + \\beta\\, MKT_t + \\varepsilon_t"]);
+  math.push(["eq-theta", "\\hat\\theta^2 = \\hat\\mu' \\hat V^{-1} \\hat\\mu, \\qquad "
+                         + "\\hat\\theta^2_{\\mathrm{adj}} = \\frac{T-K-2}{T}\\,\\hat\\theta^2 - \\frac{K}{T}"]);
+  math.push(["eq-dt", "d_t = 2\\,(u_{At} - u_{Bt}) - (u_{At}^2 - u_{Bt}^2), \\qquad "
+                      + "u_{At} = \\tfrac{T-K_A-2}{T}\\,\\hat\\mu_A' \\hat V_A^{-1}(f_{At} - \\hat\\mu_A)"]);
   $("about-body").innerHTML = `<div class="prose">
     <h2>What this data is</h2>
     <p>At each month-end, bonds are ranked on a characteristic &mdash; a credit spread, a
@@ -1762,6 +2733,43 @@ function renderAbout() {
        drawdown is measured on that path. A long&ndash;short portfolio is zero-cost and its
        cumulative value can be negative, so geometric compounding is not well defined for it.</p>
 
+    <h2>Factor models</h2>
+    <p>The Models tab tests a factor model the way
+       <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson, Mueller and Robotti (2023)</a>
+       test the bond factor models in the literature. A model is a set of K traded factors. Its
+       performance is the maximum squared Sharpe ratio a combination of its factors attains,
+       estimated from the sample means and covariance and adjusted for the upward bias of the
+       sample estimate, as in
+       <a href="https://doi.org/10.1017/S0022109019000589">Barillas, Kan, Robotti and Shanken (2019)</a>.</p>
+    <div class="eq" id="eq-theta">theta^2 = mu' V^-1 mu,   theta^2_adj = (T - K - 2) / T * theta^2 - K / T</div>
+    <p>The p-value against a squared Sharpe ratio of zero uses T times the sample value as a
+       chi-square with K degrees of freedom. The tangency portfolio's weights are proportional
+       to V<sup>&minus;1</sup>&mu;, and its return is what the cumulative chart draws, beside
+       each factor on its own, every line scaled to one volatility so the slopes compare.</p>
+    <p><strong>Two models are compared on the same months.</strong> When one model's factors
+       are a subset of the other's, the larger model improves on the smaller one exactly when
+       the excluded factors have alphas on it, so the test is the Gibbons, Ross and Shanken
+       (1989) test of those alphas, in the heteroskedasticity-robust form. When neither nests
+       the other, a spanning pretest first asks whether the factors the models do not share are
+       spanned by the ones they do. If they are, the models are equivalent. If not, the
+       difference in bias-adjusted squared Sharpe ratios is asymptotically normal, with a
+       variance from the influence function below, estimated with Newey-West and the same
+       lags as the rest of the page.</p>
+    <div class="eq" id="eq-dt">d_t = 2 (u_At - u_Bt) - (u_At^2 - u_Bt^2)</div>
+    <p>The frontier figure draws the mean-variance frontier of every factor in a slice that
+       has a value in every month of the sample, and a line from the origin for each model
+       with the slope of its maximum Sharpe ratio. A model near the frontier's own line is
+       near mean-variance efficient. The benchmark models are the bond CAPM, the credit
+       component of the bond market, a two-factor credit-and-Treasury model in the spirit of
+       van Binsbergen, Nozawa and Schwert (2025), and the Fama and French (1993) five-factor
+       model, whose three stock factors are read from French's three-factor file and whose
+       DEF and TERM are built by the pipeline as long corporate minus long government and long
+       government minus the bill. The pipeline's own <code>term</code> is a total return and
+       is shipped here net of the bill as <code>term_x</code>.</p>
+    <p>The statistics are computed in the browser and are checked, number for number, against
+       a reference implementation in Python on the published series before each release of
+       this page.</p>
+
     <h2>Datasets</h2>
     <div class="scroll"><table>
       <thead><tr><th>Dataset</th><th>Sort</th><th>Sample</th><th>Months</th>
@@ -1824,16 +2832,50 @@ async function boot() {
     return;
   }
 
-  for (const p of ["e", "c"]) {
+  for (const p of ["e", "c", "m"]) {
     fill($(`${p}-dataset`), productEntries(), "extended");
     fill($(`${p}-sort`), Object.entries(META.sorts), "single");
     syncProductControls(p);
   }
   $("e-rt").value = "exc"; $("e-band").value = "all"; $("e-w").value = "vw";
   $("c-rt").value = "exc"; $("c-band").value = "all"; $("c-w").value = "vw";
+  $("m-rt").value = "exc"; $("m-band").value = "all"; $("m-w").value = "vw";
 
   exploreCtl = sampleControl("e", onExploreSample);
   compareCtl = sampleControl("c", (range) => { compare.range = range; renderCompare(); });
+  modelsCtl = sampleControl("m", onModelsSample);
+  if (META.models) META.models.presets.forEach((p) => models.against.add(p.key));
+
+  for (const id of ["m-dataset", "m-sort"]) {
+    $(id).onchange = () => { syncProductControls("m"); refreshFactorList("m"); };
+  }
+  $("m-band").onchange = () => refreshFactorList("m");
+  $("m-add").onclick = () => {
+    const e = modelPick();
+    $("m-quick-note").textContent = "";
+    if (models.cart.some((x) => cartKey(x) === cartKey(e))) return;
+    if (models.cart.length >= 10) { alert("Ten factors in one model is the limit."); return; }
+    models.cart.push(e);
+    renderModels();
+  };
+  $("m-clear").onclick = () => { models.cart = []; $("m-quick-note").textContent = ""; renderModels(); };
+  document.querySelectorAll(".controls.quick button[data-maxis]").forEach((b) => {
+    b.onclick = () => addModelAcross(b.dataset.maxis);
+  });
+  $("m-save").onclick = () => {
+    if (!models.cart.length) return;
+    let name = ($("m-name").value || "My model").trim() || "My model";
+    const taken = new Set(models.saved.map((x) => x.name));
+    let k = 2;
+    while (taken.has(name)) name = `${($("m-name").value || "My model").trim()} (${k++})`;
+    models.saved.push({ name, cart: models.cart.map((e) => ({ ...e })) });
+    if (models.saved.length > 10) models.saved.shift();
+    $("m-name").value = `Model ${models.saved.length + 1}`;
+    renderModels();
+  };
+  $("m-name").oninput = () => renderModels();
+  $("m-universe").onchange = () => { models.universe = $("m-universe").value; renderModels(); };
+  $("m-raw").onchange = () => renderModels();
 
   // ❗A tick survives every control. The picks are signals, resolved to the slice's factor
   // on each render, so switching sort or universe compares the same factors, not none.
@@ -1868,7 +2910,8 @@ async function boot() {
     b.onclick = () => addAcross(b.dataset.axis);
   });
 
-  const tabs = { explore: "panel-explore", compare: "panel-compare", about: "panel-about" };
+  const tabs = { explore: "panel-explore", compare: "panel-compare", models: "panel-models",
+                 about: "panel-about" };
   for (const [name, panel] of Object.entries(tabs)) {
     $(`tab-${name}`).onclick = () => {
       for (const [n, p] of Object.entries(tabs)) {
@@ -1887,6 +2930,8 @@ async function boot() {
 
   mountHelp();
   refreshCompareFactors();
+  refreshFactorList("m");
+  renderModels();
   renderChips();
   renderAbout();
   await renderExplore();

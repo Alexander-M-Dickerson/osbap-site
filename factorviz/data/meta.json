@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-19T00:08:04+00:00",
+  "built_utc": "2026-09-19T01:05:34+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -11,7 +11,120 @@
     },
     "source": "PUBLIC_REPO/stage2/output/blocks/stage1/factors_merged.parquet",
     "min_months": 24,
-    "note": "alpha and beta are null below the minimum"
+    "note": "alpha and beta are null below the minimum",
+    "columns": [
+      "crf",
+      "crf_bns",
+      "crf_cls",
+      "crfx",
+      "defb",
+      "drf",
+      "drf_bns",
+      "drf_cls",
+      "drfx",
+      "lrf",
+      "lrf_bns",
+      "lrf_cls",
+      "lrfx",
+      "mktb",
+      "mktb_bns",
+      "mktb_cls",
+      "mktbx",
+      "rf",
+      "termb",
+      "term_x",
+      "term_x_bns",
+      "term_x_cls",
+      "mktrf3",
+      "smb3",
+      "hml3"
+    ],
+    "ff3": {
+      "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip",
+      "fetched_utc": "2026-09-19T00:42:07+00:00",
+      "sha256": "b840dba55d319f4818fc7300e65c52eff5f64870c8d495fa58ff5d4cd749f5eb",
+      "bytes": 13067,
+      "rows": 1201,
+      "span": [
+        "1926-07-31",
+        "2026-07-31"
+      ],
+      "columns": {
+        "Mkt-RF": "mktrf3",
+        "SMB": "smb3",
+        "HML": "hml3"
+      }
+    }
+  },
+  "models": {
+    "presets": [
+      {
+        "key": "mktb_exc",
+        "label": "MKTB (r - rf)",
+        "columns": {
+          "*": [
+            "mktb"
+          ]
+        },
+        "blurb": "The bond market over the one-month Treasury bill. The bond CAPM."
+      },
+      {
+        "key": "mktb_credit",
+        "label": "MKTB (credit)",
+        "columns": {
+          "exc": [
+            "mktbx"
+          ],
+          "dur": [
+            "mktbx"
+          ],
+          "dbns": [
+            "mktb_bns"
+          ],
+          "dcls": [
+            "mktb_cls"
+          ]
+        },
+        "blurb": "The bond market over its duration-matched Treasury portfolio, the credit component, matched to the model's return definition."
+      },
+      {
+        "key": "bns2",
+        "label": "BNS two-factor",
+        "columns": {
+          "exc": [
+            "mktbx",
+            "term_x"
+          ],
+          "dur": [
+            "mktbx",
+            "term_x"
+          ],
+          "dbns": [
+            "mktb_bns",
+            "term_x_bns"
+          ],
+          "dcls": [
+            "mktb_cls",
+            "term_x_cls"
+          ]
+        },
+        "blurb": "The credit component and the Treasury component of the bond market, each over the bill, in the spirit of van Binsbergen, Nozawa and Schwert (2025)."
+      },
+      {
+        "key": "ff5_1993",
+        "label": "FF (1993) five-factor",
+        "columns": {
+          "*": [
+            "mktrf3",
+            "smb3",
+            "hml3",
+            "defb",
+            "termb"
+          ]
+        },
+        "blurb": "Fama and French (1993), the three stock factors from French's three-factor file and the two bond factors, DEF as long corporate minus long government and TERM as long government minus the bill, built by the pipeline from the bond panel and CRSP Treasuries."
+      }
+    ]
   },
   "windows": [
     "full",
@@ -264,6 +377,26 @@
     "align": {
       "title": "Aligned sample",
       "text": "Selected series can cover different months, because datasets start in different years and some characteristics only exist after 2002. With this on, every series is cut to the months they all have and the statistics are recomputed on that sample, so the comparison is like for like."
+    },
+    "m_against": {
+      "title": "Benchmark models",
+      "text": "The models yours is tested against. MKTB over the bill is the bond CAPM. MKTB credit is the market over its duration-matched Treasury portfolio, matched to your first factor's return definition. The BNS two-factor model adds the Treasury component, over the bill. The FF (1993) five-factor model is Fama and French's three stock factors from their three-factor file with the DEF and TERM bond factors, built by the pipeline from long corporate and long government bonds. A model you save appears here too."
+    },
+    "m_frontier": {
+      "title": "The frontier",
+      "text": "The mean-variance frontier of every factor in the chosen slice that has a value in every month of the sample, in annualised terms. The grey dashed line from the origin is the highest Sharpe ratio any combination of them attains. Each model's line has the slope of its own maximum Sharpe ratio, the square root of its squared Sharpe ratio, so a model close to the grey line is close to mean-variance efficient and one far below is far from it. The dots are the factors, yours in colour. When the fully invested tangency portfolio sits on the inefficient branch the frontier line shows the upper asymptote instead, following Gospodinov and Robotti (2021)."
+    },
+    "m_cum": {
+      "title": "Optimally weighted",
+      "text": "The cumulative return of the tangency portfolio of your model's factors, with weights proportional to the inverse covariance times the mean, beside each factor on its own. Every line is scaled to the same volatility so their slopes compare, and the sum of monthly returns is plotted because a long-short factor is zero-cost. Untick the scaling to see raw returns."
+    },
+    "m_model": {
+      "title": "The model",
+      "text": "One row per factor. The weight is its share of the tangency portfolio's gross exposure, the return and t-statistic its own mean, and the alpha its intercept when regressed on the first benchmark model ticked above, with a Newey-West t-statistic. The line under the table gives the model's bias-adjusted squared Sharpe ratio, the sample value times (T minus K minus 2) over T, minus K over T, and the p-value against zero from a chi-square with K degrees of freedom."
+    },
+    "m_tests": {
+      "title": "The tests",
+      "text": "Each row is a benchmark model on the same months. Its squared Sharpe ratio and the difference from yours are both bias-adjusted. When one model's factors are a subset of the other's, the test is the GRS test of the excluded factors' alphas on the smaller model, heteroskedasticity-robust. When neither nests the other, a spanning pretest first asks whether the factors the models do not share are spanned by the ones they do, and if not, the difference in squared Sharpe ratios is tested directly with a Newey-West standard error, as in Barillas, Kan, Robotti and Shanken (2019). The alpha is the intercept of your model's tangency portfolio on the benchmark's factors, and the information ratio is that alpha over the residual volatility, annualised. The sentences below the table say what the p-values allow."
     }
   },
   "groups": [
