@@ -439,6 +439,8 @@ const PALETTE = ["#1f4e79", "#c1121f", "#2a9d8f", "#e76f51", "#6a4c93", "#606c38
 
 // `range` is the sample as DATES, {from, to}, so it survives a change of dataset -- the
 // slider re-clamps it to the new product's months rather than keeping a meaningless index.
+// `picked` holds SIGNALS (base names, `cs` not `cs_wf_hy`) for the same reason: a tick
+// survives a change of sort or universe, resolved to that slice's factor by pickedKeys().
 const explore = { picked: new Set(), range: null, sortBy: "sharpe", asc: false };
 const compare = { cart: [], range: null };
 let exploreCtl = null, compareCtl = null;
@@ -1081,11 +1083,20 @@ function exploreLive(s) {
   return { data, x };
 }
 
-function pickedRows(rows) {
+function pickedKeys(s) {
+  // The ticked signals as this slice's factor keys, in tick order, dropping any the slice
+  // does not carry (Lehman-ICE has 83 of the 108). `cs` ticked on the single sort is
+  // `cs_wf` within firm and `cs_wf_hy` in high yield, and stays ticked through all of them.
+  const prod = META.products[`${s.dataset}_${s.sort}`];
+  const have = new Set(prod ? prod.factors : []);
+  return [...explore.picked].map((b) => factorName(b, s.sort, s.band)).filter((k) => have.has(k));
+}
+
+function pickedRows(rows, keys) {
   // The ticked factors as their own table, in the chart's order with the chart's colours.
   // Built from the UNSEARCHED rows: a factor stays selected when the search box hides it.
   const byKey = new Map(rows.map((r) => [r._key, r]));
-  return [...explore.picked].filter((f) => byKey.has(f)).map((f, i) => (
+  return keys.filter((f) => byKey.has(f)).map((f, i) => (
     { ...byKey.get(f), _color: PALETTE[i % PALETTE.length] }));
 }
 
@@ -1155,34 +1166,37 @@ async function renderExplore() {
     renderExplore();
   };
   const onPick = (f, on) => {
-    if (on) { if (explore.picked.size >= 10) { alert("Ten series at once is the limit -- untick one first."); renderExplore(); return; } explore.picked.add(f); }
-    else explore.picked.delete(f);
+    const b = baseName(f);
+    if (on) { if (explore.picked.size >= 10) { alert("Ten series at once is the limit -- untick one first."); renderExplore(); return; } explore.picked.add(b); }
+    else explore.picked.delete(b);
     renderExplore();
   };
 
   // The selected factors, above the chart, so a line and its numbers sit in one view. The
   // full table below is unchanged; this is the same rows, filtered, sorted the same way.
-  const picked = pickedRows(all);
+  const keys = pickedKeys(s);
+  const keySet = new Set(keys);
+  const picked = pickedRows(all, keys);
   $("e-picked-card").hidden = !picked.length;
   $("e-picked-note").textContent = picked.length ? `${picked.length} of ${all.length}` : "";
   renderTable($("e-picked"), picked, {
-    sortBy: explore.sortBy, asc: explore.asc, picked: explore.picked, grouped: false,
+    sortBy: explore.sortBy, asc: explore.asc, picked: keySet, grouped: false,
     onSort, onPick,
   });
 
   renderTable($("e-table"), rows, {
     sortBy: explore.sortBy, asc: explore.asc,
-    picked: explore.picked, grouped: $("e-group").checked,
+    picked: keySet, grouped: $("e-group").checked,
     onSort, onPick,
   });
 
-  await drawExploreChart(s, stats, flipOn);
+  await drawExploreChart(s, stats, flipOn, keys);
 }
 
-function exploreDatasets(s, stats, flipOn, data) {
+function exploreDatasets(s, stats, flipOn, data, keys) {
   const mask = rangeMask(data.dates, explore.range.from, explore.range.to);
   const labels = data.dates.filter((_, i) => mask[i]);
-  const datasets = [...explore.picked].map((f, i) => {
+  const datasets = keys.map((f, i) => {
     const flip = flipOn && isFlipped(stats, f, s.w, s.rt);
     const full = cumulative(data.cols[f] || [], mask, flip);
     return {
@@ -1195,17 +1209,17 @@ function exploreDatasets(s, stats, flipOn, data) {
   return { labels, datasets };
 }
 
-async function drawExploreChart(s, stats, flipOn) {
-  const picks = [...explore.picked];
+async function drawExploreChart(s, stats, flipOn, keys) {
   const note = $("e-chart-note");
-  if (!picks.length) {
+  if (!keys.length) {
     if (eChart) { eChart.destroy(); eChart = null; }
-    note.textContent = "tick factors in the table below";
+    note.textContent = explore.picked.size
+      ? "the selected factors are not in this dataset" : "tick factors in the table below";
     return;
   }
-  note.textContent = `${picks.length} selected`;
+  note.textContent = `${keys.length} selected`;
   const data = await loadSeries(s.dataset, s.sort, s.rt, s.band, s.w);
-  const { labels, datasets } = exploreDatasets(s, stats, flipOn, data);
+  const { labels, datasets } = exploreDatasets(s, stats, flipOn, data, keys);
   eChart = setChart(eChart, $("e-chart"), labels, datasets);
 }
 
@@ -1224,11 +1238,12 @@ function onExploreSample(range) {
   const rows = q ? all.filter((r) => `${r.factor} ${r._label}`.toLowerCase().includes(q)) : all;
   patchTable($("e-table"), rows, { sortBy: explore.sortBy, asc: explore.asc,
                                    grouped: $("e-group").checked });
-  patchTable($("e-picked"), pickedRows(all),
+  const keys = pickedKeys(s);
+  patchTable($("e-picked"), pickedRows(all, keys),
              { sortBy: explore.sortBy, asc: explore.asc, grouped: false });
   $("e-table-note").textContent = `${rows.length} factors · ${prod.span[0]} to ${prod.span[1]}`;
-  if (explore.picked.size && eChart) {
-    const { labels, datasets } = exploreDatasets(s, stats, flipOn, live.data);
+  if (keys.length && eChart) {
+    const { labels, datasets } = exploreDatasets(s, stats, flipOn, live.data, keys);
     eChart = setChart(eChart, $("e-chart"), labels, datasets);
   }
 }
@@ -1820,11 +1835,13 @@ async function boot() {
   exploreCtl = sampleControl("e", onExploreSample);
   compareCtl = sampleControl("c", (range) => { compare.range = range; renderCompare(); });
 
+  // ❗A tick survives every control. The picks are signals, resolved to the slice's factor
+  // on each render, so switching sort or universe compares the same factors, not none.
   for (const id of ["e-dataset", "e-sort"]) {
-    $(id).onchange = () => { syncProductControls("e"); explore.picked.clear(); renderExplore(); };
+    $(id).onchange = () => { syncProductControls("e"); renderExplore(); };
   }
   for (const id of ["e-rt", "e-band", "e-w", "e-flip", "e-group"]) {
-    $(id).onchange = () => { if (id === "e-band") explore.picked.clear(); renderExplore(); };
+    $(id).onchange = () => renderExplore();
   }
   $("e-search").oninput = () => renderExplore();
 
