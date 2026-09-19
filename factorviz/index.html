@@ -436,6 +436,7 @@
       <select id="m-w"></select></div>
     <div class="field"><label for="m-factor">Factor</label><select id="m-factor"></select></div>
     <button class="btn" id="m-add">Add factor</button>
+    <button class="btn ghost" id="m-move" title="move every factor already in the model to the dataset, sort, return definition, universe and weighting chosen above">Move model here</button>
     <button class="btn ghost" id="m-clear">Clear</button>
   </div>
 
@@ -2955,39 +2956,34 @@ async function boot() {
   modelsCtl = sampleControl("m", onModelsSample);
   if (META.models) META.models.presets.forEach((p) => models.against.add(p.key));
 
-  // ❗A picker change moves the WHOLE model when every factor in it shares the old value --
-  // a reader who built a model on one dataset and switches the dataset means "the same model
-  // on that dataset", not "the next factor I add". A model that deliberately mixes datasets
-  // is left alone and told so.
-  models.pickerPrev = modelPick();
-  const moveModel = (axis) => {
+  // ❗The picker describes the NEXT factor and never touches the model on its own. It did
+  // for a day, moving every factor when the reader changed a control, and that made a
+  // mixed model impossible to build: changing Sort to add a within-firm factor moved the
+  // single-sort ones first. Moving the model is an explicit button, and it moves every
+  // factor to the picker's whole selection, saying what it could not carry across.
+  for (const id of ["m-dataset", "m-sort"]) {
+    $(id).onchange = () => { syncProductControls("m"); refreshFactorList("m"); };
+  }
+  $("m-band").onchange = () => refreshFactorList("m");
+  $("m-move").onclick = () => {
+    if (!models.cart.length) return;
     const now = modelPick();
-    const prev = models.pickerPrev;
-    models.pickerPrev = now;
-    if (!models.cart.length || now[axis] === prev[axis]) return;
-    if (!models.cart.every((e) => e[axis] === prev[axis])) {
-      $("m-quick-note").textContent = `the model mixes ${axis === "dataset" ? "datasets" : axis === "w" ? "weightings" : axis + "s"}, so the picker only sets the next factor added`;
-      return;
-    }
-    const moved = [], dropped = [];
+    const moved = [], dropped = [], seen = new Set();
     for (const e of models.cart) {
-      const n = { ...e, [axis]: now[axis] };
+      const n = { ...e, dataset: now.dataset, sort: now.sort, rt: now.rt, band: now.band, w: now.w };
       n.factor = factorName(baseName(e.factor), n.sort, n.band);
       const prod = META.products[`${n.dataset}_${n.sort}`];
-      if (prod && prod.factors.includes(n.factor) && prod.return_types.includes(n.rt)) moved.push(n);
-      else dropped.push(labelFor(e.factor));
+      if (!prod || !prod.factors.includes(n.factor) || !prod.return_types.includes(n.rt)) { dropped.push(labelFor(e.factor)); continue; }
+      if (seen.has(cartKey(n))) continue;              // two variants of one signal collapse into one
+      seen.add(cartKey(n));
+      moved.push(n);
     }
     models.cart = moved;
-    $("m-quick-note").textContent = `moved the model to ${axis === "dataset" ? META.datasets[now.dataset].label : axis === "sort" ? META.sorts[now.sort] : axis === "rt" ? META.return_types[now.rt] : axis === "band" ? META.bands[now.band] : now.w.toUpperCase()}`
-      + (dropped.length ? `, dropped ${dropped.join(", ")} which it does not carry` : "");
+    $("m-quick-note").textContent = `moved the model to ${shortSlice(now)}`
+      + (dropped.length ? `, dropped ${dropped.join(", ")} which it does not carry` : "")
+      + (moved.length < models.cart.length + dropped.length ? "" : "");
     renderModels();
   };
-  for (const id of ["m-dataset", "m-sort"]) {
-    $(id).onchange = () => { syncProductControls("m"); refreshFactorList("m"); moveModel(id.slice(2)); };
-  }
-  $("m-band").onchange = () => { refreshFactorList("m"); moveModel("band"); };
-  $("m-rt").onchange = () => moveModel("rt");
-  $("m-w").onchange = () => moveModel("w");
   $("m-add").onclick = () => {
     const e = modelPick();
     $("m-quick-note").textContent = "";
