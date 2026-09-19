@@ -2808,10 +2808,6 @@ function renderAbout() {
                        <td><code>${b}</code></td></tr>`).join("");
 
   math.push(["eq-capmb", "r_t = \\alpha + \\beta\\, MKT_t + \\varepsilon_t"]);
-  math.push(["eq-theta", "\\hat\\theta^2 = \\hat\\mu' \\hat V^{-1} \\hat\\mu, \\qquad "
-                         + "\\hat\\theta^2_{\\mathrm{adj}} = \\frac{T-K-2}{T}\\,\\hat\\theta^2 - \\frac{K}{T}"]);
-  math.push(["eq-dt", "d_t = 2\\,(u_{At} - u_{Bt}) - (u_{At}^2 - u_{Bt}^2), \\qquad "
-                      + "u_{At} = \\tfrac{T-K_A-2}{T}\\,\\hat\\mu_A' \\hat V_A^{-1}(f_{At} - \\hat\\mu_A)"]);
   $("about-body").innerHTML = `<div class="prose">
     <h2>What this data is</h2>
     <p>At each month-end, bonds are ranked on a characteristic &mdash; a credit spread, a
@@ -2934,45 +2930,6 @@ function renderAbout() {
     <p>Charts plot the cumulative <em>sum</em> of monthly returns, in percent, and maximum
        drawdown is measured on that path. A long&ndash;short portfolio is zero-cost and its
        cumulative value can be negative, so geometric compounding is not well defined for it.</p>
-
-    <h2>Factor models</h2>
-    <p>The Models tab tests a factor model the way
-       <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson, Mueller and Robotti (2023)</a>
-       test the bond factor models in the literature. A model is a set of K traded factors. Its
-       performance is the maximum squared Sharpe ratio a combination of its factors attains,
-       estimated from the sample means and covariance and adjusted for the upward bias of the
-       sample estimate, as in
-       <a href="https://doi.org/10.1017/S0022109019000589">Barillas, Kan, Robotti and Shanken (2019)</a>.</p>
-    <div class="eq" id="eq-theta">theta^2 = mu' V^-1 mu,   theta^2_adj = (T - K - 2) / T * theta^2 - K / T</div>
-    <p>The p-value against a squared Sharpe ratio of zero uses T times the sample value as a
-       chi-square with K degrees of freedom. The tangency portfolio's weights are proportional
-       to V<sup>&minus;1</sup>&mu;, and its return is what the cumulative chart draws, beside
-       each factor on its own, every line scaled to one volatility so the slopes compare.</p>
-    <p><strong>Two models are compared on the same months.</strong> When one model's factors
-       are a subset of the other's, the larger model improves on the smaller one exactly when
-       the excluded factors have alphas on it, so the test is the Gibbons, Ross and Shanken
-       (1989) test of those alphas, in the heteroskedasticity-robust form. When neither nests
-       the other, a spanning pretest first asks whether the factors the models do not share are
-       spanned by the ones they do. If they are, the models are equivalent. If not, the
-       difference in bias-adjusted squared Sharpe ratios is asymptotically normal, with a
-       variance from the influence function below, estimated with Newey-West and the same
-       lags as the rest of the page.</p>
-    <div class="eq" id="eq-dt">d_t = 2 (u_At - u_Bt) - (u_At^2 - u_Bt^2)</div>
-    <p>The frontier figure draws the efficient frontier of every factor in a slice that
-       has a value in every month of the sample, with its minimum-variance and tangency
-       portfolios marked, and a line from the origin for each model with the slope of its
-       maximum Sharpe ratio, named where it ends. Factors are drawn with the sign that makes
-       their mean positive, which changes nothing about a frontier or a model. A model whose
-       line hugs the frontier is near mean-variance efficient. The benchmark models are the bond CAPM, the credit
-       component of the bond market, a two-factor credit-and-Treasury model in the spirit of
-       van Binsbergen, Nozawa and Schwert (2025), and the Fama and French (1993) five-factor
-       model, whose three stock factors are read from French's three-factor file and whose
-       DEF and TERM are built by the pipeline as long corporate minus long government and long
-       government minus the bill. The pipeline's own <code>term</code> is a total return and
-       is shipped here net of the bill as <code>term_x</code>.</p>
-    <p>The statistics are computed in the browser and are checked, number for number, against
-       a reference implementation in Python on the published series before each release of
-       this page.</p>
 
     <h2>Datasets</h2>
     <div class="scroll"><table>
