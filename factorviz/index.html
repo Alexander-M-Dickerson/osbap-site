@@ -2056,6 +2056,23 @@ function modelPick() {
 
 function sliceKey(e) { return `${e.dataset}_${e.sort}_${e.rt}_${e.band}_${e.w}`; }
 
+// The short codes for the axes on which a model's factors DIFFER, so "Value (IPR)" twice
+// becomes "Value (IPR) · SS" and "Value (IPR) · WF" (or · EW / · VW, · IG / · HY, the return
+// definition, the dataset). Nothing is appended when every factor shares the axis.
+const AXIS_CODE = {
+  dataset: { trace: "TRACE", extended: "L-ICE+TRACE", lehman_ice: "L-ICE" },
+  sort: { single: "SS", within_firm: "WF" },
+  band: { all: "All", ig: "IG", nig: "HY" },
+  w: { ew: "EW", vw: "VW" },
+};
+function modelLabels(cart) {
+  const varies = ["dataset", "sort", "rt", "band", "w"].filter((k) => new Set(cart.map((e) => e[k])).size > 1);
+  return cart.map((e) => {
+    const tags = varies.map((k) => (k === "rt" ? e.rt : AXIS_CODE[k][e[k]] || e[k]));
+    return labelFor(e.factor) + (tags.length ? " · " + tags.join(" ") : "");
+  });
+}
+
 function shortSlice(e) {
   return [META.datasets[e.dataset].label, META.sorts[e.sort], META.return_types[e.rt],
           META.bands[e.band], e.w.toUpperCase()].join(" · ");
@@ -2218,6 +2235,15 @@ const endLabels = {
     ctx.font = "600 11px " + getComputedStyle(document.body).fontFamily;
     ctx.textBaseline = "middle";
     const placed = [];
+    // point labels that sit near the right edge claim their row first, so a line's label is
+    // nudged off a factor's name rather than printed across it
+    chart.data.datasets.forEach((d) => {
+      if (!d._pointLabels) return;
+      d.data.forEach((p) => {
+        const px = x.getPixelForValue(p.x), py = y.getPixelForValue(p.y);
+        if (px > area.right - 150 && py >= area.top && py <= area.bottom) placed.push(py);
+      });
+    });
     const settle = (py) => {          // nudge a label off any earlier one within 13px
       let yy = py;
       for (let pass = 0; pass < 8; pass++) {
@@ -2346,7 +2372,34 @@ async function renderModels() {
     return;
   }
   await loadBenchmarks();
-  const loaded = await Promise.all(models.cart.map((e) => loadSeries(e.dataset, e.sort, e.rt, e.band, e.w)));
+  let loaded = await Promise.all(models.cart.map((e) => loadSeries(e.dataset, e.sort, e.rt, e.band, e.w)));
+
+  // ❗A model with a factor that has no months before 2002-08 -- a TRACE-only slice, or a
+  // signal that needs transaction prices -- cannot use the Lehman-ICE years at all, and in
+  // the TRACE era the extended and TRACE-only datasets are the same data (the G6 gate). So
+  // its Lehman-ICE + TRACE factors are shown as what they then are, TRACE-only, and the
+  // note says why. Driven by the factors' coverage, never by the slider, so dragging the
+  // sample never rewrites the model.
+  const traceStart = META.window_detail && META.window_detail.trace ? META.window_detail.trace.start : "2002-08-31";
+  const firstMonth = (data, f) => { const col = data.cols[f] || []; const i = col.findIndex((v) => Number.isFinite(v)); return i < 0 ? null : data.dates[i]; };
+  const traceOnly = models.cart.filter((e, i) => { const d = firstMonth(loaded[i], e.factor); return d && d >= traceStart; });
+  if (traceOnly.length && models.cart.some((e) => e.dataset === "extended")) {
+    const moved = [];
+    models.cart = models.cart.map((e) => {
+      if (e.dataset !== "extended") return e;
+      const n = { ...e, dataset: "trace" };
+      const prod = META.products[`trace_${n.sort}`];
+      if (!prod || !prod.factors.includes(n.factor) || !prod.return_types.includes(n.rt)) return e;
+      moved.push(labelFor(e.factor));
+      return n;
+    });
+    if (moved.length) {
+      if (models.universe && models.universe.startsWith("extended_")) models.universe = models.universe.replace(/^extended_/, "trace_");
+      $("m-quick-note").textContent = `${traceOnly.map((e) => labelFor(e.factor)).join(", ")} ${traceOnly.length === 1 ? "has" : "have"} no months before ${traceStart.slice(0, 7)}, so the model is on TRACE-only data, where Lehman-ICE + TRACE is the same data. Moved ${moved.join(", ")}.`;
+      renderModelChips(); fillUniverse();
+      loaded = await Promise.all(models.cart.map((e) => loadSeries(e.dataset, e.sort, e.rt, e.band, e.w)));
+    }
+  }
 
   // One column per distinct series. The model's factors first, then every rival's, so a
   // factor shared with a rival is ONE column and the nesting test can see it.
@@ -2371,16 +2424,21 @@ async function renderModels() {
     }
   }
 
-  // The axis is every month any FACTOR has (the benchmark file runs past the factors, on
-  // the macro columns' frontier, and must not stretch the slider there); the sample is the
-  // slider range on it; the common months are those every series has a value for.
-  const all = new Set();
-  reg.forEach((r) => { if (!r.key.startsWith("bench:")) r.dates.forEach((d) => all.add(d)); });
-  const axis = [...all].sort();
+  // ❗The axis is the months EVERY series has a value for -- the intersection, not the
+  // union. A union axis read "1973-01 to 2025-11, Full sample" over a model whose newest
+  // factor begins in 2003, while every number was measured on 2003 onward. Here Full
+  // sample is the sample, and the handles cannot be dragged onto months nothing can use.
+  const axis = [];
+  if (reg.length) {
+    const base = reg[0];
+    for (let i = 0; i < base.dates.length; i++) {
+      const d = base.dates[i];
+      if (reg.every((r) => Number.isFinite(r.lookup.get(d)))) axis.push(d);
+    }
+  }
   modelsCtl.setDates(axis, models.range);
   models.range = modelsCtl.current();
-  const inRange = axis.filter((d) => d >= models.range.from && d <= models.range.to);
-  const common = inRange.filter((d) => reg.every((r) => Number.isFinite(r.lookup.get(d))));
+  const common = models.range ? axis.filter((d) => d >= models.range.from && d <= models.range.to) : [];
   const T = common.length;
   if (T < 24) { clearModels(`only ${T} months are shared by every series, twenty-four is the least`); return; }
   const X = common.map((d) => reg.map((r) => r.lookup.get(d)));
@@ -2405,10 +2463,11 @@ async function renderModels() {
   const tp = tangencyPortfolio(F);
   const gross = tp.weights.reduce((s, w) => s + Math.abs(w), 0);
   const first = rivals[0];
+  const names_ = modelLabels(models.cart);
   const rows = models.cart.map((e, i) => {
     const y = F.map((row) => row[i]);
     const st = computeStats(y, null, y.map(() => true));
-    const r = { _label: labelFor(e.factor), _sub: shortSlice(e), _color: PALETTE[(i + 1) % PALETTE.length],
+    const r = { _label: names_[i], _sub: shortSlice(e), _color: PALETTE[(i + 1) % PALETTE.length],
                 _flipped: signs[i] < 0,
                 weight: 100 * tp.weights[i] / gross, mean_ann: st.mean_ann, tstat: st.tstat,
                 vol_ann: st.vol_ann, sharpe: st.sharpe };
@@ -2481,11 +2540,19 @@ async function renderModels() {
   // dots at |mean|: the frontier of a set of factors does not depend on their signs, and a
   // dot below zero is the same factor held the other way round
   const assetPts = fr.means.map((m, i) => ({ x: S * Math.sqrt(fr.cov[i][i]), y: A * Math.abs(m) }));
-  const xMax = Math.max(...assetPts.map((p) => p.x)) * 1.06;
+  // the model's factors are drawn from their own series, whatever slice the frontier is over,
+  // so every factor in the model is on the figure
+  const minePts = models.cart.map((e, i) => {
+    const col = F.map((row) => row[i]);
+    const m = col.reduce((a, v) => a + v, 0) / col.length;
+    const sd = Math.sqrt(col.reduce((a, v) => a + (v - m) ** 2, 0) / col.length);
+    return { x: S * sd, y: A * Math.abs(m) };
+  });
+  const xMax = Math.max(...assetPts.map((p) => p.x), ...minePts.map((p) => p.x)) * 1.06;
   const rivalTheta = rivals.map((r) => squaredSharpe(columns(X, r.idx)));
   const slopes = [Math.sqrt(Math.max(mine.theta2, 0)), ...rivalTheta.map((t) => Math.sqrt(Math.max(t.theta2, 0)))];
   const lineTop = Math.max(...slopes) * Math.sqrt(12) * xMax;
-  const yMax = Math.max(...assetPts.map((p) => p.y), lineTop) * 1.12;
+  const yMax = Math.max(...assetPts.map((p) => p.y), ...minePts.map((p) => p.y), lineTop) * 1.12;
   const yMin = -yMax * 0.02;
   // the upper branch, from the minimum-variance mean to the mean where the curve meets the
   // right edge (the larger root of A mu^2 - 2 B mu + D - Delta sigma^2 = 0)
@@ -2499,7 +2566,9 @@ async function renderModels() {
   const lineTo = (slope) => [{ x: 0, y: 0 }, { x: xMax, y: xMax * slope * Math.sqrt(12) }];
   // the model's factors are highlighted only when they come from the slice the frontier is
   // drawn from -- the same signal in another sort or dataset is a different factor
-  const myPts = new Set(models.cart.filter((e) => !uniEntry || sliceKey(e) === models.universe).map((e) => labelFor(e.factor)));
+  // a universe dot that IS a model factor (same slice, same factor) is left out so it is
+  // not drawn twice; the model's own dots come from their own series, below
+  const myPts = new Set(models.cart.filter((e) => uniEntry && sliceKey(e) === models.universe).map((e) => labelFor(e.factor)));
   const sr = (theta2) => fmt(Math.sqrt(Math.max(theta2, 0)) * Math.sqrt(12), 2);
   const inkSoft = cssVar("--ink-soft", "#5a5a5a");
   const datasets = [
@@ -2515,10 +2584,11 @@ async function renderModels() {
                     borderColor: PALETTE[(i + 3) % PALETTE.length], borderWidth: 1.6, borderDash: [4, 3],
                     backgroundColor: PALETTE[(i + 3) % PALETTE.length] });
   });
-  const otherNames = names.filter((n) => !myPts.has(n)), mineNames = names.filter((n) => myPts.has(n));
+  const otherNames = names.filter((n) => !myPts.has(n));
+  const mineNames = modelLabels(models.cart);
   datasets.push({ label: "_assets", data: assetPts.filter((_, i) => !myPts.has(names[i])), _names: otherNames,
                   pointRadius: 3, backgroundColor: "rgba(128,128,128,.35)", borderColor: "rgba(128,128,128,.35)" });
-  datasets.push({ label: "_mine", data: assetPts.filter((_, i) => myPts.has(names[i])), _names: mineNames,
+  datasets.push({ label: "_mine", data: minePts, _names: mineNames,
                   _pointLabels: mineNames, _labelColor: PALETTE[0],
                   pointRadius: 5.5, backgroundColor: PALETTE[0], borderColor: "#fff", borderWidth: 1.2 });
   // the two portfolios that anchor the curve, named on the plot
@@ -2545,7 +2615,7 @@ async function renderModels() {
   const cumSets = [{ label: `${name}, optimally weighted`, data: cumSum(scaleTo(tp.series, vol)),
                      borderColor: MODEL_INK(), backgroundColor: MODEL_INK(), borderWidth: 2.8 }];
   models.cart.forEach((e, i) => {
-    cumSets.push({ label: labelFor(e.factor), data: cumSum(scaleTo(F.map((row) => row[i]), vol)),
+    cumSets.push({ label: modelLabels(models.cart)[i], data: cumSum(scaleTo(F.map((row) => row[i]), vol)),
                    borderColor: PALETTE[(i + 1) % PALETTE.length], backgroundColor: PALETTE[(i + 1) % PALETTE.length],
                    borderWidth: 1.4 });
   });
@@ -3004,7 +3074,9 @@ async function boot() {
     models.cart.push(e);
     renderModels();
   };
-  $("m-clear").onclick = () => { models.cart = []; $("m-quick-note").textContent = ""; renderModels(); };
+  // Clear starts over, sample included: the handles keep their months while a model is being
+  // edited (adding a factor must not reset the sample), and a cleared model is a new start.
+  $("m-clear").onclick = () => { models.cart = []; models.range = null; $("m-quick-note").textContent = ""; renderModels(); };
   document.querySelectorAll(".controls.quick button[data-maxis]").forEach((b) => {
     b.onclick = () => addModelAcross(b.dataset.maxis);
   });
@@ -3029,6 +3101,7 @@ async function boot() {
   const toModels = (entries, from) => {
     if (!entries.length) return;
     models.cart = entries.slice(0, 10).map((e) => ({ ...e }));
+    models.range = null;
     $("m-quick-note").textContent = `${models.cart.length} factor${models.cart.length === 1 ? "" : "s"} from ${from}`
       + (entries.length > 10 ? ", the first ten" : "");
     $("tab-models").click();
