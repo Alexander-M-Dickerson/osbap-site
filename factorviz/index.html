@@ -2384,18 +2384,29 @@ async function renderModels() {
   const firstMonth = (data, f) => { const col = data.cols[f] || []; const i = col.findIndex((v) => Number.isFinite(v)); return i < 0 ? null : data.dates[i]; };
   const traceOnly = models.cart.filter((e, i) => { const d = firstMonth(loaded[i], e.factor); return d && d >= traceStart; });
   if (traceOnly.length && models.cart.some((e) => e.dataset === "extended")) {
-    const moved = [];
-    models.cart = models.cart.map((e) => {
-      if (e.dataset !== "extended") return e;
+    // ❗Moving can land on a factor the model already has on TRACE-only -- "all return
+    // definitions" on the extended picker did exactly that -- and two identical series make
+    // a singular model. The moved list is de-duplicated by key, as the Move button's is.
+    const moved = new Set(), dupes = new Set(), keep = [], seen = new Set(models.cart.filter((e) => e.dataset !== "extended").map(cartKey));
+    for (const e of models.cart) {
+      if (e.dataset !== "extended") { keep.push(e); continue; }
       const n = { ...e, dataset: "trace" };
       const prod = META.products[`trace_${n.sort}`];
-      if (!prod || !prod.factors.includes(n.factor) || !prod.return_types.includes(n.rt)) return e;
-      moved.push(labelFor(e.factor));
-      return n;
-    });
-    if (moved.length) {
+      if (!prod || !prod.factors.includes(n.factor) || !prod.return_types.includes(n.rt)) { keep.push(e); continue; }
+      if (seen.has(cartKey(n))) { dupes.add(labelFor(e.factor)); continue; }
+      seen.add(cartKey(n));
+      moved.add(labelFor(e.factor));
+      keep.push(n);
+    }
+    if (moved.size || dupes.size) {
+      models.cart = keep;
       if (models.universe && models.universe.startsWith("extended_")) models.universe = models.universe.replace(/^extended_/, "trace_");
-      $("m-quick-note").textContent = `${traceOnly.map((e) => labelFor(e.factor)).join(", ")} ${traceOnly.length === 1 ? "has" : "have"} no months before ${traceStart.slice(0, 7)}, so the model is on TRACE-only data, where Lehman-ICE + TRACE is the same data. Moved ${moved.join(", ")}.`;
+      // the picker follows, so the next factor added is coherent with the model
+      if ($("m-dataset").value === "extended") { $("m-dataset").value = "trace"; syncProductControls("m"); refreshFactorList("m"); }
+      const cause = [...new Set(traceOnly.map((e) => labelFor(e.factor)))];
+      $("m-quick-note").textContent = `${cause.join(", ")} ${cause.length === 1 ? "has" : "have"} no months before ${traceStart.slice(0, 7)}, so the model is on TRACE-only data, where Lehman-ICE + TRACE is the same data.`
+        + (moved.size ? ` Moved ${[...moved].join(", ")}.` : "")
+        + (dupes.size ? ` Dropped ${[...dupes].join(", ")}, already in the model on TRACE-only.` : "");
       renderModelChips(); fillUniverse();
       loaded = await Promise.all(models.cart.map((e) => loadSeries(e.dataset, e.sort, e.rt, e.band, e.w)));
     }
