@@ -2381,42 +2381,67 @@ async function renderModels() {
     if (keep.length >= 2 && T > keep.length + 10) {
       R = rowsIdx.map((i) => keep.map((f) => data.cols[f][i]));
       names = keep.map((f) => labelFor(f));
-      uniLabel = `${keep.length} of ${Object.keys(data.cols).length} factors of ${shortSlice(uniEntry)}`;
+      uniLabel = `${keep.length} of ${Object.keys(data.cols).length} factors`;
     } else if (keep.length >= 2) {
-      uniLabel = `the model's factors (${keep.length} factors need more than ${keep.length + 10} months, the sample has ${T})`;
+      uniLabel = `the model's factors only, ${keep.length} factors need more than ${keep.length + 10} months and the sample has ${T}`;
     }
   }
+  // The figure, in the paper's form: the EFFICIENT branch of the frontier from the
+  // minimum-variance portfolio up, the frontier's own Sharpe line, one line per model from
+  // the origin, the factors as dots. Axes follow the factors and the model lines, not the
+  // frontier: a 100-asset in-sample frontier has a Sharpe ratio several times any model's,
+  // so it climbs out of the top of the chart -- which is the point of the picture.
   const fr = frontier(R, [0]);
   const A = 12 * 100, S = Math.sqrt(12) * 100;                      // annualising, mean and vol
   const assetPts = fr.means.map((m, i) => ({ x: S * Math.sqrt(fr.cov[i][i]), y: A * m }));
-  const xMax = Math.max(...assetPts.map((p) => p.x)) * 1.08;
-  const yAbs = Math.max(...assetPts.map((p) => Math.abs(p.y)));
-  const targets = Array.from({ length: 81 }, (_, i) => (-1.2 * yAbs + 2.4 * yAbs * i / 80) / A);
-  const curve = frontier(R, targets).vols.map((v, i) => ({ x: S * v, y: A * targets[i] })).filter((p) => p.x <= xMax * 1.5);
+  const xMax = Math.max(...assetPts.map((p) => p.x)) * 1.06;
+  const rivalTheta = rivals.map((r) => squaredSharpe(columns(X, r.idx)));
+  const slopes = [Math.sqrt(Math.max(mine.theta2, 0)), ...rivalTheta.map((t) => Math.sqrt(Math.max(t.theta2, 0)))];
+  const lineTop = Math.max(...slopes) * Math.sqrt(12) * xMax;
+  const yMax = Math.max(...assetPts.map((p) => p.y), lineTop) * 1.12;
+  const yMin = Math.min(0, ...assetPts.map((p) => p.y)) * 1.12 - (yMax * 0.02);
+  // the upper branch, from the minimum-variance mean to the mean where the curve meets the
+  // right edge (the larger root of A mu^2 - 2 B mu + D - Delta sigma^2 = 0)
+  const delta = fr.A * fr.D - fr.B * fr.B;
+  const muMv = fr.B / fr.A;
+  const sigmaEdge = xMax / S;
+  const disc = fr.B * fr.B - fr.A * (fr.D - delta * sigmaEdge * sigmaEdge);
+  const muEdge = disc > 0 ? (fr.B + Math.sqrt(disc)) / fr.A : muMv + 0.01;
+  const targets = Array.from({ length: 81 }, (_, i) => muMv + (muEdge - muMv) * i / 80);
+  const curve = frontier(R, targets).vols.map((v, i) => ({ x: S * v, y: A * targets[i] }));
   const lineTo = (slope) => [{ x: 0, y: 0 }, { x: xMax, y: xMax * slope * Math.sqrt(12) }];
   const myPts = new Set(models.cart.map((e) => labelFor(e.factor)));
+  const sr = (theta2) => fmt(Math.sqrt(Math.max(theta2, 0)) * Math.sqrt(12), 2);
+  const inkSoft = "#5a5a5a";
   const datasets = [
     { label: `Frontier, Sharpe ${fmt(fr.slope * Math.sqrt(12), 2)}`, data: curve, showLine: true, pointRadius: 0,
-      borderColor: "#8d99ae", borderWidth: 1.6, backgroundColor: "#8d99ae", tension: 0.3 },
-    { label: `Frontier line`, data: lineTo(fr.slope), showLine: true, pointRadius: 0, borderDash: [5, 4],
-      borderColor: "#8d99ae", borderWidth: 1.2, backgroundColor: "#8d99ae" },
-    { label: `${name}, Sharpe ${fmt(Math.sqrt(Math.max(mine.theta2, 0)) * Math.sqrt(12), 2)}, θ̂² ${fmt(mine.adjusted, 3)}`,
+      borderColor: inkSoft, borderWidth: 2, backgroundColor: inkSoft, tension: 0.25 },
+    { label: "_frontier line", data: lineTo(fr.slope), showLine: true, pointRadius: 0, borderDash: [5, 4],
+      borderColor: inkSoft, borderWidth: 1.1, backgroundColor: inkSoft },
+    { label: `${name}, Sharpe ${sr(mine.theta2)}`,
       data: lineTo(Math.sqrt(Math.max(mine.theta2, 0))), showLine: true, pointRadius: 0,
-      borderColor: PALETTE[0], borderWidth: 2.4, backgroundColor: PALETTE[0] },
+      borderColor: PALETTE[0], borderWidth: 2.6, backgroundColor: PALETTE[0] },
   ];
   rivals.forEach((r, i) => {
-    const th = squaredSharpe(columns(X, r.idx));
-    datasets.push({ label: `${r.label}, Sharpe ${fmt(Math.sqrt(Math.max(th.theta2, 0)) * Math.sqrt(12), 2)}, θ̂² ${fmt(th.adjusted, 3)}`,
-                    data: lineTo(Math.sqrt(Math.max(th.theta2, 0))), showLine: true, pointRadius: 0,
-                    borderColor: PALETTE[(i + 3) % PALETTE.length], borderWidth: 1.6, borderDash: [3, 3],
+    datasets.push({ label: `${r.label}, Sharpe ${sr(rivalTheta[i].theta2)}`,
+                    data: lineTo(slopes[i + 1]), showLine: true, pointRadius: 0,
+                    borderColor: PALETTE[(i + 3) % PALETTE.length], borderWidth: 1.6, borderDash: [4, 3],
                     backgroundColor: PALETTE[(i + 3) % PALETTE.length] });
   });
   datasets.push({ label: "_assets", data: assetPts.filter((_, i) => !myPts.has(names[i])), _names: names.filter((n) => !myPts.has(n)),
                   pointRadius: 3, backgroundColor: "rgba(128,128,128,.35)", borderColor: "rgba(128,128,128,.35)" });
   datasets.push({ label: "_mine", data: assetPts.filter((_, i) => myPts.has(names[i])), _names: names.filter((n) => myPts.has(n)),
                   pointRadius: 5.5, backgroundColor: PALETTE[0], borderColor: "#fff", borderWidth: 1.2 });
-  mFrontier = setScatter(mFrontier, $("m-frontier"), datasets,
-    { x: { min: 0, max: xMax }, y: { min: -1.25 * yAbs, max: 1.25 * yAbs } });
+  // the two portfolios that anchor the curve
+  const marks = [{ x: S * Math.sqrt(1 / fr.A), y: A * muMv, _n: `Minimum-variance portfolio, ${fmt(A * muMv, 1)}% at ${fmt(S * Math.sqrt(1 / fr.A), 1)}% vol` }];
+  if (fr.source === "budget_tangency") {
+    marks.push({ x: S * fr.tangentVol, y: A * fr.tangentMean,
+                 _n: `Tangency portfolio, Sharpe ${fmt(fr.slope * Math.sqrt(12), 2)}, ${fmt(A * fr.tangentMean, 1)}% at ${fmt(S * fr.tangentVol, 1)}% vol` });
+  }
+  const shown = marks.filter((m) => m.x <= xMax && m.y <= yMax);
+  datasets.push({ label: "_marks", data: shown, _names: shown.map((m) => m._n),
+                  pointRadius: 6, pointStyle: "rectRot", backgroundColor: "#e9c46a", borderColor: inkSoft, borderWidth: 1.2 });
+  mFrontier = setScatter(mFrontier, $("m-frontier"), datasets, { x: { min: 0, max: xMax }, y: { min: yMin, max: yMax } });
   $("m-frontier-note").textContent = `${uniLabel} · ${span}`;
 
   // --- cumulative return of the tangency portfolio, beside its constituents
