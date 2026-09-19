@@ -296,7 +296,8 @@
   </div>
 
   <div class="card" id="e-picked-card" hidden>
-    <h2>Selected factors <span class="note" id="e-picked-note"></span></h2>
+    <h2>Selected factors <span class="note" id="e-picked-note"></span>
+      <button class="btn ghost sm" id="e-to-model" style="float:right" title="open the Models tab with these factors as a model">Test as a model &rarr;</button></h2>
     <div class="scroll"><table id="e-picked"></table></div>
   </div>
 
@@ -358,6 +359,7 @@
     <div class="field"><label for="c-factor">Factor</label><select id="c-factor"></select></div>
     <button class="btn" id="c-add">Add series</button>
     <button class="btn ghost" id="c-clear">Clear all</button>
+    <button class="btn ghost" id="c-to-model" title="open the Models tab with this list as a model">Test as a model &rarr;</button>
   </div>
 
   <div class="controls quick">
@@ -2038,6 +2040,14 @@ function refreshFactorList(prefix) {
 const models = { cart: [], saved: [], against: new Set(), range: null, universe: null };
 let modelsCtl = null, mFrontier = null, mCum = null;
 const VOL_TARGET = 0.10;          // annualised, the volatility every cumulative line is scaled to
+// The model itself is drawn in the ink colour, never a palette colour: with ten factors the
+// palette wraps and a factor would share the model's colour. Read from the theme at draw
+// time, so it is light ink on the dark theme rather than black on near-black.
+function cssVar(name, fallback) {
+  const v = getComputedStyle(document.body).getPropertyValue(name).trim();
+  return v || fallback;
+}
+const MODEL_INK = () => cssVar("--ink", "#1a1a1a");
 
 function modelPick() {
   return { dataset: $("m-dataset").value, sort: $("m-sort").value, rt: $("m-rt").value,
@@ -2408,7 +2418,7 @@ async function renderModels() {
     }
     return r;
   });
-  const cols = [["_label", "Factor"], ["weight", "Weight %", 1, true], ["mean_ann", "Return % p.a.", 2, true],
+  const cols = [["_label", "Factor"], ["weight", "Weight, % of gross", 1, true], ["mean_ann", "Return % p.a.", 2, true],
                 ["tstat", "t-stat", 2, true], ["vol_ann", "Vol % p.a.", 2, false], ["sharpe", "Sharpe", 2, true]];
   if (first) cols.push(["alpha_ann", `Alpha % p.a. on ${first.label}`, 2, true], ["alpha_t", "t(alpha)", 2, true]);
   simpleTable($("m-model"), cols, rows);
@@ -2455,7 +2465,8 @@ async function renderModels() {
     if (keep.length >= 2 && T > keep.length + 10) {
       R = rowsIdx.map((i) => keep.map((f) => data.cols[f][i]));
       names = keep.map((f) => labelFor(f));
-      uniLabel = `${keep.length} of ${Object.keys(data.cols).length} factors`;
+      const total = Object.keys(data.cols).length;
+      uniLabel = keep.length === total ? `all ${total} factors` : `${keep.length} of ${total} factors have every month of the sample`;
     } else if (keep.length >= 2) {
       uniLabel = `the model's factors only, ${keep.length} factors need more than ${keep.length + 10} months and the sample has ${T}`;
     }
@@ -2486,15 +2497,17 @@ async function renderModels() {
   const targets = Array.from({ length: 81 }, (_, i) => muMv + (muEdge - muMv) * i / 80);
   const curve = frontier(R, targets).vols.map((v, i) => ({ x: S * v, y: A * targets[i] }));
   const lineTo = (slope) => [{ x: 0, y: 0 }, { x: xMax, y: xMax * slope * Math.sqrt(12) }];
-  const myPts = new Set(models.cart.map((e) => labelFor(e.factor)));
+  // the model's factors are highlighted only when they come from the slice the frontier is
+  // drawn from -- the same signal in another sort or dataset is a different factor
+  const myPts = new Set(models.cart.filter((e) => !uniEntry || sliceKey(e) === models.universe).map((e) => labelFor(e.factor)));
   const sr = (theta2) => fmt(Math.sqrt(Math.max(theta2, 0)) * Math.sqrt(12), 2);
-  const inkSoft = "#5a5a5a";
+  const inkSoft = cssVar("--ink-soft", "#5a5a5a");
   const datasets = [
     { label: "Frontier", _endLabel: `Frontier, Sharpe ${fmt(fr.slope * Math.sqrt(12), 2)}`, data: curve,
       showLine: true, pointRadius: 0, borderColor: inkSoft, borderWidth: 2, backgroundColor: inkSoft, tension: 0.25 },
     { label: name, _endLabel: `${name}, Sharpe ${sr(mine.theta2)}`,
       data: lineTo(Math.sqrt(Math.max(mine.theta2, 0))), showLine: true, pointRadius: 0,
-      borderColor: PALETTE[0], borderWidth: 2.6, backgroundColor: PALETTE[0] },
+      borderColor: MODEL_INK(), borderWidth: 2.8, backgroundColor: MODEL_INK() },
   ];
   rivals.forEach((r, i) => {
     datasets.push({ label: r.label, _endLabel: `${r.label}, Sharpe ${sr(rivalTheta[i].theta2)}`,
@@ -2530,7 +2543,7 @@ async function renderModels() {
   const raw = $("m-raw").checked;
   const vol = raw ? null : VOL_TARGET;
   const cumSets = [{ label: `${name}, optimally weighted`, data: cumSum(scaleTo(tp.series, vol)),
-                     borderColor: PALETTE[0], backgroundColor: PALETTE[0], borderWidth: 2.6 }];
+                     borderColor: MODEL_INK(), backgroundColor: MODEL_INK(), borderWidth: 2.8 }];
   models.cart.forEach((e, i) => {
     cumSets.push({ label: labelFor(e.factor), data: cumSum(scaleTo(F.map((row) => row[i]), vol)),
                    borderColor: PALETTE[(i + 1) % PALETTE.length], backgroundColor: PALETTE[(i + 1) % PALETTE.length],
@@ -2980,15 +2993,14 @@ async function boot() {
     }
     models.cart = moved;
     $("m-quick-note").textContent = `moved the model to ${shortSlice(now)}`
-      + (dropped.length ? `, dropped ${dropped.join(", ")} which it does not carry` : "")
-      + (moved.length < models.cart.length + dropped.length ? "" : "");
+      + (dropped.length ? `, dropped ${dropped.join(", ")} which it does not carry` : "");
     renderModels();
   };
   $("m-add").onclick = () => {
     const e = modelPick();
     $("m-quick-note").textContent = "";
     if (models.cart.some((x) => cartKey(x) === cartKey(e))) { $("m-quick-note").textContent = "already in the model"; return; }
-    if (models.cart.length >= 10) { alert("Ten factors in one model is the limit."); return; }
+    if (models.cart.length >= 10) { $("m-quick-note").textContent = "ten factors in one model is the limit, remove one first"; return; }
     models.cart.push(e);
     renderModels();
   };
@@ -3003,11 +3015,32 @@ async function boot() {
     let k = 2;
     while (taken.has(name)) name = `${($("m-name").value || "My model").trim()} (${k++})`;
     models.saved.push({ name, cart: models.cart.map((e) => ({ ...e })) });
+    models.against.add(`saved:${models.saved.length - 1}`);
+    $("m-quick-note").textContent = `saved ${name}. Change the model above and it is compared against ${name} below`;
     if (models.saved.length > 10) models.saved.shift();
     $("m-name").value = `Model ${models.saved.length + 1}`;
     renderModels();
   };
   $("m-name").onchange = () => renderModels();
+
+  // ❗One click from a finding to a test. Explore's ticked factors (in Explore's slice) and
+  // Compare's list (already the same shape as a model) open the Models tab as the model,
+  // replacing whatever was there -- the reader came here to test THESE.
+  const toModels = (entries, from) => {
+    if (!entries.length) return;
+    models.cart = entries.slice(0, 10).map((e) => ({ ...e }));
+    $("m-quick-note").textContent = `${models.cart.length} factor${models.cart.length === 1 ? "" : "s"} from ${from}`
+      + (entries.length > 10 ? ", the first ten" : "");
+    $("tab-models").click();
+    renderModels();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  $("e-to-model").onclick = (ev) => {
+    ev.preventDefault();
+    const s = exploreSlice();
+    toModels(pickedKeys(s).map((f) => ({ ...s, factor: f })), "Explore");
+  };
+  $("c-to-model").onclick = () => toModels(compare.cart, "Compare");
   $("m-universe").onchange = () => { models.universe = $("m-universe").value; renderModels(); };
   $("m-raw").onchange = () => renderModels();
 
