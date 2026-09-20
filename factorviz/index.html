@@ -2808,10 +2808,6 @@ function renderAbout() {
   math.push(["eq-capmb", "r_t = \\alpha + \\beta\\, MKT_t + \\varepsilon_t"]);
   $("about-body").innerHTML = `<div class="prose">
     <h2>What this data is</h2>
-    <p>At each month-end, bonds are ranked on a characteristic &mdash; a credit spread, a
-       measure of illiquidity, a past return, an estimated factor loading &mdash; and sorted
-       into portfolios. The factor return is the top portfolio minus the bottom, rebalanced
-       monthly.</p>
     <p>The underlying bond panels are built by the
        <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">TRACE Data Pipeline</a>, and the construction follows
        <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>.
@@ -2819,22 +2815,14 @@ function renderAbout() {
        <a href="https://pypi.org/project/pybondlab/">PyBondLab</a>.</p>
 
     <h2>Download the data</h2>
-    <p>Data is available for download as a wide-format time series or as a panel carrying
-       more than the page shows. The <strong>panel</strong> archive holds the long leg, the
-       short leg and the long&ndash;short for every factor, equal-weighted and value-weighted,
-       all four return definitions and all three universes, with two-way turnover and the
-       number of bonds in each portfolio every month. The <strong>time series</strong> archive
-       is the same long&ndash;short returns pivoted wide, one CSV per return definition,
-       universe and weighting.</p>
+    <p>Data is available for download in wide-format (time series) or in panel format
+       which includes additional variables such as turnover, long/short legs etc.</p>
     ${dl}
-    <p>Every archive carries a <code>MANIFEST.json</code> listing each file with its
-       SHA-256. The four market benchmarks
-       behind the alphas are one small monthly file,
-       <a href="./data/benchmarks.csv">benchmarks.csv</a>, running from 1973. The pipeline
-       that builds the underlying bond panels is public at
-       <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a>,
-       and more data is available at
-       <a href="https://openbondassetpricing.com">openbondassetpricing.com</a>.</p>
+    <p>Every archive includes <code>MANIFEST.json</code> listing each file with its
+       SHA-256. The four market benchmarks can be downloaded here,
+       <a href="./data/benchmarks.csv">benchmarks.csv</a>. The pipeline that builds the
+       underlying bond panels is public at
+       <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a>.</p>
 
     <h2>How the portfolios are formed</h2>
     <p>The sorts are run with
@@ -2842,31 +2830,29 @@ function renderAbout() {
        <a href="https://giuliorossetti94.github.io/">Giulio Rossetti</a> and
        <a href="https://www.alexdickerson.com/">Alex Dickerson</a>.</p>
     <h3>Single sorts</h3>
-    <p>Bonds are ranked across the entire cross-section each month, into deciles over all
-       bonds and quintiles within a rating band. The factor is the extreme-decile (or quintile) spread,
-       computed both equal-weighted and value-weighted, where value weights are price times
-       amount outstanding.</p>
+    <p>Bonds are ranked each month into deciles for 'All' bonds and quintiles for IG/HY.
+       The factor is the extreme-decile (or quintile) spread, computed both equal-weighted
+       and value-weighted, where value weights are price times amount outstanding.</p>
     <h3>Within-firm sorts</h3>
     <p>Bonds are ranked only against other bonds of the <em>same issuer</em>, identified by
-       CRSP <code>permno</code>, so firm-level determinants such as default risk, industry and
-       leverage are differenced out and what remains is the marginal price of the bond-level
-       characteristic.</p>
+       CRSP <code>permno</code>.</p>
     <p>A firm is included in a given month t only if it holds at least two bonds with both
        a valid signal and a positive market value. The cutoffs are the 33rd and 67th
        percentiles of the <em>distinct</em> signal values in that firm and rating group. Bonds
        strictly above the upper cutoff form the firm's long leg and bonds strictly below the
        lower one form its short leg. Each leg is value-weighted inside the firm, and firms
-       combine in proportion to the market value of the bonds in their two legs. The procedure
-       runs separately for all bonds, for investment grade and for high yield.</p>
+       combine in proportion to the market value of the bonds in their two legs. See
+       Dick-Nielsen et al., 2023.</p>
 
     <h2>Return definitions</h2>
     <p>A corporate bond's total return contains compensation for interest-rate risk. The
        four definitions below differ only in how the duration-hedged portfolio of Treasuries
        is constructed, which is subtracted from the bond total return to isolate the credit
        component.</p>
-    <p>Each definition is a separate build. The beta, momentum and reversal characteristics
-       are re-estimated against that definition's own benchmark, so a factor sorted on a beta
-       is not sorted on the same numbers across the four.</p>
+    <p>Characteristics that require returns to be estimated, e.g., momentum, factor betas
+       etc., are re-estimated using that return definition's own benchmark. For example, if
+       the BNS return is used, and the 6-month momentum factor is evaluated, the 6-month
+       momentum characteristic is computed with the BNS return type.</p>
     ${returns}
 
     <h2>Measurement error, and the one business day signal gap</h2>
