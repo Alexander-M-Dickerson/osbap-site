@@ -2855,26 +2855,17 @@ function renderAbout() {
        momentum characteristic is computed with the BNS return type.</p>
     ${returns}
 
-    <h2>Measurement error, and the one business day signal gap</h2>
-    <p>A month-end TRACE price is a volume-weighted average of actual trades rather than a
-       quote, so it carries noise. If the same price sets a signal and the denominator of the
-       following month's return, the same error enters both. A bond priced too high sorts
-       toward the short leg and its measured return comes out too low, a bond priced too low
-       sorts toward the long leg with its return too high, and the measured premium widens for
-       no economic reason. Noise alone does not do this. The bias needs the same price error to
-       both misrank the bond and contaminate its return, and it is first order in that noise.</p>
-    <p><strong>What we do about it.</strong> Every price-based signal in the TRACE era is
-       computed from a price observed at least one business day before the month-end price
-       used in the return denominator, capped at ten business days, with a median gap of one.
-       The two price errors then come from different dates and no longer share a disturbance.
-       Pre-2002 Lehman and ICE prices are indicative bid-side quotes and need no such
+    <h2>The one business day signal gap</h2>
+    <p>Price-based signals in the TRACE era are computed from a price at least one business
+       day before the month-end price used in the return denominator. This removes the
+       correlated errors-in-variables (CEIV) bias that arises when the same transaction price
+       enters both the signal and the return. See Dickerson, Robotti and Rossetti (2026),
+       Section 3. The unadjusted signals are in the additional-data download on the
+       <a href="https://alexander-m-dickerson.github.io/osbap-site/data/">Data page</a>, not
+       recommended for forming factors. Pre-2002 Lehman and ICE prices are quotes and need no
        adjustment.</p>
     <div class="cite"><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, A., Robotti, C. and Rossetti, G.
-      (2026). The Corporate Bond Factor Replication Crisis</a>, Section 3.<br>
-      Duarte, J., Jones, C.S. and Wang, J.L. (2024). Very noisy option prices and inference
-      regarding the volatility risk premium. Journal of Finance 79, 3581-3621.<br>
-      Blume, M.E. and Stambaugh, R.F. (1983). Biases in computed returns, an application to the
-      size effect. Journal of Financial Economics 12, 387-404.</div>
+      (2026). The Corporate Bond Factor Replication Crisis</a>, Section 3.</div>
 
     <h2>Risk adjustment</h2>
     <p>Alpha and beta come from a time-series regression of the factor on a bond market
