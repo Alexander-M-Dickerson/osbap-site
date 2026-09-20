@@ -245,9 +245,10 @@
   <h1>Exploring the corporate bond factor zoo</h1>
   <p class="sub">
     108 Long&ndash;short corporate bond factors from
-    <a href="https://openbondassetpricing.com">Open Source Bond Asset Pricing</a>. Compare
-    single sorts against within-firm sorts, four return definitions, three rating universes
-    and two weighting schemes &mdash; across three datasets reaching back to 1973.
+    <a href="https://openbondassetpricing.com">Open Source Bond Asset Pricing</a> and
+    <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, A., Robotti, C. and Rossetti, G. (2026)</a>.
+    Compare single sorts against within-firm sorts, four return definitions, three rating
+    universes and two weighting schemes &mdash; across three datasets reaching back to 1973.
   </p>
 </header>
 
@@ -262,9 +263,7 @@
 <section id="panel-explore">
   <div class="warn">
     Pick a dataset, a sort, a return definition, a universe and a weighting. The table
-    below ranks every factor in that slice selection, grouped by factor cluster. Tick up to
-    ten factors to chart them, then drag the sample handles under the chart and watch every
-    line and every number follow.
+    below ranks every factor in that slice selection, grouped by factor cluster.
   </div>
 
   <div class="controls">
@@ -3131,7 +3130,6 @@ async function boot() {
 
   $("foot-built").innerHTML =
     `Built ${META.built_utc.replace("T", " ").replace("+00:00", " UTC")} &middot; `
-    + `factors published without sign-correction &middot; `
     + `alpha from the one-factor bond CAPM, the factor regressed on the market benchmark `
     + `matched to its return definition, excess or duration-adjusted &middot; `
     + `t-statistics use Newey-West standard errors`;

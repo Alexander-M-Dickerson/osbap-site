@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-19T02:34:46+00:00",
+  "built_utc": "2026-09-20T03:16:06+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -324,17 +324,17 @@
       "title": "Dataset",
       "source": "datasets",
       "items": {
-        "trace": "Transaction prices from TRACE, cleaned and filtered as in Dickerson, Robotti and Rossetti (2026). This is the dataset a public user can reproduce end to end from the published pipeline.",
+        "trace": "Transaction prices from TRACE, cleaned and filtered as in Dickerson, Robotti and Rossetti (2026). See the Code tab, to re-produce the underlying data.",
         "extended": "Quote-based data before August 2002, the Lehman Brothers (Warga) database from 1973 to 1997 and ICE/BofA-ML from 1997 to 2002-07, then TRACE transaction prices from August 2002 onward.",
-        "lehman_ice": "The pre-TRACE half on its own, quote-based throughout. It is fixed and does not extend, and it sorts 83 of the 108 characteristics, because quote data carries no trade prints and no daily returns."
+        "lehman_ice": "The Lehman Brothers (Warga) database from 1973 to 1997 and ICE/BofA-ML from 1997 to 2023-01."
       }
     },
     "sort": {
       "title": "Sort",
       "source": "sorts",
       "items": {
-        "single": "Bonds are ranked across the whole cross-section each month, into deciles over all bonds and quintiles inside a rating band. The factor is the top portfolio minus the bottom.",
-        "within_firm": "Bonds are ranked only against other bonds of the same issuer, so firm-level determinants such as default risk and leverage are differenced out. Firms combine in proportion to the market value of their two legs."
+        "single": "Bonds are ranked each month into deciles for all bonds and quintiles for the IG/HY rating subset. The factor is long the top portfolio (D10, Q5) minus the bottom (D1, Q1).",
+        "within_firm": "Bonds are ranked only against other bonds of the same issuer (using permno), so firm-level determinants such as default risk and leverage are differenced out."
       }
     },
     "rt": {
@@ -345,8 +345,7 @@
         "dur": "",
         "dbns": "",
         "dcls": ""
-      },
-      "note": "The four differ only in how the duration-hedged portfolio of Treasuries is built. Each one is a separate build, with the beta, momentum and reversal characteristics re-estimated against its own benchmark. Full definitions and citations are in the About tab."
+      }
     },
     "band": {
       "title": "Universe",
@@ -355,8 +354,7 @@
         "all": "Every bond in the dataset, ranked into deciles.",
         "ig": "Investment-grade bonds only, ranked into quintiles.",
         "nig": "High-yield bonds only, ranked into quintiles."
-      },
-      "note": "This is the formation universe. Bonds are ranked against each other inside it, rather than the factor being filtered after the sort."
+      }
     },
     "w": {
       "title": "Weighting",
@@ -368,11 +366,11 @@
     },
     "flip": {
       "title": "Orient to positive mean",
-      "text": "Some factors earn a negative average return. This multiplies those by minus one so every factor reads positive, the convention most published tables use. It changes the display only. The data behind the page and in the downloads carries no correction, and a row marked with a small minus sign is the one being shown corrected. Volatility is unchanged, and maximum drawdown is measured again on the corrected path."
+      "text": "Enables factor sign-correction, such that the factor premia are always positive (flips long/short leg, when the premium is below zero)."
     },
     "group": {
       "title": "Group by cluster",
-      "text": "The 108 characteristics fall into nine clusters, from spreads, value and momentum through illiquidity and volatility to the beta families. With this on, rows sit under their cluster and a column sort ranks within each one. Turn it off for a single ranking across every factor."
+      "text": "The 108 characteristics have nine clusters. Puts factors under their respective cluster header."
     },
     "align": {
       "title": "Aligned sample",
