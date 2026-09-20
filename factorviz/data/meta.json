@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-20T05:29:39+00:00",
+  "built_utc": "2026-09-20T06:06:27+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -171,15 +171,15 @@
   "datasets": {
     "trace": {
       "label": "TRACE-only",
-      "blurb": "What a public user can reproduce end to end from the published pipeline."
+      "blurb": "Transaction prices from TRACE, cleaned and filtered as in Dickerson, Robotti and Rossetti (2026). See the Code tab, to re-produce the underlying data."
     },
     "extended": {
       "label": "Lehman-ICE + TRACE",
-      "blurb": "The full 1973-> history. This is the product the website has always served."
+      "blurb": "Quote-based data before August 2002, the Lehman Brothers (Warga) database from 1973 to 1997 and ICE/BofA-ML from 1997 to 2002-07, then TRACE transaction prices from August 2002 onward."
     },
     "lehman_ice": {
       "label": "Lehman-ICE only",
-      "blurb": "The pre-TRACE half alone, fixed at 2023-01. Does not extend -- a new WRDS pull does nothing for it."
+      "blurb": "The Lehman Brothers (Warga) database from 1973 to 1997 and ICE/BofA-ML from 1997 to 2023-01."
     }
   },
   "sorts": {
@@ -324,9 +324,9 @@
       "title": "Dataset",
       "source": "datasets",
       "items": {
-        "trace": "Transaction prices from TRACE, cleaned and filtered as in Dickerson, Robotti and Rossetti (2026). See the Code tab, to re-produce the underlying data.",
-        "extended": "Quote-based data before August 2002, the Lehman Brothers (Warga) database from 1973 to 1997 and ICE/BofA-ML from 1997 to 2002-07, then TRACE transaction prices from August 2002 onward.",
-        "lehman_ice": "The Lehman Brothers (Warga) database from 1973 to 1997 and ICE/BofA-ML from 1997 to 2023-01."
+        "trace": "",
+        "extended": "",
+        "lehman_ice": ""
       }
     },
     "sort": {

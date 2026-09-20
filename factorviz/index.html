@@ -2689,10 +2689,11 @@ function helpHtml(topic) {
   if (h.text) body += `<p>${h.text}</p>`;
   if (h.items) {
     body += "<dl>" + Object.keys(h.items).map((k) => {
-      // ❗An empty item falls back to the one-line definition the return type already
-      // carries. Writing those four lines here a second time is how they drift.
+      // ❗An empty item falls back to the one-line definition the return type or the
+      // dataset already carries. Writing those lines here a second time is how they drift.
       const d = META.return_type_detail && META.return_type_detail[k];
-      let txt = h.items[k] || (d && d.long) || "";
+      const ds = h.source === "datasets" && META.datasets && META.datasets[k];
+      let txt = h.items[k] || (d && d.long) || (ds && ds.blurb) || "";
       if (txt && !txt.endsWith(".")) txt += ".";
       return `<dt>${helpLead(topic, k)}</dt><dd>${txt}</dd>`;
     }).join("") + "</dl>";
@@ -2886,11 +2887,6 @@ function renderAbout() {
        <code>flip_set.json</code>, which lists the factors whose full-sample average return is
        negative, if you want to know which ones need a sign-correction.</p>
 
-    <h2>Cumulative performance</h2>
-    <p>Charts plot the cumulative <em>sum</em> of monthly returns, in percent, and maximum
-       drawdown is measured on that path. A long&ndash;short portfolio is zero-cost and its
-       cumulative value can be negative, so geometric compounding is not well defined for it.</p>
-
     <h2>Datasets</h2>
     <div class="scroll"><table>
       <thead><tr><th>Dataset</th><th>Sort</th><th>Sample</th><th>Months</th>
@@ -2901,18 +2897,14 @@ function renderAbout() {
       <li><strong>${META.datasets.extended.label}</strong> &mdash; ${META.datasets.extended.blurb}</li>
       <li><strong>${META.datasets.lehman_ice.label}</strong> &mdash; ${META.datasets.lehman_ice.blurb}</li>
     </ul>
-    <p>Pre-2002 prices are indicative bid-side quotes from the Lehman Brothers Fixed Income
-       database and from ICE/BofA-ML index constituents. From August 2002 they are
-       transaction prices from TRACE. Because the two eras are different kinds of data, the
-       Lehman-ICE dataset sorts 83 of the 108 characteristics. Every measure needing trade
-       prints or daily returns, meaning illiquidity, daily volatility and daily betas, is
-       unavailable before TRACE.</p>
+    <p>Lehman-ICE prices are quotes, so the characteristics that rely on transaction data or
+       daily returns start with TRACE in August 2002. The Lehman-ICE dataset has data for 83
+       of the 108 characteristics.</p>
 
     <h2>Known gaps</h2>
     <ul>
       <li>Factor returns are missing for eight months in which the Lehman database has no
           prices, 1975-08 to 1975-11 and 1984-12 to 1985-03.</li>
-      <li>Illiquidity and daily-volatility characteristics are unavailable before 2002-08.</li>
       <li>For long-sample work, 1985-06 is a sensible start. Before the mid-1980s the
           high-yield market is small, and a non-investment-grade long&ndash;short leg rests on
           roughly one hundred bonds.</li>
