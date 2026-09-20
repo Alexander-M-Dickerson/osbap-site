@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-20T03:16:06+00:00",
+  "built_utc": "2026-09-20T03:45:52+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -374,7 +374,7 @@
     },
     "align": {
       "title": "Aligned sample",
-      "text": "Selected series can cover different months, because datasets start in different years and some characteristics only exist after 2002. With this on, every series is cut to the months they all have and the statistics are recomputed on that sample, so the comparison is like for like."
+      "text": "Selected series can cover different months, because datasets start in different years and some characteristics only exist after 2002. This force-aligns the selected series."
     },
     "m_against": {
       "title": "Benchmark models",
