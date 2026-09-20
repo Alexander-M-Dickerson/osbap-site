@@ -2876,30 +2876,15 @@ function renderAbout() {
     <div class="scroll"><table><thead><tr><th>Return definition</th>
       <th>Market benchmark</th></tr></thead><tbody>${bm}</tbody></table></div>
     <div class="eq" id="eq-capmb">r_t = alpha + beta * MKT_t + e_t</div>
-    <p>Alpha is annualised and reported in percent, and the information ratio is the annualised
-       ratio of alpha to residual volatility. The t-statistics on both the average return and
-       alpha use Newey-West standard errors with lags = floor(T<sup>0.25</sup>), where T is the
-       number of months in the series. Alpha, its t-statistic and beta are shown as &mdash;
-       below ${META.benchmarks.min_months} overlapping monthly observations, which is why the
-       one-year window reports no alpha, because twelve observations is not an estimate.</p>
     <p>The four benchmarks are downloadable as one monthly file,
        <a href="./data/benchmarks.csv">benchmarks.csv</a>, running from 1973 to the end of the
        sample.</p>
 
     <h2>Sign convention</h2>
-    <p>These factors are <strong>not sign-corrected</strong>. The long leg is always the
-       high-characteristic portfolio, so a factor whose average return is negative keeps it.
-       Short-term reversal is the familiar example.</p>
-    <p>The usual alternative multiplies any factor with a negative full-sample average by minus
-       one. That correction reads the whole sample, including months later than the ones being
-       reported, so one more month of data can reverse a factor against last year's release and
-       swap which leg is called long.</p>
-    <p><strong>Orient to positive mean</strong> applies that correction for display only, using
-       the same mapping distributed with the data, and it is on by default. It negates the
-       return, so the average return, Sharpe ratio, both t-statistics, alpha, beta and the
-       information ratio negate with it. Volatility does not, and maximum drawdown is measured
-       again on the corrected path rather than negated, because the drawdown of a negated path
-       is a different quantity.</p>
+    <p>These factors are <strong>not sign-corrected</strong> to have a positive premium. The
+       long leg is always the high-characteristic portfolio. Every download includes
+       <code>flip_set.json</code>, which lists the factors whose full-sample average return is
+       negative, if you want to know which ones need a sign-correction.</p>
 
     <h2>Cumulative performance</h2>
     <p>Charts plot the cumulative <em>sum</em> of monthly returns, in percent, and maximum
