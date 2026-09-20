@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-20T03:45:52+00:00",
+  "built_utc": "2026-09-20T03:51:18+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -378,19 +378,19 @@
     },
     "m_against": {
       "title": "Benchmark models",
-      "text": "The models yours is tested against. MKTB over the bill is the bond CAPM. MKTB credit is the market over its duration-matched Treasury portfolio, matched to your first factor's return definition. The BNS two-factor model adds the Treasury component, over the bill. The FF (1993) five-factor model is Fama and French's three stock factors from their three-factor file with the DEF and TERM bond factors, built by the pipeline from long corporate and long government bonds. A model you save appears here too."
+      "text": "<strong>MKTB (r - rf)</strong> total market return minus the one-month T-Bill rate of return.<br><strong>MKTB (credit)</strong> total market return minus the duration-matched Treasury portfolio, matched to your first factor's return definition (BNS, CLS, APR).<br><strong>BNS two-factor model</strong> the decomposed DCAPM model. Includes the credit and term component of the corporate bond market factor.<br><strong>FF (1993) five-factor model</strong> the original FF 5-factor model including Mkt-Rf, SMB, HML and the DEF and TERM factors."
     },
     "m_frontier": {
       "title": "The frontier",
-      "text": "The efficient frontier of every factor in the chosen slice that has a value in every month of the sample, in annualised terms, from its minimum-variance portfolio up, with that portfolio and the tangency portfolio marked. Each line from the origin has the slope of a model's maximum Sharpe ratio, the square root of its squared Sharpe ratio, and is named where it ends, so a model whose line hugs the frontier is close to mean-variance efficient and one far below is far from it. The dots are the factors, yours in colour, each drawn with the sign that makes its mean positive, which changes nothing about the frontier. The axes follow the factors and the model lines, so a frontier of a hundred factors, whose in-sample Sharpe ratio is several times any model's, climbs out of the top of the chart. When the fully invested tangency portfolio sits on the inefficient branch the frontier's Sharpe ratio is the upper asymptote instead, following Gospodinov and Robotti (2021)."
+      "text": "Each line from the origin is the slope of a model's maximum Sharpe ratio. The dots are the factors."
     },
     "m_cum": {
       "title": "Optimally weighted",
-      "text": "The cumulative return of the tangency portfolio of your model's factors, with weights proportional to the inverse covariance times the mean, beside each factor on its own. Every line is scaled to the same volatility so their slopes compare, and the sum of monthly returns is plotted because a long-short factor is zero-cost. Untick the scaling to see raw returns."
+      "text": "The cumulative return of the tangency portfolio of your chosen factors (your model)."
     },
     "m_model": {
       "title": "The model",
-      "text": "One row per factor. The weight is its share of the tangency portfolio's gross exposure, the return and t-statistic its own mean, and the alpha its intercept when regressed on the first benchmark model ticked above, with a Newey-West t-statistic. The line under the table gives the model's bias-adjusted squared Sharpe ratio, the sample value times (T minus K minus 2) over T, minus K over T, and the p-value against zero from a chi-square with K degrees of freedom."
+      "text": "Model's bias-adjusted squared Sharpe ratio, the sample value times (T minus K minus 2) over T, minus K over T, and the p-value against zero from a chi-square with K degrees of freedom."
     },
     "m_tests": {
       "title": "The tests",

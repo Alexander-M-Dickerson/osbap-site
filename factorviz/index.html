@@ -412,11 +412,10 @@
 <!-- ===================== MODELS ===================== -->
 <section id="panel-models" class="hidden">
   <div class="warn">
-    Build a factor model from any factors, from any dataset, sort, return definition,
-    universe or weighting, then see how far it sits from the mean-variance frontier and
-    whether it beats the bond market. The statistics are the ones in Dickerson, Mueller and
-    Robotti (2023), the bias-adjusted squared Sharpe ratio and the pairwise model tests of
-    Barillas, Kan, Robotti and Shanken (2019), computed on the months every series has.
+    Build your factor model, and compare it to established models in the literature.
+    Squared Sharpe ratio statistics and model comparison tests from Barillas, Kan, Robotti
+    and Shanken (2019) and Dickerson, Mueller and Robotti (2023) are estimated, and
+    mean-variance efficient frontiers are constructed.
   </div>
 
   <div class="controls">
@@ -484,7 +483,7 @@
         <span class="note" id="m-cum-note"></span></h2>
       <div class="chartbox"><canvas id="m-cum"></canvas></div>
       <div class="range" style="margin-top:12px">
-        <span class="check-wrap"><label class="check"><input type="checkbox" id="m-raw"> Raw returns, not scaled to one volatility</label></span>
+        <span class="check-wrap"><label class="check"><input type="checkbox" id="m-raw"> Raw returns, not scaled to common volatility</label></span>
       </div>
     </div>
   </div>
@@ -2104,7 +2103,7 @@ function renderModelChips() {
   const el = $("m-chips");
   if (!models.cart.length) {
     el.innerHTML = '<span class="muted" style="font-size:13px">No factors yet &mdash; pick '
-                 + 'above and press <strong>Add factor</strong>. Two to five is the usual model.</span>';
+                 + 'above and press <strong>Add factor</strong>.</span>';
     return;
   }
   el.innerHTML = models.cart.map((e, i) => `
