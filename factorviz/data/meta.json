@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-20T04:26:04+00:00",
+  "built_utc": "2026-09-20T04:36:44+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -214,9 +214,9 @@
       "benchmark": "tret_bns",
       "cite": "van Binsbergen, Nozawa and Schwert (2025)",
       "cite_full": "van Binsbergen, J.H., Nozawa, Y. and Schwert, M. (2025). Duration-Based Valuation of Corporate Bonds. The Review of Financial Studies 38(1), 158-191. doi:10.1093/rfs/hhae054.",
-      "how": "A synthetic Treasury carrying the bond's own cash flows, each weighted by its present value discounted at the bond's own yield. That yield is higher than the Treasury zero yields, so the weights sit further forward and the benchmark is shorter in duration, removing parallel shifts in the curve.",
-      "equation": "w_k = PV_k / SUM_j PV_j,   PV_k = CF_k / (1 + y/f)^(f t_k)",
-      "equation_tex": "w_k = \\frac{PV_k}{\\sum_j PV_j}, \\qquad PV_k = \\frac{CF_k}{(1 + y/f)^{f t_k}}",
+      "how": "A weighted average of one-month returns on zero-coupon Treasury bonds, one maturing on each cash-flow date t_k of the bond. The weight w_k is the present value of the cash flow CF_k at the bond's own yield y, as a share of the total. See van Binsbergen, Nozawa and Schwert (2025).",
+      "equation": "w_k = PV_k / SUM_j PV_j,   PV_k = CF_k / (1 + y/f)^(f t_k),   tret_bns = SUM_k w_k r_{t+1,k}",
+      "equation_tex": "\\begin{aligned} w_k &= \\frac{PV_k}{\\sum_j PV_j}, \\qquad PV_k = \\frac{CF_k}{(1 + y/f)^{f t_k}} \\\\ \\text{tret\\_bns} &= \\sum_k w_k\\, r_{t+1,k} \\end{aligned}",
       "equation_source": "Eqs. (3)-(6) of the SSRN working paper 3914422, which is what code/ implements; the published RFS version may renumber."
     },
     "dcls": {
@@ -225,9 +225,9 @@
       "benchmark": "tret_cls",
       "cite": "Cui, Lu and Song (2026)",
       "cite_full": "Cui, S., Lu, Y. and Song, Y. (2026). Understanding Corporate Bond Excess Returns, Eqs. (3)-(6).",
-      "how": "The same synthetic Treasury, but each cash flow is weighted by its present value on the Treasury zero curve rather than the bond's own yield. That is the only difference from BNS. The weights sit further out, so this benchmark is longer in duration and removes slope and curvature as well as parallel shifts.",
-      "equation": "v_k = CF_k exp(-z_t(t_k) t_k) / SUM_j CF_j exp(-z_t(t_j) t_j)",
-      "equation_tex": "v_k = \\frac{CF_k\\, e^{-z_t(t_k)\\, t_k}}{\\sum_j CF_j\\, e^{-z_t(t_j)\\, t_j}}"
+      "how": "As in BNS, but the weight v_k discounts CF_k at the Treasury zero-coupon yield z_t(t_k) rather than the bond's own yield. See Cui, Lu and Song (2026).",
+      "equation": "v_k = CF_k exp(-z_t(t_k) t_k) / SUM_j CF_j exp(-z_t(t_j) t_j),   tret_cls = SUM_k v_k r_{t+1,k}",
+      "equation_tex": "\\begin{aligned} v_k &= \\frac{CF_k\\, e^{-z_t(t_k)\\, t_k}}{\\sum_j CF_j\\, e^{-z_t(t_j)\\, t_j}} \\\\ \\text{tret\\_cls} &= \\sum_k v_k\\, r_{t+1,k} \\end{aligned}"
     }
   },
   "bands": {
