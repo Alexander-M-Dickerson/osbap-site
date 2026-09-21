@@ -170,53 +170,58 @@
 <body>
 
 <div class="wrap">
-<p class="lead">
-  Two pieces. A pipeline that turns raw TRACE, Lehman and ICE data into bond panels, and a
-  library that turns those panels into factors. Both are public, and both are what produced
-  every number on this site.
-</p>
+<div class="note">
+  The code comprises the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">trace-data-pipeline</a> which transforms ~0.5 billion trades in
+  TRACE into daily data (~30 million rows) and then to monthly data (~2 million rows) in
+  ~3 hours. The generated monthly dataset includes 108 characteristics which can be used to
+  form factors with <a href="https://pypi.org/project/pybondlab/">PyBondLab</a>.
+</div>
 
 <h2>TRACE data pipeline</h2>
 <p>
   <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a> processes Enhanced and 144A TRACE, with error-correction and
   cleaning procedures documented in the paper, and produces the daily and monthly panels on
   the Data page. It runs in parallel on the WRDS cloud and writes a data report for every run.
+  The pipeline takes around 3-4 hours to run on the WRDS cloud.
 </p>
 <ul>
-  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage0">Stage 0</a>, transaction-level cleaning.</li>
-  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage1">Stage 1</a>, the daily bond panel.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage0">Stage 0</a>, transaction-level cleaning, 0.5 billion rows are processed.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage1">Stage 1</a>, the daily bond panel. Delivers the ~30 million row panel with
+      credit spread, duration and prices.</li>
   <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage2">Stage 2</a>, the monthly panel and its characteristics.</li>
-  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage3">Stage 3</a>, every exhibit in the paper, from any Stage 2 panel.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage3">Stage 3</a>, reproduces the <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a> paper in ~30 minutes.</li>
 </ul>
 <p>
-  Reproducing the data needs a WRDS account and the underlying data licences. The
-  <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/README.md">pipeline README</a> is the place to start, and the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage1/DATA_DICTIONARY.md">daily data dictionary</a> and
-  <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage2/DATA_DICTIONARY.md">monthly data dictionary</a> define every column.
+  Reproducing the data requires a WRDS account and the underlying data licences. The
+  <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">trace-data-pipeline</a> README contains useful information, and the
+  <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage1/DATA_DICTIONARY.md">daily data dictionary</a> and <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage2/DATA_DICTIONARY.md">monthly data dictionary</a> define the variables that are
+  produced from running the pipeline.
 </p>
 
 <h2>PyBondLab</h2>
 <p>
-  <a href="https://pypi.org/project/pybondlab/">PyBondLab</a> forms corporate bond portfolios, with portfolio turnover,
-  characteristics, holding periods and transaction-cost adjustments built in. It is what
-  sorts the 108 factors published here.
+  <a href="https://pypi.org/project/pybondlab/">PyBondLab</a> forms corporate bond portfolios, computes portfolio turnover,
+  characteristics, and handles different holding periods and cost mitigation procedures
+  (banding, staggered rebalancing). The 108 factors are produced with this package.
 </p>
 <pre><code>pip install PyBondLab</code></pre>
 <p>
-  Source and issues at <a href="https://github.com/GiulioRossetti94/PyBondLab">PyBondLab on GitHub</a>, worked examples at
-  <a href="https://github.com/GiulioRossetti94/PyBondLab/tree/main/examples">the PyBondLab examples</a>. Maintained by Giulio Rossetti.
+  Worked examples can be <a href="https://github.com/GiulioRossetti94/PyBondLab/tree/main/examples">found here</a>. Maintained by Giulio
+  Rossetti.
 </p>
 
 <h2>Data uncertainty</h2>
 <p>
-  The same library measures how much a factor moves when reasonable choices in the data change
-  - the filters, the sample, the weighting. The examples show how to run a grid of those
-  choices and read the spread rather than a single number.
+  PyBondLab also measures how much a factor moves (e.g., the non-standard error) around
+  when 'reasonable choices' in the data change or when reasonable changes to the sort method
+  are made. The examples on <a href="https://pypi.org/project/pybondlab/">PyPi</a> show how to implement the data and
+  methodology related uncertainty protocols.
 </p>
 
 <h2>Co-pricing factor zoo</h2>
 <p>
   The replication package for the co-pricing paper, including the traded bond, stock and
-  nontraded factors, is at <a href="https://github.com/Alexander-M-Dickerson/co-pricing-factor-zoo/tree/main">the replication package</a>.
+  nontraded factors, is available in the <a href="https://github.com/Alexander-M-Dickerson/co-pricing-factor-zoo/tree/main">replication package</a>.
 </p>
 </div>
 
