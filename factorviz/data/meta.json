@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-21T07:16:40+00:00",
+  "built_utc": "2026-09-22T22:50:14+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -248,72 +248,72 @@
         "panel": {
           "name": "single_sort_panel_trace_2026.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/single_sort_panel_trace_2026.zip",
-          "bytes": 36980509
+          "bytes": 36980554
         },
         "csv": {
           "name": "single_sort_trace_2026_csv.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/single_sort_trace_2026_csv.zip",
-          "bytes": 4461801
+          "bytes": 4461803
         }
       },
       "trace_within_firm": {
         "panel": {
           "name": "within_firm_sort_panel_trace_2026.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/within_firm_sort_panel_trace_2026.zip",
-          "bytes": 37456302
+          "bytes": 37456352
         },
         "csv": {
           "name": "within_firm_sort_trace_2026_csv.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/within_firm_sort_trace_2026_csv.zip",
-          "bytes": 4506463
+          "bytes": 4506468
         }
       },
       "extended_single": {
         "panel": {
           "name": "single_sort_panel_extended_2026.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/single_sort_panel_extended_2026.zip",
-          "bytes": 65911407
+          "bytes": 65911054
         },
         "csv": {
           "name": "single_sort_extended_2026_csv.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/single_sort_extended_2026_csv.zip",
-          "bytes": 8002578
+          "bytes": 8002580
         }
       },
       "extended_within_firm": {
         "panel": {
           "name": "within_firm_sort_panel_extended_2026.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/within_firm_sort_panel_extended_2026.zip",
-          "bytes": 66434974
+          "bytes": 66435603
         },
         "csv": {
           "name": "within_firm_sort_extended_2026_csv.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/within_firm_sort_extended_2026_csv.zip",
-          "bytes": 8039136
+          "bytes": 8039141
         }
       },
       "lehman_ice_single": {
         "panel": {
           "name": "single_sort_panel_lehman_ice_2026.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/single_sort_panel_lehman_ice_2026.zip",
-          "bytes": 53357540
+          "bytes": 53357535
         },
         "csv": {
           "name": "single_sort_lehman_ice_2026_csv.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/single_sort_lehman_ice_2026_csv.zip",
-          "bytes": 6499133
+          "bytes": 6499125
         }
       },
       "lehman_ice_within_firm": {
         "panel": {
           "name": "within_firm_sort_panel_lehman_ice_2026.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/within_firm_sort_panel_lehman_ice_2026.zip",
-          "bytes": 53717728
+          "bytes": 53717719
         },
         "csv": {
           "name": "within_firm_sort_lehman_ice_2026_csv.zip",
           "url": "https://github.com/Alexander-M-Dickerson/factorviz/releases/download/v2026/within_firm_sort_lehman_ice_2026_csv.zip",
-          "bytes": 6514382
+          "bytes": 6514384
         }
       }
     },
@@ -1058,7 +1058,7 @@
       "name": "Value (HZ)",
       "short": "Value (HZ)",
       "group": "II",
-      "description": "Percentage deviation of observed credit spread from fitted ``fair'' spread: $(cs - \\widehat{cs}) / \\widehat{cs}$. Controls: rating, industry, maturity, spread change, callable. Fitted spread is estimated each month via cross-sectional regression; because cs is used, this signal is also exposed to microstructure noise."
+      "description": "Percentage deviation of observed credit spread from fitted ``fair'' spread: $(cs - \\widehat{cs}) / \\widehat{cs}$. Controls: rating, industry, 3-month spread change, callable. Fitted spread is estimated each month via cross-sectional regression; because cs is used, this signal is also exposed to microstructure noise."
     },
     "val_hz_dts": {
       "name": "Value (HZ, DtS-adjusted)",
