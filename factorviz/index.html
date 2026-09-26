@@ -11,7 +11,7 @@
   Self-contained but for Chart.js (pinned, from cdnjs) and its data directory, which must
   sit beside this file as ./data/ . Upload both to WordPress and point a page at it.
 
-  Data contract, produced by osbap_data/tools/make_factorviz.py:
+  Data contract, produced by tools/make_factorviz.py:
     data/meta.json                          controls, labels, product index, flip counts
     data/stats_<dataset>_<sort>.json        every series x 5 windows, precomputed; any
                                             other sample is recomputed in the browser
@@ -1006,8 +1006,7 @@ function applyFlip(row, flip) {
    Barillas-Kan-Robotti-Shanken (2019) pairwise tests, the GRS spanning test, and the
    mean-variance frontier, as Dickerson, Mueller and Robotti (2023) use them.
 
-   ❗These reproduce `robust-asset-pricing/src/robust_asset_pricing/statistics/squared_sharpe.py`
-   line for line: biased covariances (1/T), the (T-K-2)/T - K/T bias adjustment, the
+   ❗These reproduce the reference implementation line for line: biased covariances (1/T), the (T-K-2)/T - K/T bias adjustment, the
    uncentred Newey-West variance of the influence function, the heteroskedastic GRS
    statistic. `tests/page/check_page_models.mjs` replays `tests/fixtures/models_reference.json`,
    which that package wrote on real payload series, through these functions. A formula that
@@ -2837,19 +2836,27 @@ function renderAbout() {
     <h3>Within-firm sorts</h3>
     <p>Bonds are ranked only against other bonds of the <em>same issuer</em>, identified by
        CRSP <code>permno</code>.</p>
-    <p>A firm is included in a given month t only if it holds at least two bonds with both
-       a valid signal and a positive market value. The cutoffs are the 33rd and 67th
-       percentiles of the <em>distinct</em> signal values in that firm and rating group. Bonds
+    <p>A firm is included in a rating group in a given month t only if it holds at least two
+       bonds there with both a valid signal and a positive market value. The cutoffs are the one-third and
+       two-thirds points of the <em>distinct</em> signal values in that firm and rating group. Bonds
        strictly above the upper cutoff form the firm's long leg and bonds strictly below the
-       lower one form its short leg. Each leg is value-weighted inside the firm, and firms
-       combine in proportion to the market value of the bonds in their two legs. See
+       lower one form its short leg. For the equal-weighted factor each leg is an equal
+       average inside the firm and the firm's long-minus-short is averaged equally across
+       firms. For the value-weighted factor each leg is value-weighted inside the firm and
+       firms combine in proportion to the market value of the bonds in their two legs. This
+       is done separately in three rating groups (AAA to A-, BBB, below investment grade), and
+       the factor is the average over the groups that have a firm that month. See
        Dick-Nielsen et al., 2023.</p>
+    <p>The long and short legs in the downloads pool every firm's long bonds, and every firm's
+       short bonds, into one portfolio each. They bring back the differences between firms that
+       the factor removes, so for within-firm sorts the factor is not the long leg minus the
+       short leg.</p>
 
     <h2>Return definitions</h2>
     <p>A corporate bond's total return contains compensation for interest-rate risk. The
-       four definitions below differ only in how the duration-hedged portfolio of Treasuries
-       is constructed, which is subtracted from the bond total return to isolate the credit
-       component.</p>
+       first definition below subtracts the one-month Treasury bill. The other three subtract
+       a duration-hedged portfolio of Treasuries, to isolate the credit component, and differ
+       only in how that portfolio is constructed.</p>
     <p>Characteristics that require returns to be estimated, e.g., momentum, factor betas
        etc., are re-estimated using that return definition's own benchmark. For example, if
        the BNS return is used, and the 6-month momentum factor is evaluated, the 6-month
@@ -2903,11 +2910,11 @@ function renderAbout() {
 
     <h2>Known gaps</h2>
     <ul>
-      <li>Factor returns are missing for eight months in which the Lehman database has no
-          prices, 1975-08 to 1975-11 and 1984-12 to 1985-03.</li>
+      <li>Factor returns are missing for eight months around two gaps in the Lehman
+          database, 1975-08 to 1975-11 and 1984-12 to 1985-03.</li>
       <li>For long-sample work, 1985-06 is a sensible start. Before the mid-1980s the
-          high-yield market is small, and a non-investment-grade long&ndash;short leg rests on
-          roughly one hundred bonds.</li>
+          high-yield market is small. In the single sorts a high-yield leg holds a median of 7
+          to 18 bonds a month in the 1970s, and about 100 only by 1982&ndash;84.</li>
     </ul>
 
     <h2>Citation</h2>

@@ -2,13 +2,13 @@
 
 The interactive front end for the [Open Source Bond Asset
 Pricing](https://openbondassetpricing.com) corporate bond factors. Published with GitHub
-Pages and embedded on the site; this repository holds only the page and its data.
+Pages and embedded on the site. This folder holds the page and its data.
 
-**Do not edit anything here by hand.** Everything is generated:
+**Do not edit anything here by hand.** Everything is generated with
 
     python tools/make_factorviz.py --pages-dir <this repo>
 
-from `osbap_data` in the private build repo, which is where `factorviz.html` lives.
+from the private build repo, which is where `factorviz.html` lives.
 
 ## What is in here
 
