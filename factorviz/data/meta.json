@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-26T23:28:29+00:00",
+  "built_utc": "2026-09-28T02:32:52+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -500,13 +500,13 @@
       "name": "Inflation Volatility Beta",
       "short": "Inflation Vol. Beta",
       "group": "IX",
-      "description": "Beta on 6-month rolling CPI volatility."
+      "description": "Beta on the 6-month rolling standard deviation of that lagged CPI change, in index points."
     },
     "b_cptlt": {
       "name": "Intermediary Capital Beta",
       "short": "Interm. Capital Beta",
       "group": "IX",
-      "description": "Beta on traded intermediary capital ratio."
+      "description": "Beta on the He-Kelly-Manela traded intermediary capital factor, a return less the risk-free rate, with MKTRF alongside."
     },
     "b_credit": {
       "name": "Credit Spread Level Beta",
@@ -524,7 +524,7 @@
       "name": "Inflation Beta",
       "short": "Inflation Beta",
       "group": "IX",
-      "description": "Beta on monthly CPI changes."
+      "description": "Beta on the one-month-lagged change in the CPI level (FRED CPIAUCSL), in index points: a change in the index, not a rate of inflation."
     },
     "b_dcredit": {
       "name": "Credit Spread Change Beta",
@@ -536,7 +536,7 @@
       "name": "Default Beta",
       "short": "Default Beta",
       "group": "VII",
-      "description": "Beta on DEFB from duration-adjusted market regression."
+      "description": "Beta on DEFB, from one rolling regression of the bond's return on TERMB and DEFB."
     },
     "b_drf": {
       "name": "Downside Risk Beta (Univariate)",
@@ -596,19 +596,19 @@
       "name": "VIX Beta (Amihud)",
       "short": "VIX Beta (Amihud)",
       "group": "VIII",
-      "description": "$\\Delta$VIX beta from FF3+VIX+Amihud specification."
+      "description": "Sum of the betas on this month's and last month's VIX change, from a rolling regression on FF3, the VIX level, both VIX changes and the Amihud factor (AMD)."
     },
     "b_dvix_vp": {
       "name": "VIX Beta (PSB)",
       "short": "VIX Beta (PSB)",
       "group": "VIII",
-      "description": "$\\Delta$VIX beta from FF3+VIX+PSB specification."
+      "description": "Sum of the betas on this month's and last month's VIX change, from a rolling regression on FF3, the VIX level, both VIX changes and the Pastor-Stambaugh factor (PSB)."
     },
     "b_dvixd": {
       "name": "Daily VIX Innovation Beta",
       "short": "Daily VIX Inn. Beta",
       "group": "VIII",
-      "description": "Beta on daily $\\Delta$VIX within the month. Requires a minimum of 5 daily returns."
+      "description": "Beta on the change in VIX between the bond's consecutive trade dates within the month, from a regression of its daily returns; a change across more than 5 days is left out. Requires a minimum of 5 daily returns."
     },
     "b_epu": {
       "name": "Economic Policy Uncertainty Beta",
@@ -674,7 +674,7 @@
       "name": "Duration-Adj Market Beta",
       "short": "Dur.-Adj Market Beta",
       "group": "VI",
-      "description": "Beta on MKTBX from duration-adjusted CAPM."
+      "description": "Beta on MKTBX, from a rolling regression of the bond's return \\texttt{ret\\_vw} on MKTBX and TERM. The regression is on the total return; the version on the duration-adjusted return is in the \\texttt{betas\\_x} block."
     },
     "b_mktrf_mkt": {
       "name": "Equity Market Beta",
@@ -710,13 +710,13 @@
       "name": "Term Premium Beta",
       "short": "Term Premium Beta",
       "group": "VI",
-      "description": "Beta on TERM $=$ MKTB $-$ MKTBX from duration-adjusted CAPM."
+      "description": "Beta on TERM, from the same regression of \\texttt{ret\\_vw} on MKTBX and TERM. TERM $=$ MKTB $+ r^f -$ MKTBX, the value-weighted duration-matched Treasury return, not an excess return."
     },
     "b_termb": {
       "name": "Term Beta",
       "short": "Term Beta",
       "group": "VI",
-      "description": "Beta on TERMB from market regression."
+      "description": "Beta on TERMB, from one rolling regression of the bond's return on TERMB and DEFB."
     },
     "b_unc": {
       "name": "Uncertainty Level Beta",
@@ -728,7 +728,7 @@
       "name": "VIX Level Beta",
       "short": "VIX Level Beta",
       "group": "VIII",
-      "description": "Beta on VIX level from monthly regression."
+      "description": "Beta on the VIX level (divided by 100 and by $\\sqrt{12}$), from a regression of the bond's daily returns within the month. Requires a minimum of 5 daily returns."
     },
     "b_ysp": {
       "name": "Yield Spread Beta",
@@ -758,7 +758,7 @@
       "name": "12-Month Average Spread",
       "short": "12M Avg. Spread",
       "group": "I",
-      "description": "Rolling 12-month average credit spread, skipping the prior month. Requires minimum 6 observations."
+      "description": "Average credit spread over the bond's 12 monthly observations before month $t$, month $t{-}1$ included. Requires minimum 6 observations."
     },
     "cs_sprd": {
       "name": "Corwin-Schultz Spread",
@@ -800,13 +800,13 @@
       "name": "Idiosyncratic Volatility",
       "short": "Idio. Vol.",
       "group": "V",
-      "description": "Standard deviation of idiosyncratic returns (CAPMB residuals) within the month. Requires a minimum of 5 daily returns."
+      "description": "Standard deviation of the idiosyncratic part of the bond's daily returns within the month: the residual of a regression on the day's equal-weighted average return across all bonds. Requires a minimum of 5 daily returns."
     },
     "dvol_sys": {
       "name": "Systematic Volatility",
       "short": "Systematic Vol.",
       "group": "V",
-      "description": "Standard deviation of systematic returns (CAPMB fitted values) within the month. Requires a minimum of 5 daily returns."
+      "description": "Standard deviation of the systematic part of the bond's daily returns within the month, from a regression on the day's equal-weighted average return across all bonds. Requires a minimum of 5 daily returns."
     },
     "es_90": {
       "name": "90% Expected Shortfall",
@@ -836,7 +836,7 @@
       "name": "Roll Autocovariance",
       "short": "Roll Autocovariance",
       "group": "IV",
-      "description": "Negative autocovariance of log returns $\\times 100$. Requires a minimum of 5 daily returns."
+      "description": "Negative autocovariance of the bond's daily log clean-price returns, the returns taken in percent (log return $\\times 100$), so 10,000 times the autocovariance of decimal returns. Requires a minimum of 5 daily returns."
     },
     "iltr24_3": {
       "name": "Industry LTR (24-3)",
@@ -878,7 +878,7 @@
       "name": "Idiosyncratic Skewness",
       "short": "Idio. Skewness",
       "group": "V",
-      "description": "Skewness of residuals from coskewness regression."
+      "description": "Rolling skewness of the residuals of the coskewness regression (MKTB and its square), each residual taken with that month's rolling betas. Before the bond has enough observations for the betas, its residual is the raw return."
     },
     "ivol_bbw": {
       "name": "Idiosyncratic Volatility (BBW)",
@@ -902,7 +902,7 @@
       "name": "Negative LIX (Illiquidity)",
       "short": "Negative LIX",
       "group": "IV",
-      "description": "$-\\log_{10}[(V \\times P_{\\text{close}}) / (P_{\\text{high}} - P_{\\text{low}})]$. Requires a minimum of 5 prices. Stored NEGATED (lib/illiq_pandas.py), so it rises with ILLIQUIDITY -- 99.29% of non-null values are negative, median -2.181."
+      "description": "$-\\log_{10}[(V \\times P_{\\text{close}}) / (P_{\\text{high}} - P_{\\text{low}})]$, averaged over the month's days whose high differs from their low. Requires a minimum of 5 daily Amihud ratios (a daily return with positive volume), the count \\texttt{ami} uses. Stored NEGATED (lib/illiq_pandas.py), so it rises with ILLIQUIDITY -- 99.29% of non-null values are negative, median -2.181."
     },
     "ltr24_3": {
       "name": "Long-Term Reversal (24-3)",
@@ -962,13 +962,13 @@
       "name": "FHT Spread",
       "short": "FHT Spread",
       "group": "IV",
-      "description": "Spread derived from zero-return proportion: $2\\sigma\\Phi^{-1}((1+p_{zro})/2)$. Requires a minimum of 5 daily returns."
+      "description": "Spread derived from the no-trade proportion: $2\\sigma\\Phi^{-1}((1+p_{zro})/2)$, where $p_{zro}$ is always the full-month share, while in the published form $\\sigma$ leaves out the bond's last day of trading. Requires a minimum of 5 daily returns."
     },
     "p_zro": {
       "name": "No-Trade Day Proportion",
       "short": "No-Trade Day Prop.",
       "group": "IV",
-      "description": "Fraction of business days with no valid price. Returns are never inspected, so the old name \"Zero-Return Proportion\" contradicted this description."
+      "description": "Fraction of the month's business days with no valid price. In the published (gap-adjusted) form the bond's last trading day in the month counts as a day without one, so the value is at least one over the month's business days; the unadjusted share is \\texttt{p\\_zro\\_mmn}. Returns are never inspected, so the old name \"Zero-Return Proportion\" contradicted this description."
     },
     "pi": {
       "name": "Price Impact",
@@ -986,13 +986,13 @@
       "name": "Roll Spread",
       "short": "Roll Spread",
       "group": "IV",
-      "description": "Implicit bid-ask spread: $2\\sqrt{\\max(-\\text{Cov}(r_t, r_{t-1}), 0)}$. Requires a minimum of 5 daily returns."
+      "description": "Implicit bid-ask spread: $2\\sqrt{\\max(-\\text{Cov}(r_t, r_{t-1}), 0)}$, with $r_t$ the daily log clean-price return in percent, so the spread is in percent of price. Requires a minimum of 5 daily returns."
     },
     "rsj": {
       "name": "Realized Signed Jump",
       "short": "Realized Signed Jump",
       "group": "V",
-      "description": "Within-month asymmetry in positive vs.\\ negative squared returns: $(RV^+ - RV^-)/RV$. Requires a minimum of 5 daily returns."
+      "description": "Within-month signed jump as the code computes it: $(\\sqrt{\\sum_{r>0} r_t^2} - \\sqrt{\\sum_{r<0} r_t^2}) / \\sum_t r_t^2$, the up-minus-down volatility over the realized variance. It is not bounded by 1 and scales with one over the volatility. Requires a minimum of 5 daily returns."
     },
     "rsk": {
       "name": "Realized Skewness",
@@ -1010,13 +1010,13 @@
       "name": "Absolute Bid-Ask Spread",
       "short": "Bid-Ask Spread (Abs)",
       "group": "IV",
-      "description": "Volume-weighted $(P^{ask} - P^{bid})$ in dollars. Requires a minimum of 5 prices."
+      "description": "Dollar-volume-weighted average dealer ask price minus average dealer bid price over the month, in points of par. No minimum: a month with one bid and one ask has a value."
     },
     "spd_rel": {
       "name": "Relative Bid-Ask Spread",
       "short": "Bid-Ask Spread (Rel)",
       "group": "IV",
-      "description": "Volume-weighted $(P^{ask} - P^{bid})/\\text{mid}$. Requires a minimum of 5 prices."
+      "description": "Dollar-volume-weighted average dealer ask minus average dealer bid, over their midpoint. No minimum: a month with one bid and one ask has a value."
     },
     "str": {
       "name": "Short-Term Reversal",
