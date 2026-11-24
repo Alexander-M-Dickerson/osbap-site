@@ -226,7 +226,7 @@
 <body>
 
 <div class="wrap">
-<h2>What you can download</h2>
+<h2>Corporate bond data</h2>
 <ul>
   <li>Daily and monthly corporate bond panels from Enhanced and 144A TRACE, cleaned and
       corrected as in <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>. The monthly panel has returns, credit spreads,
@@ -253,7 +253,7 @@
   <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage4">Stage 4</a> builds the TRACE-only bond factors shown in <a href="factorviz/">FactorViz</a>.</li>
 </ul>
 
-<h2>Credit and duration</h2>
+<h2>Credit and duration - the difference matters</h2>
 <p>
   <a href="https://academic.oup.com/rfs/article/38/1/158/7762644">van Binsbergen, Nozawa and Schwert (2025)</a> show that over the past twenty years most of the total return on corporate
   bonds has been the return on a duration-matched Treasury portfolio rather than compensation for
@@ -271,8 +271,9 @@
         <option value="bns">BNS, the bond's own cash flows</option>
         <option value="cls">CLS, cash flows on the Treasury zero curve</option>
         <option value="apr">APR, duration-interpolated key rates</option>
+        <option value="all">All three, credit components only</option>
       </select>
-      <div class="pop hidden" id="dec-pop" role="note"><h4>How each Treasury benchmark is built</h4><dl><dt>BNS <span class="muted">van Binsbergen, Nozawa and Schwert (2025)</span></dt><dd>A weighted average of one-month returns on zero-coupon Treasury bonds that mature on the bond's cash-flow dates t_k. The weight w_k is the present value of the cash flow CF_k at the bond's own yield y, as a share of the total. See van Binsbergen, Nozawa and Schwert (2025).</dd><dt>CLS <span class="muted">Cui, Lu and Song (2026)</span></dt><dd>As in BNS, but the weight v_k discounts CF_k at the Treasury zero-coupon yield z_t(t_k) rather than the bond's own yield. See Cui, Lu and Song (2026).</dd><dt>APR <span class="muted">Andreani, Palhares and Richardson (2024)</span></dt><dd>CRSP fixed-term Treasury index returns interpolated at the bond's modified duration across the nodes 1/12, 1, 2, 5, 7, 10, 20 and 30 years.</dd></dl><p class="muted">Each one is subtracted from the bond's total return to leave the credit component.</p></div>
+      <div class="pop hidden" id="dec-pop" role="note"><h4>How each Treasury benchmark is built</h4><dl><dt>BNS <span class="muted"><a href="https://academic.oup.com/rfs/article/38/1/158/7762644">van Binsbergen, Nozawa and Schwert (2025)</a></span></dt><dd>A weighted average of one-month returns on zero-coupon Treasury bonds that mature on the bond's cash-flow dates t_k. The weight w_k is the present value of the cash flow CF_k at the bond's own yield y, as a share of the total. See van Binsbergen, Nozawa and Schwert (2025).</dd><dt>CLS <span class="muted"><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7152198">Cui, Lu and Song (2026)</a></span></dt><dd>As in BNS, but the weight v_k discounts CF_k at the Treasury zero-coupon yield z_t(t_k) rather than the bond's own yield. See Cui, Lu and Song (2026).</dd><dt>APR <span class="muted"><a href="https://doi.org/10.1007/s11142-023-09777-6">Andreani, Palhares and Richardson (2024)</a></span></dt><dd>CRSP fixed-term Treasury index returns interpolated at the bond's modified duration across the nodes 1/12, 1, 2, 5, 7, 10, 20 and 30 years.</dd></dl><p class="muted">Each bond's duration-matched Treasury portfolio return is subtracted from its total return in month <em>t</em>, so that <em>r</em><sub>credit</sub> = <em>r</em><sub>total</sub> &minus; <em>r</em><sub>Treasury</sub>. Each line is the value-weighted average over bonds, weighted by market value at the end of the previous month.</p></div>
     </label>
   </div>
 
@@ -312,6 +313,8 @@
    their thumbs take pointer events. */
 (function () {
   const COLORS = {market: "#1f4e79", treasury: "#bc6c25", credit: "#2a9d8f", rf: "#8d99ae"};
+  // "All three" draws the three credit components side by side, one colour each.
+  const CREDIT = {bns: "#2a9d8f", cls: "#7b4fa3", apr: "#c2410c"};
   const NAMES = {bns: "BNS", cls: "CLS", apr: "APR"};
   const PRESETS = [["Full", null], ["1985+", "1985-01"], ["2002+", "2002-08"],
                    ["Last 20y", -240], ["Last 10y", -120]];
@@ -345,20 +348,25 @@
 
   function draw() {
     const b = $("dec-bench").value;
-    const tcol = "treasury_" + b;
     const rows = window_();
     const dates = rows.map((r) => r.date);
     const mk = (label, data, color) => ({
       label, data, borderColor: color, backgroundColor: color,
       borderWidth: 1.9, pointRadius: 0, tension: 0,
     });
-    const datasets = [
-      mk("Bond market, total return", cum(rows.map((r) => r.market)), COLORS.market),
-      mk("Duration-matched Treasuries (" + NAMES[b] + ")",
-         cum(rows.map((r) => r[tcol])), COLORS.treasury),
-      mk("Credit component", cum(rows.map((r) => r.market - r[tcol])), COLORS.credit),
-      mk("One-month T-bill", cum(rows.map((r) => r.rf)), COLORS.rf),
-    ];
+    const credit = (k) => cum(rows.map((r) => r.market - r["treasury_" + k]));
+    const datasets = [mk("Bond market, total return", cum(rows.map((r) => r.market)), COLORS.market)];
+    if (b === "all") {
+      for (const k of ["bns", "cls", "apr"]) {
+        datasets.push(mk("Credit component (" + NAMES[k] + ")", credit(k), CREDIT[k]));
+      }
+    } else {
+      datasets.push(
+        mk("Duration-matched Treasuries (" + NAMES[b] + ")",
+           cum(rows.map((r) => r["treasury_" + b])), COLORS.treasury),
+        mk("Credit component", credit(b), COLORS.credit));
+    }
+    datasets.push(mk("One-month T-bill", cum(rows.map((r) => r.rf)), COLORS.rf));
     $("dec-span").textContent = dates[0].slice(0, 7) + " to "
       + dates[dates.length - 1].slice(0, 7) + ", " + dates.length + " months";
     paintTrack();
@@ -457,8 +465,9 @@
 </script>
 
 <p>
-  Every monthly panel we publish has all three Treasury hedging portfolios, so you can split
-  returns with any of the three. <a href="factorviz/">FactorViz</a> defines them under its About tab.
+  Every monthly panel we publish includes all three Treasury hedging portfolio returns, so you
+  can compute duration-adjusted returns with any of the three. <a href="factorviz/">FactorViz</a> defines them
+  under its About tab.
 </p>
 
 <h2>Priced risk in corporate bonds</h2>
