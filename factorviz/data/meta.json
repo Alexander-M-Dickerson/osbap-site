@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-11-24T10:59:26+00:00",
+  "built_utc": "2026-11-24T22:18:06+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -386,7 +386,7 @@
     },
     "align": {
       "title": "Aligned sample",
-      "text": "The series you pick can cover different months, because the datasets start in different years and some characteristics exist only from 2002. Tick this to keep only the months every series has."
+      "text": "The series you pick can cover different months, because the datasets start in different years and some characteristics exist only from 2002. Tick this to keep only the months in which every series has valid data."
     },
     "m_against": {
       "title": "Benchmark models",
@@ -406,7 +406,10 @@
     },
     "m_tests": {
       "title": "The tests",
-      "text": "Each row is a benchmark model on the same months. Its squared Sharpe ratio and the difference from yours are both bias-adjusted. When one model's factors are a subset of the other's, the test is the GRS test of the excluded factors' alphas on the smaller model, heteroskedasticity-robust. When neither nests the other, a spanning pretest first asks whether the factors the models do not share are spanned by the ones they do, and if not, the difference in squared Sharpe ratios is tested directly with a Newey-West standard error, as in Barillas, Kan, Robotti and Shanken (2019). The alpha is the intercept of your model's tangency portfolio on the benchmark's factors, and the information ratio is that alpha over the residual volatility, annualised. The sentences below the table say what the p-values show."
+      "links": {
+        "Barillas, Kan, Robotti and Shanken (2019)": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3013149"
+      },
+      "text": "Each row is a benchmark model estimated with data common to all factors. Squared Sharpe ratios are corrected for small-sample bias, because the sample estimate overstates the true value. When one model's factors are a subset of the other's, the test is a heteroskedasticity-robust GRS test of the excluded factors' alphas on the smaller model. When neither model nests the other, a spanning test is run first on the factors the two models do not share. If those factors are not spanned by the shared ones, the difference in squared Sharpe ratios is tested with a Newey-West standard error, as in Barillas, Kan, Robotti and Shanken (2019). The alpha is the intercept from regressing your model's tangency portfolio on the benchmark's factors, and the information ratio is that alpha divided by the residual volatility, annualised."
     }
   },
   "groups": [
