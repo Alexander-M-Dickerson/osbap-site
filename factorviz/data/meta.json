@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-11-24T09:01:41+00:00",
+  "built_utc": "2026-11-24T10:30:17+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -333,8 +333,8 @@
       "title": "Sort",
       "source": "sorts",
       "items": {
-        "single": "Bonds are ranked each month into deciles for all bonds and quintiles for the IG/HY rating subset. The factor is long the top portfolio (D10, Q5) minus the bottom (D1, Q1).",
-        "within_firm": "Bonds are ranked only against other bonds of the same issuer (using permno), so firm-level determinants such as default risk and leverage are differenced out."
+        "single": "Each month bonds are sorted into deciles over all bonds, or into quintiles within investment grade or high yield. The factor is the top portfolio (D10 or Q5) minus the bottom (D1 or Q1).",
+        "within_firm": "Bonds are ranked only against other bonds of the same issuer (CRSP permno), so firm-level differences such as default risk and leverage drop out."
       }
     },
     "rt": {
@@ -361,40 +361,40 @@
       "source": "weightings",
       "items": {
         "ew": "Every bond in a leg counts the same.",
-        "vw": "Bonds count in proportion to price times amount outstanding, so large issues dominate the leg."
+        "vw": "Bonds count in proportion to price times amount outstanding, so large issues weigh more."
       }
     },
     "flip": {
       "title": "Orient to positive mean",
-      "text": "Enables factor sign-correction, such that each factor premium is positive over the full sample (flips long/short leg, when the full-sample premium is below zero)."
+      "text": "Reverses every factor whose full-sample mean is negative, swapping its long and short legs, so that each factor shown has a positive mean."
     },
     "group": {
       "title": "Group by cluster",
-      "text": "The 108 characteristics have nine clusters. Puts factors under their respective cluster header."
+      "text": "Shows the factors under the nine clusters of the 108 characteristics."
     },
     "align": {
       "title": "Aligned sample",
-      "text": "Selected series can cover different months, because datasets start in different years and some characteristics only exist after 2002. This force-aligns the selected series."
+      "text": "The series you pick can cover different months, because the datasets start in different years and some characteristics exist only from 2002. Tick this to keep only the months every series has."
     },
     "m_against": {
       "title": "Benchmark models",
-      "text": "<strong>MKTB (r - rf)</strong> total market return minus the one-month T-Bill rate of return.<br><strong>MKTB (credit)</strong> total market return minus the duration-matched Treasury portfolio, matched to your first factor's return definition (BNS, CLS, APR).<br><strong>BNS two-factor model</strong> the decomposed DCAPM model. Includes the credit and term component of the corporate bond market factor.<br><strong>FF (1993) five-factor model</strong> the original FF 5-factor model including Mkt-Rf, SMB, HML and the DEF and TERM factors."
+      "text": "<strong>MKTB (r - rf)</strong>, the bond market's total return minus the one-month T-bill.<br><strong>MKTB (credit)</strong>, the market's total return minus the duration-matched Treasury portfolio, on the return definition of your first factor (APR, BNS or CLS).<br><strong>BNS two-factor model</strong>, the decomposed DCAPM, with the credit and term parts of the corporate bond market factor.<br><strong>FF (1993) five-factor model</strong>, the original Fama-French five factors, Mkt-Rf, SMB, HML, DEF and TERM."
     },
     "m_frontier": {
       "title": "The frontier",
-      "text": "Each line from the origin is the slope of a model's maximum Sharpe ratio. The dots are the factors."
+      "text": "Each line from the origin has the slope of a model's maximum Sharpe ratio. The dots are the individual factors."
     },
     "m_cum": {
       "title": "Optimally weighted",
-      "text": "The cumulative return of the tangency portfolio of your chosen factors (your model)."
+      "text": "The cumulative return of your model's tangency portfolio, beside each of its factors."
     },
     "m_model": {
       "title": "The model",
-      "text": "Model's bias-adjusted squared Sharpe ratio, the sample value times (T minus K minus 2) over T, minus K over T, and the p-value against zero from a chi-square with K degrees of freedom."
+      "text": "The model's squared Sharpe ratio, bias-adjusted as the sample value times (T minus K minus 2) over T, minus K over T, with its p-value against zero from a chi-square with K degrees of freedom."
     },
     "m_tests": {
       "title": "The tests",
-      "text": "Each row is a benchmark model on the same months. Its squared Sharpe ratio and the difference from yours are both bias-adjusted. When one model's factors are a subset of the other's, the test is the GRS test of the excluded factors' alphas on the smaller model, heteroskedasticity-robust. When neither nests the other, a spanning pretest first asks whether the factors the models do not share are spanned by the ones they do, and if not, the difference in squared Sharpe ratios is tested directly with a Newey-West standard error, as in Barillas, Kan, Robotti and Shanken (2019). The alpha is the intercept of your model's tangency portfolio on the benchmark's factors, and the information ratio is that alpha over the residual volatility, annualised. The sentences below the table say what the p-values allow."
+      "text": "Each row is a benchmark model on the same months. Its squared Sharpe ratio and the difference from yours are both bias-adjusted. When one model's factors are a subset of the other's, the test is the GRS test of the excluded factors' alphas on the smaller model, heteroskedasticity-robust. When neither nests the other, a spanning pretest first asks whether the factors the models do not share are spanned by the ones they do, and if not, the difference in squared Sharpe ratios is tested directly with a Newey-West standard error, as in Barillas, Kan, Robotti and Shanken (2019). The alpha is the intercept of your model's tangency portfolio on the benchmark's factors, and the information ratio is that alpha over the residual volatility, annualised. The sentences below the table say what the p-values show."
     }
   },
   "groups": [

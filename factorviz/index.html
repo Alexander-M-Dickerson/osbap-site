@@ -285,11 +285,11 @@
 <header>
   <h1>Exploring the corporate bond factor zoo</h1>
   <p class="sub">
-    108 Long&ndash;short corporate bond factors from
+    108 long-short corporate bond factors from
     <a href="https://openbondassetpricing.com">Open Source Bond Asset Pricing</a> and
-    <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, A., Robotti, C. and Rossetti, G. (2026)</a>.
-    Compare single sorts against within-firm sorts, four return definitions, three rating
-    universes and two weighting schemes &mdash; across three datasets reaching back to 1973.
+    <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>,
+    on three datasets going back to 1973. Each factor comes as a single sort and a within-firm
+    sort, with four return definitions, three rating universes and two weightings.
   </p>
 </header>
 
@@ -297,14 +297,14 @@
   <button role="tab" id="tab-explore" aria-selected="true">Explore</button>
   <button role="tab" id="tab-compare" aria-selected="false">Compare</button>
   <button role="tab" id="tab-models" aria-selected="false">Models</button>
-  <button role="tab" id="tab-about" aria-selected="false">About the data/Downloads</button>
+  <button role="tab" id="tab-about" aria-selected="false">About and downloads</button>
 </div>
 
 <!-- ===================== EXPLORE ===================== -->
 <section id="panel-explore">
   <div class="warn">
-    Pick a dataset, a sort, a return definition, a universe and a weighting. The table
-    below ranks every factor in that slice selection, grouped by factor cluster.
+    Choose a dataset, sort, return definition, universe and weighting. The table ranks every
+    factor in that selection, grouped by cluster. Tick factors to chart them.
   </div>
 
   <div class="controls">
@@ -363,11 +363,11 @@
   <div class="card">
     <h2>All factors <span class="note" id="e-table-note"></span></h2>
     <p class="method">
-      Alpha is the intercept from the one-factor bond CAPM (CAPMB) of
+      Alpha is the intercept of a regression of the factor on the bond market benchmark with
+      the same return definition, the one-factor bond CAPM (CAPMB) of
       <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson,
-      Mueller and Robotti (2023)</a>, the factor regressed on the market benchmark matched to
-      its return definition. Both t-statistics use Newey-West standard errors with lags
-      = floor(T<sup>0.25</sup>), where T is the number of months in the series.
+      Mueller and Robotti (2023)</a>. Both t-statistics use Newey-West standard errors with
+      floor(T<sup>0.25</sup>) lags, where T is the number of months in the series.
     </p>
     <div class="scroll"><table id="e-table"></table></div>
   </div>
@@ -376,8 +376,8 @@
 <!-- ===================== COMPARE ===================== -->
 <section id="panel-compare" class="hidden">
   <div class="warn">
-    Compare your set of chosen factors, across datasets, sorts, return definitions,
-    universes and weightings.
+    Add factors from any dataset, sort, return definition, universe and weighting, and
+    compare them on one chart and in one table.
   </div>
 
   <div class="controls">
@@ -453,10 +453,9 @@
 <!-- ===================== MODELS ===================== -->
 <section id="panel-models" class="hidden">
   <div class="warn">
-    Build your factor model, and compare it to established models in the literature.
-    Squared Sharpe ratio statistics and model comparison tests from Barillas, Kan, Robotti
-    and Shanken (2019) and Dickerson, Mueller and Robotti (2023) are estimated, and
-    mean-variance efficient frontiers are constructed.
+    Build a factor model and compare it with models from the literature. The tab estimates
+    squared Sharpe ratios and the model comparison tests of Barillas, Kan, Robotti and Shanken
+    (2019) and Dickerson, Mueller and Robotti (2023), and draws the mean-variance frontier.
   </div>
 
   <div class="controls">
@@ -1737,7 +1736,7 @@ async function renderExplore() {
   };
   const onPick = (f, on) => {
     const b = baseName(f);
-    if (on) { if (explore.picked.size >= 10) { alert("Ten series at once is the limit -- untick one first."); renderExplore(); return; } explore.picked.add(b); }
+    if (on) { if (explore.picked.size >= 10) { alert("Ten series at once is the limit. Untick one first."); renderExplore(); return; } explore.picked.add(b); }
     else explore.picked.delete(b);
     renderExplore();
   };
@@ -2382,14 +2381,14 @@ function verdict(mine, rival, cmp, T) {
       : `Not enough evidence that ${rival} improves on ${mine}. The factors it adds are spanned by ${mine} (${ps}).`;
   }
   if (cmp.pretestHetero > 0.05) {
-    return `${mine} and ${rival} are economically very similar on this sample. The factors they do not share are spanned by the ones they do (spanning ${ps}), so the squared Sharpe ratios are not distinguishable.`;
+    return `${mine} and ${rival} are close on this sample. The factors they do not share are spanned by the ones they do (spanning ${ps}), so their squared Sharpe ratios cannot be told apart.`;
   }
   if (p <= 0.05) {
     return cmp.difference > 0
-      ? `${mine} delivers a better attainable mean-variance trade-off than ${rival} on this sample (${ps}).`
-      : `${rival} delivers a better attainable mean-variance trade-off than ${mine} on this sample (${ps}).`;
+      ? `${mine} has a higher squared Sharpe ratio than ${rival} on this sample (${ps}).`
+      : `${rival} has a higher squared Sharpe ratio than ${mine} on this sample (${ps}).`;
   }
-  return `Not enough evidence that either of ${mine} and ${rival} dominates the other (${ps}). The steeper line is only marginally above the other.`;
+  return `Not enough evidence that either of ${mine} and ${rival} has the higher squared Sharpe ratio (${ps}). The difference is not significant at the 5% level.`;
 }
 
 function clearModels(msg) {
@@ -2849,21 +2848,18 @@ function renderAbout() {
   math.push(["eq-capmb", "r_t = \\alpha + \\beta\\, MKT_t + \\varepsilon_t"]);
   $("about-body").innerHTML = `<div class="prose">
     <h2>What this data is</h2>
-    <p>The underlying bond panels are built by the
-       <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">TRACE Data Pipeline</a>, and the construction follows
+    <p>The bond panels behind these factors are built by the
+       <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">TRACE Data Pipeline</a>, following
        <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>.
-       Factors are formed with
+       The factors are formed with
        <a href="https://pypi.org/project/pybondlab/">PyBondLab</a>.</p>
 
     <h2>Download the data</h2>
-    <p>Data is available for download in wide-format (time series) or in panel format
-       which includes additional variables such as turnover, long/short legs etc.</p>
+    <p>Each set comes as time series, one CSV per return definition, universe and weighting,
+       and as a parquet panel that adds the long and short legs, turnover and portfolio
+       counts.</p>
     ${dl}
-    <p>Every archive includes <code>MANIFEST.json</code> listing each file with its
-       SHA-256. The four market benchmarks can be downloaded here,
-       <a href="./data/benchmarks.csv">benchmarks.csv</a>. The pipeline that builds the
-       underlying bond panels is public at
-       <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a>.</p>
+    <p>Every archive has a <code>MANIFEST.json</code> with the SHA-256 of each file.</p>
 
     <h2>How the portfolios are formed</h2>
     <p>The sorts are run with
@@ -2871,69 +2867,70 @@ function renderAbout() {
        <a href="https://giuliorossetti94.github.io/">Giulio Rossetti</a> and
        <a href="https://www.alexdickerson.com/">Alex Dickerson</a>.</p>
     <h3>Single sorts</h3>
-    <p>Bonds are ranked each month into deciles for 'All' bonds and quintiles for IG/HY.
-       The factor is the extreme-decile (or quintile) spread, computed both equal-weighted
-       and value-weighted, where value weights are price times amount outstanding.</p>
+    <p>Each month bonds are sorted into deciles over all bonds, and into quintiles within
+       investment grade and within high yield. The factor is the top portfolio minus the
+       bottom one, equal-weighted and value-weighted, with value weights of price times
+       amount outstanding.</p>
     <h3>Within-firm sorts</h3>
     <p>Bonds are ranked only against other bonds of the <em>same issuer</em>, identified by
        CRSP <code>permno</code>.</p>
-    <p>A firm is included in a rating group in a given month t only if it holds at least two
-       bonds there with both a valid signal and a positive market value. The cutoffs are the one-third and
-       two-thirds points of the <em>distinct</em> signal values in that firm and rating group. Bonds
-       strictly above the upper cutoff form the firm's long leg and bonds strictly below the
-       lower one form its short leg. For the equal-weighted factor each leg is an equal
-       average inside the firm and the firm's long-minus-short is averaged equally across
-       firms. For the value-weighted factor each leg is value-weighted inside the firm and
-       firms combine in proportion to the market value of the bonds in their two legs. This
-       is done separately in three rating groups (AAA to A-, BBB, below investment grade), and
-       the factor is the average over the groups that have a firm that month. See
-       Dick-Nielsen et al., 2023.</p>
-    <p>The long and short legs in the downloads pool every firm's long bonds, and every firm's
-       short bonds, into one portfolio each. They bring back the differences between firms that
-       the factor removes, so for within-firm sorts the factor is not the long leg minus the
-       short leg.</p>
+    <p>A firm enters a rating group in month t only if it has at least two bonds there with a
+       valid signal and a positive market value. The cutoffs are the one-third and two-thirds
+       points of the <em>distinct</em> signal values in that firm and rating group. Bonds
+       strictly above the upper cutoff form the firm's long leg, and bonds strictly below the
+       lower one its short leg. In the equal-weighted factor each leg is an equal average
+       inside the firm, and the firms' long-minus-short returns are averaged equally. In the
+       value-weighted factor each leg is value-weighted inside the firm, and firms count in
+       proportion to the market value of the bonds in their two legs. This is done separately
+       in three rating groups (AAA to A-, BBB, and below investment grade), and the factor is
+       the average over the groups that have a firm that month, as in Dick-Nielsen et al.
+       (2023).</p>
+    <p>The long and short legs in the downloads pool every firm's long bonds into one
+       portfolio and every firm's short bonds into another. Pooling brings back the
+       differences between firms that the factor removes, so a within-firm factor is not its
+       long leg minus its short leg.</p>
 
     <h2>Return definitions</h2>
-    <p>A corporate bond's total return contains compensation for interest-rate risk. The
+    <p>A corporate bond's total return includes compensation for interest-rate risk. The
        first definition below subtracts the one-month Treasury bill. The other three subtract
-       a duration-hedged portfolio of Treasuries, to isolate the credit component, and differ
-       only in how that portfolio is constructed.</p>
-    <p>Characteristics that require returns to be estimated, e.g., momentum, factor betas
-       etc., are re-estimated using that return definition's own benchmark. For example, if
-       the BNS return is used, and the 6-month momentum factor is evaluated, the 6-month
-       momentum characteristic is computed with the BNS return type.</p>
+       a duration-matched portfolio of Treasuries to isolate the credit component, and differ
+       only in how that portfolio is built.</p>
+    <p>Characteristics estimated from returns, such as momentum and the factor betas, are
+       re-estimated on each return definition. The 6-month momentum factor on BNS returns,
+       for example, sorts on 6-month momentum computed from BNS returns.</p>
     ${returns}
 
     <h2>The one business day signal gap</h2>
-    <p>Price-based signals in the TRACE era are computed from a price at least one business
-       day before the month-end price used in the return denominator. This removes the
-       correlated errors-in-variables (CEIV) bias that arises when the same transaction price
-       enters both the signal and the return. See Dickerson, Robotti and Rossetti (2026),
-       Section 3. The unadjusted signals are in the additional-data download on the
-       <a href="https://alexander-m-dickerson.github.io/osbap-site/data/">Data page</a>, not
-       recommended for forming factors. Pre-2002 Lehman and ICE prices are quotes and need no
-       adjustment.</p>
+    <p>In the TRACE era, price-based signals use a price at least one business day before the
+       month-end price in the return's denominator. This removes the correlated
+       errors-in-variables (CEIV) bias that arises when the same transaction price enters
+       both the signal and the return (Dickerson, Robotti and Rossetti, 2026, Section 3). The
+       unadjusted signals are in the additional monthly panel on the
+       <a href="https://alexander-m-dickerson.github.io/osbap-site/data/">Data page</a>, and
+       we do not recommend them for forming factors. Before August 2002 the Lehman and ICE
+       prices are quotes and need no adjustment.</p>
     <div class="cite"><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, A., Robotti, C. and Rossetti, G.
       (2026). The Corporate Bond Factor Replication Crisis</a>, Section 3.</div>
 
     <h2>Risk adjustment</h2>
     <p>Alpha and beta come from a time-series regression of the factor on a bond market
        benchmark, the one-factor bond CAPM (CAPMB) of
-       <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson, Mueller and Robotti (2023)</a>. <strong>Each return
-       definition is paired with its own benchmark</strong>, so a duration-adjusted factor is
-       never regressed on an unadjusted market.</p>
+       <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson, Mueller and Robotti (2023)</a>.
+       Each return definition has its own benchmark, the market return on the same
+       definition, so a duration-adjusted factor is regressed on a duration-adjusted
+       market.</p>
     <div class="scroll"><table><thead><tr><th>Return definition</th>
       <th>Market benchmark</th></tr></thead><tbody>${bm}</tbody></table></div>
     <div class="eq" id="eq-capmb">r_t = alpha + beta * MKT_t + e_t</div>
-    <p>The four benchmarks are downloadable as one monthly file,
-       <a href="./data/benchmarks.csv">benchmarks.csv</a>, running from 1973 to the end of the
+    <p>The four benchmarks are in one monthly file,
+       <a href="./data/benchmarks.csv">benchmarks.csv</a>, from 1973 to the end of the
        sample.</p>
 
     <h2>Sign convention</h2>
-    <p>These factors are <strong>not sign-corrected</strong> to have a positive premium. The
-       long leg is always the high-characteristic portfolio. Every download includes
-       <code>flip_set.json</code>, which lists the factors whose full-sample average return is
-       negative, if you want to know which ones need a sign-correction.</p>
+    <p>The factors are not sign-corrected to have a positive mean. The long leg is always the
+       portfolio with the high characteristic. Every download has
+       <code>flip_set.json</code>, which lists the factors whose full-sample mean is
+       negative.</p>
 
     <h2>Datasets</h2>
     <div class="scroll"><table>
@@ -2941,21 +2938,21 @@ function renderAbout() {
                  <th>Series</th></tr></thead>
       <tbody>${rows}</tbody></table></div>
     <ul>
-      <li><strong>${META.datasets.trace.label}</strong> &mdash; ${META.datasets.trace.blurb}</li>
-      <li><strong>${META.datasets.extended.label}</strong> &mdash; ${META.datasets.extended.blurb}</li>
-      <li><strong>${META.datasets.lehman_ice.label}</strong> &mdash; ${META.datasets.lehman_ice.blurb}</li>
+      <li>${META.datasets.trace.label}. ${META.datasets.trace.blurb}</li>
+      <li>${META.datasets.extended.label}. ${META.datasets.extended.blurb}</li>
+      <li>${META.datasets.lehman_ice.label}. ${META.datasets.lehman_ice.blurb}</li>
     </ul>
-    <p>Lehman-ICE prices are quotes, so the characteristics that rely on transaction data or
-       daily returns start with TRACE in August 2002. The Lehman-ICE dataset has data for 83
-       of the 108 characteristics.</p>
+    <p>Lehman-ICE prices are quotes, so the characteristics that need transaction data or
+       daily returns start with TRACE in August 2002. The Lehman-ICE dataset has 83 of the
+       108 characteristics.</p>
 
     <h2>Known gaps</h2>
     <ul>
       <li>Factor returns are missing for eight months around two gaps in the Lehman
           database, 1975-08 to 1975-11 and 1984-12 to 1985-03.</li>
-      <li>For long-sample work, 1985-06 is a sensible start. Before the mid-1980s the
-          high-yield market is small. In the single sorts a high-yield leg holds a median of 7
-          to 18 bonds a month in the 1970s, and about 100 only by 1982&ndash;84.</li>
+      <li>For long samples, 1985-06 is a sensible start. Before the mid-1980s the high-yield
+          market is small. In the single sorts a high-yield leg holds a median of 7 to 18
+          bonds a month in the 1970s, and reaches about 100 only in 1982 to 1984.</li>
     </ul>
 
     <h2>Citation</h2>
@@ -3131,9 +3128,8 @@ async function boot() {
 
   $("foot-built").innerHTML =
     `Built ${META.built_utc.replace("T", " ").replace("+00:00", " UTC")} &middot; `
-    + `alpha from the one-factor bond CAPM, the factor regressed on the market benchmark `
-    + `matched to its return definition, excess or duration-adjusted &middot; `
-    + `t-statistics use Newey-West standard errors`;
+    + `alpha from the one-factor bond CAPM, on the market benchmark with the same `
+    + `return definition &middot; Newey-West t-statistics`;
 
   mountHelp();
   refreshCompareFactors();
