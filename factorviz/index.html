@@ -237,6 +237,47 @@
   .hidden { display: none !important; }
   .spin { color: var(--ink-soft); font-size: 13px; padding: 20px 0; }
 </style>
+<script>
+/* A page of ours shown inside the WordPress site's frame (one source, inlined into the head of
+   every built page by tools/make_site.py and of FactorViz by tools/make_factorviz.py).
+
+   1. The frame sits on a white WordPress page, so inside it the page stays light, whatever the
+      visitor's device prefers. Opened on its own, a page still follows dark mode.
+   2. GitHub, SSRN, PyPI and the journals refuse to be shown in a frame, so a link followed inside
+      it shows an error in the box. And a page of ours opened inside it leaves the address bar on
+      the page the visitor came from. So, when framed, a link to one of our pages opens that page
+      on the WordPress site, and a link anywhere else opens in the whole window. A jump within the
+      page, a file of ours (the figure's data) and a download made in the page stay as they are.
+
+   "./" is the site root relative to this page, [] our pages relative to that
+   root, the same paths the WordPress pages have. FactorViz passes no pages. */
+(function (root, pages) {
+  if (window.self === window.top) return;
+  document.documentElement.setAttribute("data-theme", "light");
+  var parent = "";
+  if (location.ancestorOrigins && location.ancestorOrigins.length) {
+    parent = location.ancestorOrigins[0];
+  } else if (document.referrer) {
+    try { parent = new URL(document.referrer).origin; } catch (e) { parent = ""; }
+  }
+  var rootPath = new URL(root, location.href).pathname;
+  document.addEventListener("click", function (e) {
+    var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+    if (!a || a.hasAttribute("download")) return;
+    if (a.target && a.target !== "_self") return;
+    var u = new URL(a.getAttribute("href"), location.href);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return;
+    if (u.origin === location.origin) {
+      if (u.pathname === location.pathname) return;
+      if (u.pathname.indexOf(rootPath) !== 0 || !parent) return;
+      var p = "/" + u.pathname.slice(rootPath.length);
+      if (pages.indexOf(p) < 0) return;
+      a.href = parent + p + u.hash;
+    }
+    a.target = "_top";
+  }, true);
+})("./", []);
+</script>
 </head>
 <body>
 <div class="wrap">

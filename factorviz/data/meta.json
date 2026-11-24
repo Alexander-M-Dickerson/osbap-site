@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-09-28T02:32:52+00:00",
+  "built_utc": "2026-11-24T07:17:49+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -626,7 +626,7 @@
       "name": "Tax Policy Uncertainty Beta",
       "short": "Tax Policy Beta",
       "group": "IX",
-      "description": "Beta on the tax policy uncertainty index level (Baker-Bloom-Davis categorical EPU, column \"3. Taxes\"). NOT trade policy -- a separate category in the same workbook, never read."
+      "description": "Beta on the tax policy uncertainty index level (Baker-Bloom-Davis categorical EPU, column \"3. Taxes\")."
     },
     "b_illiq": {
       "name": "Illiquidity Beta",
@@ -674,7 +674,7 @@
       "name": "Duration-Adj Market Beta",
       "short": "Dur.-Adj Market Beta",
       "group": "VI",
-      "description": "Beta on MKTBX, from a rolling regression of the bond's return \\texttt{ret\\_vw} on MKTBX and TERM. The regression is on the total return; the version on the duration-adjusted return is in the \\texttt{betas\\_x} block."
+      "description": "Beta on MKTBX, from a rolling regression of the bond's return \\texttt{ret\\_vw} on MKTBX and TERM."
     },
     "b_mktrf_mkt": {
       "name": "Equity Market Beta",
@@ -776,7 +776,7 @@
       "name": "6-Month Spread Narrowing (log)",
       "short": "6M Spread Narrowing",
       "group": "I",
-      "description": "Log change in credit spread over prior 6 months: $\\log(cs_{t-6}) - \\log(cs_t)$. If the spread is missing exactly 6 months ago, the nearest adjacent month is used within a $\\pm$1 month band, the EARLIER month first."
+      "description": "Log change in credit spread over prior 6 months: $\\log(cs_{t-6}) - \\log(cs_t)$. If the spread is missing exactly 6 months ago, the nearest adjacent month is used within a $\\pm$1 month band, the earlier month first."
     },
     "dkurt": {
       "name": "Daily Kurtosis",
@@ -902,7 +902,7 @@
       "name": "Negative LIX (Illiquidity)",
       "short": "Negative LIX",
       "group": "IV",
-      "description": "$-\\log_{10}[(V \\times P_{\\text{close}}) / (P_{\\text{high}} - P_{\\text{low}})]$, averaged over the month's days whose high differs from their low. Requires a minimum of 5 daily Amihud ratios (a daily return with positive volume), the count \\texttt{ami} uses. Stored NEGATED (lib/illiq_pandas.py), so it rises with ILLIQUIDITY -- 99.29% of non-null values are negative, median -2.181."
+      "description": "$-\\log_{10}[(V \\times P_{\\text{close}}) / (P_{\\text{high}} - P_{\\text{low}})]$, averaged over the month's days whose high differs from their low. Requires a minimum of 5 daily Amihud ratios (a daily return with positive volume), the count \\texttt{ami} uses. Stored negated, so it rises with illiquidity."
     },
     "ltr24_3": {
       "name": "Long-Term Reversal (24-3)",
@@ -968,7 +968,7 @@
       "name": "No-Trade Day Proportion",
       "short": "No-Trade Day Prop.",
       "group": "IV",
-      "description": "Fraction of the month's business days with no valid price. In the published (gap-adjusted) form the bond's last trading day in the month counts as a day without one, so the value is at least one over the month's business days; the unadjusted share is \\texttt{p\\_zro\\_mmn}. Returns are never inspected, so the old name \"Zero-Return Proportion\" contradicted this description."
+      "description": "Fraction of the month's business days with no valid price. In the published (gap-adjusted) form the bond's last trading day in the month counts as a day without one, so the value is at least one over the month's business days; the unadjusted share is \\texttt{p\\_zro\\_mmn}."
     },
     "pi": {
       "name": "Price Impact",
@@ -992,7 +992,7 @@
       "name": "Realized Signed Jump",
       "short": "Realized Signed Jump",
       "group": "V",
-      "description": "Within-month signed jump as the code computes it: $(\\sqrt{\\sum_{r>0} r_t^2} - \\sqrt{\\sum_{r<0} r_t^2}) / \\sum_t r_t^2$, the up-minus-down volatility over the realized variance. It is not bounded by 1 and scales with one over the volatility. Requires a minimum of 5 daily returns."
+      "description": "Within-month signed jump: $(\\sqrt{\\sum_{r>0} r_t^2} - \\sqrt{\\sum_{r<0} r_t^2}) / \\sum_t r_t^2$, the up-minus-down volatility over the realized variance. It is not bounded by 1 and scales with one over the volatility. Requires a minimum of 5 daily returns."
     },
     "rsk": {
       "name": "Realized Skewness",
@@ -1094,7 +1094,7 @@
       "name": "Volatility-over-Volume",
       "short": "Vol.-over-Volume",
       "group": "IV",
-      "description": "Liquidity proxy: $2.5 \\times \\sigma^{0.6} / \\bar{V}^{0.25}$, where $\\sigma$ is the volatility of daily RETURNS and $\\bar{V}$ mean volume. Requires a minimum of 5 daily returns. Not the volatility OF volume."
+      "description": "Liquidity proxy: $2.5 \\times \\sigma^{0.6} / \\bar{V}^{0.25}$, where $\\sigma$ is the volatility of daily returns and $\\bar{V}$ the mean daily dollar volume. Requires a minimum of 5 daily returns."
     },
     "ytm": {
       "name": "Yield to Maturity",

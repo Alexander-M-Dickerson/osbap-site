@@ -5,6 +5,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Data - Open Source Bond Asset Pricing</title>
 <meta name="description" content="Corporate bond panels, factors and data reports, free to download.">
+<script>
+/* A page of ours shown inside the WordPress site's frame (one source, inlined into the head of
+   every built page by tools/make_site.py and of FactorViz by tools/make_factorviz.py).
+
+   1. The frame sits on a white WordPress page, so inside it the page stays light, whatever the
+      visitor's device prefers. Opened on its own, a page still follows dark mode.
+   2. GitHub, SSRN, PyPI and the journals refuse to be shown in a frame, so a link followed inside
+      it shows an error in the box. And a page of ours opened inside it leaves the address bar on
+      the page the visitor came from. So, when framed, a link to one of our pages opens that page
+      on the WordPress site, and a link anywhere else opens in the whole window. A jump within the
+      page, a file of ours (the figure's data) and a download made in the page stay as they are.
+
+   "../" is the site root relative to this page, ["/", "/code/", "/data/", "/factorviz/"] our pages relative to that
+   root, the same paths the WordPress pages have. FactorViz passes no pages. */
+(function (root, pages) {
+  if (window.self === window.top) return;
+  document.documentElement.setAttribute("data-theme", "light");
+  var parent = "";
+  if (location.ancestorOrigins && location.ancestorOrigins.length) {
+    parent = location.ancestorOrigins[0];
+  } else if (document.referrer) {
+    try { parent = new URL(document.referrer).origin; } catch (e) { parent = ""; }
+  }
+  var rootPath = new URL(root, location.href).pathname;
+  document.addEventListener("click", function (e) {
+    var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+    if (!a || a.hasAttribute("download")) return;
+    if (a.target && a.target !== "_self") return;
+    var u = new URL(a.getAttribute("href"), location.href);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return;
+    if (u.origin === location.origin) {
+      if (u.pathname === location.pathname) return;
+      if (u.pathname.indexOf(rootPath) !== 0 || !parent) return;
+      var p = "/" + u.pathname.slice(rootPath.length);
+      if (pages.indexOf(p) < 0) return;
+      a.href = parent + p + u.hash;
+    }
+    a.target = "_top";
+  }, true);
+})("../", ["/", "/code/", "/data/", "/factorviz/"]);
+
+</script>
 <!--
   Open Source Bond Asset Pricing.
 
@@ -161,9 +203,28 @@
   .figure-box { position: relative; height: 380px; }
   .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
 
-  .news li { display: flex; gap: 14px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .news { list-style: none; padding: 0; margin: 0 0 8px; max-width: 78ch; }
+  .news li { display: flex; gap: 14px; padding: 7px 0; border-bottom: 1px solid var(--line); }
   .news time { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
-               white-space: nowrap; }
+               white-space: nowrap; padding-top: 1px; }
+  .contributors { list-style: none; padding: 0; margin: 0 0 8px; display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px 18px; }
+  .papers li { margin-bottom: 8px; }
+
+  /* A phone. A download table becomes one block per file, the name and what it is on top,
+     then the format, the size and the link on one line, so the link is always in view. */
+  @media (max-width: 640px) {
+    .wrap { padding: 4px 14px 24px; }
+    table.dl thead { display: none; }
+    table.dl tr { display: grid; grid-template-columns: auto auto 1fr; column-gap: 14px;
+                  align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    table.dl td { border: 0; padding: 0; }
+    table.dl td:first-child { grid-column: 1 / -1; margin-bottom: 6px; }
+    table.dl td.get { text-align: right; }
+    .figure { padding: 12px; }
+    .figure-box { height: 300px; }
+    .news li { flex-direction: column; gap: 0; }
+  }
 
 </style>
 </head>
@@ -179,7 +240,7 @@
 <p>
   Combined Enhanced TRACE and 144A TRACE, monthly from 2002-08 to 2025-11.
 </p>
-<div class="scroll"><table><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>OSBAP monthly panel, main</strong><span class="what">Returns, prices, duration, credit spreads and the 108 signals, monthly from 2002-08, with the price-based signals already adjusted for microstructure noise. Licensed data is withheld. The gvkey and permco columns are empty, and the rating columns hold only an investment-grade indicator, 1 for investment grade and 11 otherwise.</span></td><td class="size">zipped parquet</td><td class="size">1.27 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_main_data_2026.zip">download</a></td></tr><tr><td><strong>OSBAP monthly panel, additional</strong><span class="what">Additional data, including the beta, momentum and reversal characteristics re-estimated with duration-adjusted returns, and the price-based signals in their unadjusted form (not recommended when forming factors).</span></td><td class="size">zipped parquet</td><td class="size">1.36 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_additional_data_2026.zip">download</a></td></tr><tr><td><strong>Market and macro factors</strong><span class="what">Monthly traded and nontraded factor data used to compute corporate bond betas.</span></td><td class="size">zipped parquet</td><td class="size">185 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_stage2_factors_2026.zip">download</a></td></tr><tr><td><strong>Extended bond factors, 1973 to 2023</strong><span class="what">The bond factors Stage 2 reads to extend its own before 2002-08, built from Lehman and ICE quote data throughout, 1973-02 to 2023-01. 17 series, the market, downside risk and credit risk factors in excess and duration-adjusted form, the term and default factors, and the market, downside, credit and term factors against the two alternative Treasury benchmarks. There is no liquidity factor, which needs transaction prices.</span></td><td class="size">zipped parquet</td><td class="size">86 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/bbw_factors_extended_1973_2023.zip">download</a></td></tr></tbody></table></div>
+<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>OSBAP monthly panel, main</strong><span class="what">Returns, prices, duration, credit spreads and the 108 signals, monthly from 2002-08, with the price-based signals already adjusted for microstructure noise. Licensed data is withheld. The gvkey and permco columns are empty, and the rating columns hold only an investment-grade indicator, 1 for investment grade and 11 otherwise.</span></td><td class="size">zipped parquet</td><td class="size">1.27 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_main_data_2026.zip">download</a></td></tr><tr><td><strong>OSBAP monthly panel, additional</strong><span class="what">Additional data, including the beta, momentum and reversal characteristics re-estimated with duration-adjusted returns, and the price-based signals in their unadjusted form (not recommended when forming factors).</span></td><td class="size">zipped parquet</td><td class="size">1.36 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_additional_data_2026.zip">download</a></td></tr><tr><td><strong>Market and macro factors</strong><span class="what">Monthly traded and nontraded factor data used to compute corporate bond betas. The bond factors in this file are copies of the extended series and end in January 2023. The corrected BBW four factors download runs to the latest month.</span></td><td class="size">zipped parquet</td><td class="size">185 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_stage2_factors_2026.zip">download</a></td></tr><tr><td><strong>Extended bond factors, 1973 to 2023</strong><span class="what">The bond factors Stage 2 reads to extend its own before 2002-08, built from Lehman and ICE quote data throughout, 1973-02 to 2023-01. 17 series, the market, downside risk and credit risk factors in excess and duration-adjusted form, the term and default factors, and the market, downside, credit and term factors against the two alternative Treasury benchmarks. There is no liquidity factor, which needs transaction prices.</span></td><td class="size">zipped parquet</td><td class="size">86 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/bbw_factors_extended_1973_2023.zip">download</a></td></tr></tbody></table></div>
 
 <h2>Daily bond panel</h2>
 <p>
@@ -187,7 +248,7 @@
   yields, credit spreads, duration and convexity. <strong>No filter on par or dollar
   volume</strong> is applied, so small trades are present and can be filtered out by you.
 </p>
-<div class="scroll"><table><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>Daily bond panel</strong><span class="what">From 2002-07, Enhanced and 144A TRACE combined, with no filter on par or dollar volume. 32 columns. Agency ratings, permco and gvkey are licensed and are not included. Download both and combine.</span></td><td class="size">parquet, two parts</td><td class="size">1.97 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_daily_panel_2026_2002_2016.parquet">2002 to 2016</a> <span class="pending">905 MB</span><br><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_daily_panel_2026_2017_2025.parquet">2017 to 2025</a> <span class="pending">1.07 GB</span></td></tr></tbody></table></div>
+<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>Daily bond panel</strong><span class="what">From 2002-07, Enhanced and 144A TRACE combined, with no filter on par or dollar volume. 32 columns. Agency ratings, permco and gvkey are licensed and are not included. Download both and combine.</span></td><td class="size">parquet, two parts</td><td class="size">1.97 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_daily_panel_2026_2002_2016.parquet">2002 to 2016</a> <span class="pending">905 MB</span><br><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_daily_panel_2026_2017_2025.parquet">2017 to 2025</a> <span class="pending">1.07 GB</span></td></tr></tbody></table></div>
 
 <h2>Corporate bond factors</h2>
 <p>
@@ -199,7 +260,7 @@
   yield (HY) only. These downloads are built on the combined Lehman-ICE and TRACE data, 1973
   to 2025. <a href="../factorviz/">FactorViz</a> has the TRACE-only and Lehman-ICE-only sets too.
 </p>
-<div class="scroll"><table><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>108 factors, single sort, wide</strong><span class="what">One CSV per return definition, universe and weighting.</span></td><td class="size">zipped CSV</td><td class="size">8 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/single_sort_extended_2026_csv.zip">download</a></td></tr><tr><td><strong>108 factors, single sort, panel</strong><span class="what">The long panel, with the long leg, the short leg, two-way turnover and portfolio counts.</span></td><td class="size">zipped parquet</td><td class="size">66 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/single_sort_panel_extended_2026.zip">download</a></td></tr><tr><td><strong>108 factors, within firm, wide</strong><span class="what">The same grid, sorted only against other bonds of the same issuer.</span></td><td class="size">zipped CSV</td><td class="size">8 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/within_firm_sort_extended_2026_csv.zip">download</a></td></tr><tr><td><strong>108 factors, within firm, panel</strong><span class="what">The within-firm long panel, with both legs, turnover and counts.</span></td><td class="size">zipped parquet</td><td class="size">66 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/within_firm_sort_panel_extended_2026.zip">download</a></td></tr></tbody></table></div>
+<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>108 factors, single sort, wide</strong><span class="what">One CSV per return definition, universe and weighting.</span></td><td class="size">zipped CSV</td><td class="size">8 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/single_sort_extended_2026_csv.zip">download</a></td></tr><tr><td><strong>108 factors, single sort, panel</strong><span class="what">The long panel, with the long leg, the short leg, two-way turnover and portfolio counts.</span></td><td class="size">zipped parquet</td><td class="size">66 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/single_sort_panel_extended_2026.zip">download</a></td></tr><tr><td><strong>108 factors, within firm, wide</strong><span class="what">The same grid, sorted only against other bonds of the same issuer.</span></td><td class="size">zipped CSV</td><td class="size">8 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/within_firm_sort_extended_2026_csv.zip">download</a></td></tr><tr><td><strong>108 factors, within firm, panel</strong><span class="what">The within-firm long panel, with both legs, turnover and counts.</span></td><td class="size">zipped parquet</td><td class="size">66 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/within_firm_sort_panel_extended_2026.zip">download</a></td></tr></tbody></table></div>
 
 <h2>Data reports</h2>
 <p>
@@ -207,7 +268,7 @@
   applied in <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>. The <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">trace-data-pipeline</a> writes the same reports for the
   dataset you build with it.
 </p>
-<div class="scroll"><table><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>Transaction cleaning report, Enhanced TRACE</strong><span class="what">Trade level filtering descriptions.</span></td><td class="size">PDF</td><td class="size">149 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/enhanced_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Transaction cleaning report, 144A</strong><span class="what">Trade level filtering descriptions for 144A bonds.</span></td><td class="size">PDF</td><td class="size">1 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/144a_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Daily panel data report</strong><span class="what">Coverage, trade size, sparsity, break-down of the bond cross-section through time.</span></td><td class="size">PDF</td><td class="size">3 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Monthly panel data report</strong><span class="what">Coverage, market aggregates and the comparisons for the monthly bond asset pricing panel.</span></td><td class="size">PDF</td><td class="size">920 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage2_data_report_2026.pdf">download</a></td></tr></tbody></table></div>
+<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>Transaction cleaning report, Enhanced TRACE</strong><span class="what">Trade level filtering descriptions.</span></td><td class="size">PDF</td><td class="size">149 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/enhanced_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Transaction cleaning report, 144A</strong><span class="what">Trade level filtering descriptions for 144A bonds.</span></td><td class="size">PDF</td><td class="size">1 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/144a_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Daily panel data report</strong><span class="what">Coverage, trade size, sparsity, break-down of the bond cross-section through time.</span></td><td class="size">PDF</td><td class="size">3 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Monthly panel data report</strong><span class="what">Coverage, market aggregates and the comparisons for the monthly bond asset pricing panel.</span></td><td class="size">PDF</td><td class="size">920 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage2_data_report_2026.pdf">download</a></td></tr></tbody></table></div>
 
 <h2>Papers</h2>
 <div class="scroll"><table><tbody><tr><td><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966"><strong>The Corporate Bond Factor Replication Crisis</strong></a><span class="what">The paper the data and the pipeline are built for.</span></td></tr><tr><td><a href="https://www.sciencedirect.com/science/article/pii/S0304405X26000668"><strong>The Co-Pricing Factor Zoo</strong></a><span class="what">Journal of Financial Economics 182, article 104295.</span></td></tr><tr><td><a href="https://www.sciencedirect.com/science/article/abs/pii/S0304405X23001393"><strong>Priced risk in corporate bonds</strong></a><span class="what">Journal of Financial Economics 150, article 103707.</span></td></tr></tbody></table></div>

@@ -5,6 +5,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Home - Open Source Bond Asset Pricing</title>
 <meta name="description" content="Open corporate bond data, factors and code. Built from raw TRACE, Lehman and ICE data, free to download, reproducible end to end.">
+<script>
+/* A page of ours shown inside the WordPress site's frame (one source, inlined into the head of
+   every built page by tools/make_site.py and of FactorViz by tools/make_factorviz.py).
+
+   1. The frame sits on a white WordPress page, so inside it the page stays light, whatever the
+      visitor's device prefers. Opened on its own, a page still follows dark mode.
+   2. GitHub, SSRN, PyPI and the journals refuse to be shown in a frame, so a link followed inside
+      it shows an error in the box. And a page of ours opened inside it leaves the address bar on
+      the page the visitor came from. So, when framed, a link to one of our pages opens that page
+      on the WordPress site, and a link anywhere else opens in the whole window. A jump within the
+      page, a file of ours (the figure's data) and a download made in the page stay as they are.
+
+   "./" is the site root relative to this page, ["/", "/code/", "/data/", "/factorviz/"] our pages relative to that
+   root, the same paths the WordPress pages have. FactorViz passes no pages. */
+(function (root, pages) {
+  if (window.self === window.top) return;
+  document.documentElement.setAttribute("data-theme", "light");
+  var parent = "";
+  if (location.ancestorOrigins && location.ancestorOrigins.length) {
+    parent = location.ancestorOrigins[0];
+  } else if (document.referrer) {
+    try { parent = new URL(document.referrer).origin; } catch (e) { parent = ""; }
+  }
+  var rootPath = new URL(root, location.href).pathname;
+  document.addEventListener("click", function (e) {
+    var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+    if (!a || a.hasAttribute("download")) return;
+    if (a.target && a.target !== "_self") return;
+    var u = new URL(a.getAttribute("href"), location.href);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return;
+    if (u.origin === location.origin) {
+      if (u.pathname === location.pathname) return;
+      if (u.pathname.indexOf(rootPath) !== 0 || !parent) return;
+      var p = "/" + u.pathname.slice(rootPath.length);
+      if (pages.indexOf(p) < 0) return;
+      a.href = parent + p + u.hash;
+    }
+    a.target = "_top";
+  }, true);
+})("./", ["/", "/code/", "/data/", "/factorviz/"]);
+
+</script>
 <!--
   Open Source Bond Asset Pricing.
 
@@ -161,9 +203,28 @@
   .figure-box { position: relative; height: 380px; }
   .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
 
-  .news li { display: flex; gap: 14px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .news { list-style: none; padding: 0; margin: 0 0 8px; max-width: 78ch; }
+  .news li { display: flex; gap: 14px; padding: 7px 0; border-bottom: 1px solid var(--line); }
   .news time { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
-               white-space: nowrap; }
+               white-space: nowrap; padding-top: 1px; }
+  .contributors { list-style: none; padding: 0; margin: 0 0 8px; display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px 18px; }
+  .papers li { margin-bottom: 8px; }
+
+  /* A phone. A download table becomes one block per file, the name and what it is on top,
+     then the format, the size and the link on one line, so the link is always in view. */
+  @media (max-width: 640px) {
+    .wrap { padding: 4px 14px 24px; }
+    table.dl thead { display: none; }
+    table.dl tr { display: grid; grid-template-columns: auto auto 1fr; column-gap: 14px;
+                  align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    table.dl td { border: 0; padding: 0; }
+    table.dl td:first-child { grid-column: 1 / -1; margin-bottom: 6px; }
+    table.dl td.get { text-align: right; }
+    .figure { padding: 12px; }
+    .figure-box { height: 300px; }
+    .news li { flex-direction: column; gap: 0; }
+  }
 
 </style>
 </head>
@@ -174,6 +235,9 @@
   The paper behind this data is under Revise and Resubmit, so the data may change over the
   coming months. Every change is recorded in the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/CHANGELOG.md">changelog on GitHub</a>.
 </div>
+
+<h2>News</h2>
+<ul class="news"><li><time datetime="2026-09-28">2026-09-28</time><span>Version 4.2 of the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">trace-data-pipeline</a> is on GitHub. All five stages are public, from the raw TRACE trades to the monthly panel, the tables and figures, and the bond factors.</span></li><li><time datetime="2026-09-23">2026-09-23</time><span>The 2026 data release is on the <a href="data/">Data</a> page, with the daily and monthly bond panels, 108 long-short factors and the data reports.</span></li><li><time datetime="2026-09-17">2026-09-17</time><span><a href="factorviz/">FactorViz</a> is live. It charts all 108 factors and offers the series for download.</span></li></ul>
 
 <h2>What can I download?</h2>
 <ul>
@@ -323,13 +387,18 @@
         responsive: true, maintainAspectRatio: false, animation: false,
         interaction: {mode: "index", intersect: false},
         scales: {
-          x: {ticks: {maxTicksLimit: 12, autoSkip: true}, grid: {display: false}},
+          // The axis shows years, flat. A month-end date on a slant (1973-02-28) is noise at
+          // this scale; the tooltip still names the month.
+          x: {ticks: {maxTicksLimit: window.innerWidth < 640 ? 6 : 12, autoSkip: true, maxRotation: 0,
+                      callback: function (v) { return this.getLabelForValue(v).slice(0, 4); }},
+              grid: {display: false}},
           y: {title: {display: true, text: "Cumulative log return (%)"},
               grid: {color: "rgba(128,128,128,.18)"}},
         },
         plugins: {
           legend: {position: "bottom", labels: {boxWidth: 10, font: {size: 11}}},
-          tooltip: {callbacks: {label: (c) => c.dataset.label + ", " + c.parsed.y.toFixed(1) + "%"}},
+          tooltip: {callbacks: {title: (items) => items[0].label.slice(0, 7),
+                                label: (c) => c.dataset.label + ", " + c.parsed.y.toFixed(1) + "%"}},
         },
       },
     });
@@ -431,7 +500,10 @@
   publisher = {Elsevier}}</code></pre>
 
 <h2>Papers</h2>
-<ul class="people"><li><strong>The Corporate Bond Factor Replication Crisis</strong><br><span class="what">Dickerson, Robotti and Rossetti (2026). Working paper, under Revise and Resubmit. <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">SSRN</a></span></li><li><strong>The Co-Pricing Factor Zoo</strong><br><span class="what">Dickerson, Julliard and Mueller (2026). Journal of Financial Economics 182, article 104295. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X26000668">journal</a></span></li><li><strong>Priced risk in corporate bonds</strong><br><span class="what">Dickerson, Mueller and Robotti (2023). Journal of Financial Economics 150, article 103707. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">journal</a></span></li><li><strong>Duration-Based Valuation of Corporate Bonds</strong><br><span class="what">van Binsbergen, Nozawa and Schwert (2025). Review of Financial Studies 38(1), 158-191. <a href="https://academic.oup.com/rfs/article/38/1/158/7762644">journal</a></span></li></ul>
+<ul class="papers"><li><strong>The Corporate Bond Factor Replication Crisis</strong><br><span class="what">Dickerson, Robotti and Rossetti (2026). Working paper, under Revise and Resubmit. <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">SSRN</a></span></li><li><strong>The Co-Pricing Factor Zoo</strong><br><span class="what">Dickerson, Julliard and Mueller (2026). Journal of Financial Economics 182, article 104295. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X26000668">journal</a></span></li><li><strong>Priced risk in corporate bonds</strong><br><span class="what">Dickerson, Mueller and Robotti (2023). Journal of Financial Economics 150, article 103707. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">journal</a></span></li><li><strong>Duration-Based Valuation of Corporate Bonds</strong><br><span class="what">van Binsbergen, Nozawa and Schwert (2025). Review of Financial Studies 38(1), 158-191. <a href="https://academic.oup.com/rfs/article/38/1/158/7762644">journal</a></span></li></ul>
+
+<h2>Contributors</h2>
+<ul class="contributors"><li><a href="https://www.alexdickerson.com/">Alex Dickerson</a> <span class="muted">(UNSW)</span></li><li><a href="https://www.wbs.ac.uk/about/person/philippe-mueller">Philippe Mueller</a> <span class="muted">(Warwick)</span></li><li><a href="https://www.cesarerobotti.com/">Cesare Robotti</a> <span class="muted">(Warwick)</span></li><li><a href="https://christianjulliard.net/">Christian Julliard</a> <span class="muted">(LSE)</span></li><li><a href="https://yoshionozawa.github.io/">Yoshio Nozawa</a> <span class="muted">(Toronto)</span></li><li><a href="https://giuliorossetti94.github.io/">Giulio Rossetti</a> <span class="muted">(Warwick)</span></li><li><a href="https://www.chuckfang.finance/">Chuck Fang</a> <span class="muted">(Drexel)</span></li></ul>
 </div>
 
 <script>
