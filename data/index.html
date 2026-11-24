@@ -203,10 +203,6 @@
   .figure-box { position: relative; height: 380px; }
   .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
 
-  .news { list-style: none; padding: 0; margin: 0 0 8px; max-width: 78ch; }
-  .news li { display: flex; gap: 14px; padding: 7px 0; border-bottom: 1px solid var(--line); }
-  .news time { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
-               white-space: nowrap; padding-top: 1px; }
   .contributors { list-style: none; padding: 0; margin: 0 0 8px; display: grid;
             grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px 18px; }
   .papers li { margin-bottom: 8px; }
@@ -220,10 +216,9 @@
                   align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
     table.dl td { border: 0; padding: 0; }
     table.dl td:first-child { grid-column: 1 / -1; margin-bottom: 6px; }
-    table.dl td.get { text-align: right; }
+    table.dl td.get { text-align: right; white-space: normal; }
     .figure { padding: 12px; }
     .figure-box { height: 300px; }
-    .news li { flex-direction: column; gap: 0; }
   }
 
 </style>
@@ -231,64 +226,56 @@
 <body>
 
 <div class="wrap">
-<div class="note">
-  The paper associated with this data is under Revise and Resubmit, so the data may change
-  over the coming months. Changes are recorded in the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/CHANGELOG.md">changelog on GitHub</a>.
-</div>
+<h2>Corporate bond factors</h2>
+<p>
+  108 long-short factors, 1973 to 2025, built on the combined Lehman-ICE and TRACE data. Over
+  all bonds each factor is long the top decile and short the bottom decile. Within investment
+  grade and within high yield it uses quintiles. Every factor comes as a single sort and as a
+  within-firm sort, for all bonds, investment grade and high yield. The wide files hold the
+  factor returns, and the panel files add the long and short legs, turnover and bond counts.
+  <a href="../factorviz/">FactorViz</a> also has the TRACE-only and Lehman-ICE-only sets. The last file holds the
+  bond market factors and the other monthly factors the pipeline estimates bond betas on.
+</p>
+<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>108 factors, single sort, wide</strong><span class="what">One CSV per return definition, universe and weighting.</span></td><td class="size">zipped CSV</td><td class="size">8 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/single_sort_extended_2026_csv.zip">download</a></td></tr><tr><td><strong>108 factors, single sort, panel</strong><span class="what">Long format, with each factor's long and short legs, two-way turnover and portfolio counts.</span></td><td class="size">zipped parquet</td><td class="size">66 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/single_sort_panel_extended_2026.zip">download</a></td></tr><tr><td><strong>108 factors, within firm, wide</strong><span class="what">Factors formed within firm, each bond compared only with other bonds of the same issuer. One CSV per return definition, universe and weighting.</span></td><td class="size">zipped CSV</td><td class="size">8 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/within_firm_sort_extended_2026_csv.zip">download</a></td></tr><tr><td><strong>108 factors, within firm, panel</strong><span class="what">The within-firm factors in long format, with both legs, turnover and counts.</span></td><td class="size">zipped parquet</td><td class="size">66 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/within_firm_sort_panel_extended_2026.zip">download</a></td></tr><tr><td><strong>Bond market, liquidity and macro factors</strong><span class="what">The monthly factors the bond betas are estimated on, in one file. The bond market, downside risk, credit risk, term and default factors use Lehman and ICE data before 2002-08 and TRACE from then to 2025-11. The liquidity factors start in 2002-08, and the stock market, macro and uncertainty series in 1973.</span></td><td class="size">zipped parquet and CSV</td><td class="size">392 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_monthly_factors_2026.zip">download</a></td></tr></tbody></table></div>
 
 <h2>Monthly bond panels</h2>
 <p>
-  Combined Enhanced TRACE and 144A TRACE, monthly from 2002-08 to 2025-11.
+  Enhanced and 144A TRACE combined, monthly from 2002-08 to 2025-11.
 </p>
-<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>OSBAP monthly panel, main</strong><span class="what">Returns, prices, duration, credit spreads and the 108 signals, monthly from 2002-08, with the price-based signals already adjusted for microstructure noise. Licensed data is withheld. The gvkey and permco columns are empty, and the rating columns hold only an investment-grade indicator, 1 for investment grade and 11 otherwise.</span></td><td class="size">zipped parquet</td><td class="size">1.27 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_main_data_2026.zip">download</a></td></tr><tr><td><strong>OSBAP monthly panel, additional</strong><span class="what">Additional data, including the beta, momentum and reversal characteristics re-estimated with duration-adjusted returns, and the price-based signals in their unadjusted form (not recommended when forming factors).</span></td><td class="size">zipped parquet</td><td class="size">1.36 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_additional_data_2026.zip">download</a></td></tr><tr><td><strong>Market and macro factors</strong><span class="what">Monthly traded and nontraded factor data used to compute corporate bond betas. The bond factors in this file are copies of the extended series and end in January 2023. The corrected BBW four factors download runs to the latest month.</span></td><td class="size">zipped parquet</td><td class="size">185 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_stage2_factors_2026.zip">download</a></td></tr><tr><td><strong>Extended bond factors, 1973 to 2023</strong><span class="what">The bond factors Stage 2 reads to extend its own before 2002-08, built from Lehman and ICE quote data throughout, 1973-02 to 2023-01. 17 series, the market, downside risk and credit risk factors in excess and duration-adjusted form, the term and default factors, and the market, downside, credit and term factors against the two alternative Treasury benchmarks. There is no liquidity factor, which needs transaction prices.</span></td><td class="size">zipped parquet</td><td class="size">86 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/bbw_factors_extended_1973_2023.zip">download</a></td></tr></tbody></table></div>
+<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>OSBAP monthly panel, main</strong><span class="what">Returns, prices, duration, credit spreads and the 108 signals, monthly from 2002-08, with the price-based signals adjusted for microstructure noise. Licensed fields are withheld.</span></td><td class="size">zipped parquet</td><td class="size">1.27 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_main_data_2026.zip">download</a></td></tr><tr><td><strong>OSBAP monthly panel, additional</strong><span class="what">The beta, momentum and reversal characteristics re-estimated on duration-adjusted returns, and the price-based signals without the microstructure noise adjustment (not recommended for forming factors).</span></td><td class="size">zipped parquet</td><td class="size">1.36 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_additional_data_2026.zip">download</a></td></tr></tbody></table></div>
 
 <h2>Daily bond panel</h2>
 <p>
-  From 2002-07, combining Enhanced and 144A TRACE, with clean prices, accrued interest,
-  yields, credit spreads, duration and convexity. <strong>No filter on par or dollar
-  volume</strong> is applied, so small trades are present and can be filtered out by you.
+  Enhanced and 144A TRACE combined, daily from 2002-07, with clean prices, accrued interest,
+  yields, credit spreads, duration and convexity. No par or dollar volume filter is applied, so
+  small trades are included and you can filter them yourself.
 </p>
-<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>Daily bond panel</strong><span class="what">From 2002-07, Enhanced and 144A TRACE combined, with no filter on par or dollar volume. 32 columns. Agency ratings, permco and gvkey are licensed and are not included. Download both and combine.</span></td><td class="size">parquet, two parts</td><td class="size">1.97 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_daily_panel_2026_2002_2016.parquet">2002 to 2016</a> <span class="pending">905 MB</span><br><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_daily_panel_2026_2017_2025.parquet">2017 to 2025</a> <span class="pending">1.07 GB</span></td></tr></tbody></table></div>
-
-<h2>Corporate bond factors</h2>
-<p>
-  The 108 long-short factors from decile sorts over all bonds (long the top decile, short the
-  bottom) and quintile sorts within investment grade and high yield, and again as within-firm
-  factors. Two formats, wide and panel. Wide includes only the factor returns. Panel format
-  includes the long and short legs with their turnover and bond counts. Each download
-  includes all 108 factors formed on all bonds (All), investment grade (IG) only and on high
-  yield (HY) only. These downloads are built on the combined Lehman-ICE and TRACE data, 1973
-  to 2025. <a href="../factorviz/">FactorViz</a> has the TRACE-only and Lehman-ICE-only sets too.
-</p>
-<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>108 factors, single sort, wide</strong><span class="what">One CSV per return definition, universe and weighting.</span></td><td class="size">zipped CSV</td><td class="size">8 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/single_sort_extended_2026_csv.zip">download</a></td></tr><tr><td><strong>108 factors, single sort, panel</strong><span class="what">The long panel, with the long leg, the short leg, two-way turnover and portfolio counts.</span></td><td class="size">zipped parquet</td><td class="size">66 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/single_sort_panel_extended_2026.zip">download</a></td></tr><tr><td><strong>108 factors, within firm, wide</strong><span class="what">The same grid, sorted only against other bonds of the same issuer.</span></td><td class="size">zipped CSV</td><td class="size">8 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/within_firm_sort_extended_2026_csv.zip">download</a></td></tr><tr><td><strong>108 factors, within firm, panel</strong><span class="what">The within-firm long panel, with both legs, turnover and counts.</span></td><td class="size">zipped parquet</td><td class="size">66 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/within_firm_sort_panel_extended_2026.zip">download</a></td></tr></tbody></table></div>
+<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>Daily bond panel</strong><span class="what">Enhanced and 144A TRACE combined, from 2002-07, with no par or dollar volume filter. 32 columns. Agency ratings, permco and gvkey are licensed and not included. It comes in two parts, so download both.</span></td><td class="size">parquet, two parts</td><td class="size">1.97 GB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_daily_panel_2026_2002_2016.parquet">2002 to 2016</a> <span class="pending">905 MB</span><br><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_daily_panel_2026_2017_2025.parquet">2017 to 2025</a> <span class="pending">1.07 GB</span></td></tr></tbody></table></div>
 
 <h2>Data reports</h2>
 <p>
-  Detailed data reports which document the effects of the data processing methodology
-  applied in <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>. The <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">trace-data-pipeline</a> writes the same reports for the
-  dataset you build with it.
+  What each cleaning step in <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a> removed or corrected. The
+  <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">trace-data-pipeline</a> writes the same reports for any dataset you build with it.
 </p>
-<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>Transaction cleaning report, Enhanced TRACE</strong><span class="what">Trade level filtering descriptions.</span></td><td class="size">PDF</td><td class="size">149 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/enhanced_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Transaction cleaning report, 144A</strong><span class="what">Trade level filtering descriptions for 144A bonds.</span></td><td class="size">PDF</td><td class="size">1 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/144a_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Daily panel data report</strong><span class="what">Coverage, trade size, sparsity, break-down of the bond cross-section through time.</span></td><td class="size">PDF</td><td class="size">3 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Monthly panel data report</strong><span class="what">Coverage, market aggregates and the comparisons for the monthly bond asset pricing panel.</span></td><td class="size">PDF</td><td class="size">920 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage2_data_report_2026.pdf">download</a></td></tr></tbody></table></div>
+<div class="scroll"><table class="dl"><thead><tr><th>File</th><th>Format</th><th>Size</th><th></th></tr></thead><tbody><tr><td><strong>Transaction cleaning report, Enhanced TRACE</strong><span class="what">What each transaction filter removed or corrected in Enhanced TRACE.</span></td><td class="size">PDF</td><td class="size">149 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/enhanced_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Transaction cleaning report, 144A</strong><span class="what">The same for 144A TRACE.</span></td><td class="size">PDF</td><td class="size">1 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/144a_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Daily panel data report</strong><span class="what">Coverage, trade size and sparsity of the daily panel, and the bond cross-section over time.</span></td><td class="size">PDF</td><td class="size">3 MB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage1_data_report_2026.pdf">download</a></td></tr><tr><td><strong>Monthly panel data report</strong><span class="what">Coverage, market aggregates and comparisons for the monthly panel.</span></td><td class="size">PDF</td><td class="size">920 KB</td><td class="get"><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/stage2_data_report_2026.pdf">download</a></td></tr></tbody></table></div>
 
 <h2>Papers</h2>
-<div class="scroll"><table><tbody><tr><td><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966"><strong>The Corporate Bond Factor Replication Crisis</strong></a><span class="what">The paper the data and the pipeline are built for.</span></td></tr><tr><td><a href="https://www.sciencedirect.com/science/article/pii/S0304405X26000668"><strong>The Co-Pricing Factor Zoo</strong></a><span class="what">Journal of Financial Economics 182, article 104295.</span></td></tr><tr><td><a href="https://www.sciencedirect.com/science/article/abs/pii/S0304405X23001393"><strong>Priced risk in corporate bonds</strong></a><span class="what">Journal of Financial Economics 150, article 103707.</span></td></tr></tbody></table></div>
+<div class="scroll"><table><tbody><tr><td><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966"><strong>The Corporate Bond Factor Replication Crisis</strong></a><span class="what">The paper behind the data and the pipeline.</span></td></tr><tr><td><a href="https://www.sciencedirect.com/science/article/pii/S0304405X26000668"><strong>The Co-Pricing Factor Zoo</strong></a><span class="what">Journal of Financial Economics 182, article 104295.</span></td></tr><tr><td><a href="https://www.sciencedirect.com/science/article/abs/pii/S0304405X23001393"><strong>Priced risk in corporate bonds</strong></a><span class="what">Journal of Financial Economics 150, article 103707.</span></td></tr></tbody></table></div>
 
 <h2>Notes on the files</h2>
 <ul>
-  <li>Everything is contained in zipped parquet unless stated otherwise. Parquet format can
-      be read in with pandas with <code>pd.read_parquet</code> and in R with
-      <code>arrow::read_parquet</code>.</li>
-  <li>No proprietary data is redistributed. <code>gvkey</code> and <code>permco</code> are
-      left blank, and the rating columns are an investment-grade flag rather than the
-      underlying numeric rating (1 for AAA to 22 for D). Anyone with WRDS access and
-      appropriate licenses can merge their own rating data on <code>cusip</code>, or
-      regenerate the full version by running the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">trace-data-pipeline</a>.</li>
-  <li>Column definitions are in the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage1/DATA_DICTIONARY.md">daily data dictionary</a> for the daily panel and the
-      <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage2/DATA_DICTIONARY.md">monthly data dictionary</a> for the monthly panel.</li>
-  <li>To rebuild any of the data from scratch, the code pipeline is public at
-      <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a>. It requires a WRDS account and the relevant data licences.</li>
-  <li>The daily and monthly panels are also distributed through WRDS as contributed data,
-      <a href="https://wrds-www.wharton.upenn.edu/pages/get-data/contributed-data-forms/corporate-bond-data-dickerson-daily/">daily</a> and <a href="https://wrds-www.wharton.upenn.edu/pages/get-data/contributed-data-forms/corporate-bond-data-dickerson-monthly/">monthly</a>.</li>
+  <li>Files are zipped parquet unless stated otherwise. Read them with
+      <code>pd.read_parquet</code> in Python or <code>arrow::read_parquet</code> in R.</li>
+  <li>No licensed data is redistributed. <code>gvkey</code> and <code>permco</code> are blank,
+      and the rating columns hold an investment-grade flag (1 for investment grade, 11 otherwise)
+      in place of the numeric rating (1 for AAA to 22 for D). With WRDS access and the licences
+      you can merge your own ratings on <code>cusip</code>, or build the full version with the
+      <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">trace-data-pipeline</a>.</li>
+  <li>The <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage1/DATA_DICTIONARY.md">daily data dictionary</a> and the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/stage2/DATA_DICTIONARY.md">monthly data dictionary</a> define every column.</li>
+  <li>To rebuild the data from scratch, use the pipeline at <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a>. It needs a WRDS
+      account and the data licences.</li>
+  <li>The daily and monthly panels are also on WRDS as contributed data
+      (<a href="https://wrds-www.wharton.upenn.edu/pages/get-data/contributed-data-forms/corporate-bond-data-dickerson-daily/">daily</a> and <a href="https://wrds-www.wharton.upenn.edu/pages/get-data/contributed-data-forms/corporate-bond-data-dickerson-monthly/">monthly</a>).</li>
 </ul>
 </div>
 

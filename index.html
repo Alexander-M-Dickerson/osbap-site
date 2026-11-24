@@ -203,10 +203,6 @@
   .figure-box { position: relative; height: 380px; }
   .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
 
-  .news { list-style: none; padding: 0; margin: 0 0 8px; max-width: 78ch; }
-  .news li { display: flex; gap: 14px; padding: 7px 0; border-bottom: 1px solid var(--line); }
-  .news time { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
-               white-space: nowrap; padding-top: 1px; }
   .contributors { list-style: none; padding: 0; margin: 0 0 8px; display: grid;
             grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px 18px; }
   .papers li { margin-bottom: 8px; }
@@ -220,10 +216,9 @@
                   align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
     table.dl td { border: 0; padding: 0; }
     table.dl td:first-child { grid-column: 1 / -1; margin-bottom: 6px; }
-    table.dl td.get { text-align: right; }
+    table.dl td.get { text-align: right; white-space: normal; }
     .figure { padding: 12px; }
     .figure-box { height: 300px; }
-    .news li { flex-direction: column; gap: 0; }
   }
 
 </style>
@@ -231,50 +226,38 @@
 <body>
 
 <div class="wrap">
-<div class="note">
-  The paper behind this data is under Revise and Resubmit, so the data may change over the
-  coming months. Every change is recorded in the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/blob/main/CHANGELOG.md">changelog on GitHub</a>.
-</div>
-
-<h2>News</h2>
-<ul class="news"><li><time datetime="2026-09-28">2026-09-28</time><span>Version 4.2 of the <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">trace-data-pipeline</a> is on GitHub. All five stages are public, from the raw TRACE trades to the monthly panel, the tables and figures, and the bond factors.</span></li><li><time datetime="2026-09-23">2026-09-23</time><span>The 2026 data release is on the <a href="data/">Data</a> page, with the daily and monthly bond panels, 108 long-short factors and the data reports.</span></li><li><time datetime="2026-09-17">2026-09-17</time><span><a href="factorviz/">FactorViz</a> is live. It charts all 108 factors and offers the series for download.</span></li></ul>
-
-<h2>What can I download?</h2>
+<h2>What you can download</h2>
 <ul>
-  <li><strong>A daily bond panel</strong> from 2002-07, Enhanced and 144A TRACE
-      combined, cleaned and error-corrected following <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>. A monthly bond
-      asset pricing panel, including returns, credit spreads, duration, and the vast majority
-      of characteristics the literature has used to generate the corporate bond factor
-      zoo.</li>
-  <li><strong>108 long-short factors</strong>, single sorted and within firm, published
-      without sign correction and explorable in <a href="factorviz/">FactorViz</a>.</li>
-  <li><strong>Detailed data reports</strong> that measure what each stage of the cleaning
-      procedure removed or corrected.</li>
+  <li>Daily and monthly corporate bond panels from Enhanced and 144A TRACE, cleaned and
+      corrected as in <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>. The monthly panel has returns, credit spreads,
+      duration and most of the characteristics behind the corporate bond factor zoo.</li>
+  <li>108 long-short factors, single sorted and within firm, not sign-corrected to have a
+      positive mean. You can explore them in <a href="factorviz/">FactorViz</a>.</li>
+  <li>Data reports on what each cleaning step removed or corrected.</li>
 </ul>
 
 <h2>How the data is built</h2>
 <p>
-  The pipeline is public and runs in five stages, at <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a>.
+  The pipeline is public at <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline">github.com/Alexander-M-Dickerson/trace-data-pipeline</a> and runs in five stages.
 </p>
 <ul>
-  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage0">Stage 0</a> cleans the TRACE transaction data, removing cancellations,
-      corrections, reversals, interdealer double counts and bounce-back errors, and correcting
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage0">Stage 0</a> cleans the TRACE transactions. It removes cancellations,
+      corrections, reversals, interdealer double counts and bounce-back errors, and corrects
       decimal-shifted prices.</li>
-  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage1">Stage 1</a> turns the cleaned trades into a daily panel with clean prices,
-      accrued interest, yields, credit spreads, duration and convexity, and many other
-      variables.</li>
-  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage2">Stage 2</a> aggregates to the monthly asset pricing panel and estimates
-      the characteristics, betas and other signals that comprise the bond factor zoo.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage1">Stage 1</a> builds the daily panel, with clean prices, accrued interest,
+      yields, credit spreads, duration and convexity.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage2">Stage 2</a> builds the monthly panel and estimates the characteristics and
+      betas used as factor signals.</li>
   <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage3">Stage 3</a> rebuilds the tables and data figures of <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a> from
       your panel.</li>
-  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage4">Stage 4</a> builds the TRACE-only bond factors that <a href="factorviz/">FactorViz</a> publishes.</li>
+  <li><a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage4">Stage 4</a> builds the TRACE-only bond factors shown in <a href="factorviz/">FactorViz</a>.</li>
 </ul>
 
 <h2>Credit and duration</h2>
 <p>
-  Over the past twenty years the greater part of the total return to holding corporate bonds
-  is the return on the duration-matched Treasury portfolio, not compensation for credit or
-  liquidity risk (<a href="https://academic.oup.com/rfs/article/38/1/158/7762644">van Binsbergen, Nozawa and Schwert (2025)</a>).
+  <a href="https://academic.oup.com/rfs/article/38/1/158/7762644">van Binsbergen, Nozawa and Schwert (2025)</a> show that over the past twenty years most of the total return on corporate
+  bonds has been the return on a duration-matched Treasury portfolio rather than compensation for
+  credit or liquidity risk.
 </p>
 <div class="figure">
   <div class="figure-head">
@@ -289,7 +272,7 @@
         <option value="cls">CLS, cash flows on the Treasury zero curve</option>
         <option value="apr">APR, duration-interpolated key rates</option>
       </select>
-      <div class="pop hidden" id="dec-pop" role="note"><h4>How each Treasury benchmark is built</h4><dl><dt>BNS <span class="muted">van Binsbergen, Nozawa and Schwert (2025)</span></dt><dd>A weighted average of one-month returns on zero-coupon Treasury bonds, one maturing on each cash-flow date t_k of the bond. The weight w_k is the present value of the cash flow CF_k at the bond's own yield y, as a share of the total. See van Binsbergen, Nozawa and Schwert (2025).</dd><dt>CLS <span class="muted">Cui, Lu and Song (2026)</span></dt><dd>As in BNS, but the weight v_k discounts CF_k at the Treasury zero-coupon yield z_t(t_k) rather than the bond's own yield. See Cui, Lu and Song (2026).</dd><dt>APR <span class="muted">Andreani, Palhares and Richardson (2024)</span></dt><dd>CRSP fixed-term Treasury index returns interpolated at the bond's modified duration across the nodes 1/12, 1, 2, 5, 7, 10, 20 and 30 years.</dd></dl><p class="muted">Each one is subtracted from the bond's total return to leave the credit component. All three travel as columns in every monthly panel we publish.</p></div>
+      <div class="pop hidden" id="dec-pop" role="note"><h4>How each Treasury benchmark is built</h4><dl><dt>BNS <span class="muted">van Binsbergen, Nozawa and Schwert (2025)</span></dt><dd>A weighted average of one-month returns on zero-coupon Treasury bonds, one maturing on each cash-flow date t_k of the bond. The weight w_k is the present value of the cash flow CF_k at the bond's own yield y, as a share of the total. See van Binsbergen, Nozawa and Schwert (2025).</dd><dt>CLS <span class="muted">Cui, Lu and Song (2026)</span></dt><dd>As in BNS, but the weight v_k discounts CF_k at the Treasury zero-coupon yield z_t(t_k) rather than the bond's own yield. See Cui, Lu and Song (2026).</dd><dt>APR <span class="muted">Andreani, Palhares and Richardson (2024)</span></dt><dd>CRSP fixed-term Treasury index returns interpolated at the bond's modified duration across the nodes 1/12, 1, 2, 5, 7, 10, 20 and 30 years.</dd></dl><p class="muted">Each one is subtracted from the bond's total return to leave the credit component.</p></div>
     </label>
   </div>
 
@@ -474,9 +457,8 @@
 </script>
 
 <p>
-  Every monthly panel we publish carries all three Treasury hedging portfolios, so returns can be
-  decomposed with any of the three methods. The definitions are in <a href="factorviz/">FactorViz</a>, under
-  the About tab.
+  Every monthly panel we publish has all three Treasury hedging portfolios, so you can split
+  returns with any of the three. <a href="factorviz/">FactorViz</a> defines them under its About tab.
 </p>
 
 <h2>Priced risk in corporate bonds</h2>
@@ -485,9 +467,9 @@
   <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson, Mueller and Robotti (2023)</a>. <a href="https://github.com/Alexander-M-Dickerson/trace-data-pipeline/tree/main/stage2">Stage 2</a> of the pipeline rebuilds them.
 </p>
 <p>
-  The paper's central finding is that the bias-adjusted sample squared Sharpe ratio of the
-  bond market portfolio is greater than that of all four BBW factors together. From an
-  investment standpoint it is optimal to hold the market.
+  The paper finds that the bias-adjusted squared Sharpe ratio of the bond market portfolio is
+  higher than that of all four BBW factors together. For an investor, holding the market is
+  optimal.
 </p>
 <p><a href="https://github.com/Alexander-M-Dickerson/osbap-site/releases/download/data-2026/osbap_bbw_factors_2026.zip">Download the corrected BBW four factors (zip, parquet and CSV)</a></p>
 <pre><code>@article{Dickerson-Mueller-Robotti-2023,
@@ -500,7 +482,7 @@
   publisher = {Elsevier}}</code></pre>
 
 <h2>Papers</h2>
-<ul class="papers"><li><strong>The Corporate Bond Factor Replication Crisis</strong><br><span class="what">Dickerson, Robotti and Rossetti (2026). Working paper, under Revise and Resubmit. <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">SSRN</a></span></li><li><strong>The Co-Pricing Factor Zoo</strong><br><span class="what">Dickerson, Julliard and Mueller (2026). Journal of Financial Economics 182, article 104295. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X26000668">journal</a></span></li><li><strong>Priced risk in corporate bonds</strong><br><span class="what">Dickerson, Mueller and Robotti (2023). Journal of Financial Economics 150, article 103707. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">journal</a></span></li><li><strong>Duration-Based Valuation of Corporate Bonds</strong><br><span class="what">van Binsbergen, Nozawa and Schwert (2025). Review of Financial Studies 38(1), 158-191. <a href="https://academic.oup.com/rfs/article/38/1/158/7762644">journal</a></span></li></ul>
+<ul class="papers"><li><strong>The Corporate Bond Factor Replication Crisis</strong><br><span class="what">Dickerson, Robotti and Rossetti (2026). Working paper. <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">SSRN</a></span></li><li><strong>The Co-Pricing Factor Zoo</strong><br><span class="what">Dickerson, Julliard and Mueller (2026). Journal of Financial Economics 182, article 104295. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X26000668">journal</a></span></li><li><strong>Priced risk in corporate bonds</strong><br><span class="what">Dickerson, Mueller and Robotti (2023). Journal of Financial Economics 150, article 103707. <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">journal</a></span></li><li><strong>Duration-Based Valuation of Corporate Bonds</strong><br><span class="what">van Binsbergen, Nozawa and Schwert (2025). Review of Financial Studies 38(1), 158-191. <a href="https://academic.oup.com/rfs/article/38/1/158/7762644">journal</a></span></li></ul>
 
 <h2>Contributors</h2>
 <ul class="contributors"><li><a href="https://www.alexdickerson.com/">Alex Dickerson</a> <span class="muted">(UNSW)</span></li><li><a href="https://www.wbs.ac.uk/about/person/philippe-mueller">Philippe Mueller</a> <span class="muted">(Warwick)</span></li><li><a href="https://www.cesarerobotti.com/">Cesare Robotti</a> <span class="muted">(Warwick)</span></li><li><a href="https://christianjulliard.net/">Christian Julliard</a> <span class="muted">(LSE)</span></li><li><a href="https://yoshionozawa.github.io/">Yoshio Nozawa</a> <span class="muted">(Toronto)</span></li><li><a href="https://giuliorossetti94.github.io/">Giulio Rossetti</a> <span class="muted">(Warwick)</span></li><li><a href="https://www.chuckfang.finance/">Chuck Fang</a> <span class="muted">(Drexel)</span></li></ul>
