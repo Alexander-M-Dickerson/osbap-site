@@ -1,5 +1,5 @@
 {
-  "built_utc": "2026-11-24T10:30:47+00:00",
+  "built_utc": "2026-11-24T10:59:26+00:00",
   "orientation": "unflipped",
   "cumulative": "cumulative SUM of monthly returns (long-short factors are zero-cost; compounding them is not meaningful)",
   "benchmarks": {
@@ -206,6 +206,8 @@
       "benchmark": "tret",
       "cite": "Andreani, Palhares and Richardson (2024)",
       "cite_full": "Andreani, M., Palhares, D. and Richardson, S. (2024). Computing corporate bond returns: a word (or two) of caution. Review of Accounting Studies 29, 3887-3906.",
+      "cite_short": "Andreani, Palhares and Richardson (2024)",
+      "url": "https://doi.org/10.1007/s11142-023-09777-6",
       "how": "CRSP fixed-term Treasury index returns interpolated at the bond's modified duration across the nodes 1/12, 1, 2, 5, 7, 10, 20 and 30 years."
     },
     "dbns": {
@@ -214,7 +216,9 @@
       "benchmark": "tret_bns",
       "cite": "van Binsbergen, Nozawa and Schwert (2025)",
       "cite_full": "van Binsbergen, J.H., Nozawa, Y. and Schwert, M. (2025). Duration-Based Valuation of Corporate Bonds. The Review of Financial Studies 38(1), 158-191. doi:10.1093/rfs/hhae054.",
-      "how": "A weighted average of one-month returns on zero-coupon Treasury bonds, one maturing on each cash-flow date t_k of the bond. The weight w_k is the present value of the cash flow CF_k at the bond's own yield y, as a share of the total. See van Binsbergen, Nozawa and Schwert (2025).",
+      "cite_short": "van Binsbergen, Nozawa and Schwert (2025)",
+      "url": "https://academic.oup.com/rfs/article/38/1/158/7762644",
+      "how": "A weighted average of one-month returns on zero-coupon Treasury bonds that mature on the bond's cash-flow dates t_k. The weight w_k is the present value of the cash flow CF_k at the bond's own yield y, as a share of the total. See van Binsbergen, Nozawa and Schwert (2025).",
       "equation": "w_k = PV_k / SUM_j PV_j,   PV_k = CF_k / (1 + y/f)^(f t_k),   tret_bns = SUM_k w_k r_{t+1,k}",
       "equation_tex": "\\begin{aligned} w_k &= \\frac{PV_k}{\\sum_j PV_j}, \\qquad PV_k = \\frac{CF_k}{(1 + y/f)^{f t_k}} \\\\ \\text{tret\\_bns} &= \\sum_k w_k\\, r_{t+1,k} \\end{aligned}",
       "equation_source": "Eqs. (3)-(6) of the SSRN working paper 3914422, which is what code/ implements; the published RFS version may renumber."
@@ -224,7 +228,9 @@
       "long": "Duration-adjusted, cash-flow matched on the Treasury zero curve",
       "benchmark": "tret_cls",
       "cite": "Cui, Lu and Song (2026)",
-      "cite_full": "Cui, S., Lu, Y. and Song, Y. (2026). Understanding Corporate Bond Excess Returns, Eqs. (3)-(6).",
+      "cite_full": "Cui, L., Lu, X. and Song, Z. (2026). Understanding Corporate Bond Excess Returns, Eqs. (3)-(6).",
+      "cite_short": "Cui, Lu and Song (2026)",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7152198",
       "how": "As in BNS, but the weight v_k discounts CF_k at the Treasury zero-coupon yield z_t(t_k) rather than the bond's own yield. See Cui, Lu and Song (2026).",
       "equation": "v_k = CF_k exp(-z_t(t_k) t_k) / SUM_j CF_j exp(-z_t(t_j) t_j),   tret_cls = SUM_k v_k r_{t+1,k}",
       "equation_tex": "\\begin{aligned} v_k &= \\frac{CF_k\\, e^{-z_t(t_k)\\, t_k}}{\\sum_j CF_j\\, e^{-z_t(t_j)\\, t_j}} \\\\ \\text{tret\\_cls} &= \\sum_k v_k\\, r_{t+1,k} \\end{aligned}"
@@ -322,6 +328,9 @@
   "help": {
     "dataset": {
       "title": "Dataset",
+      "links": {
+        "Dickerson, Robotti and Rossetti (2026)": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966"
+      },
       "source": "datasets",
       "items": {
         "trace": "",
@@ -331,6 +340,9 @@
     },
     "sort": {
       "title": "Sort",
+      "links": {
+        "Within firm": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4586652"
+      },
       "source": "sorts",
       "items": {
         "single": "Each month bonds are sorted into deciles over all bonds, or into quintiles within investment grade or high yield. The factor is the top portfolio (D10 or Q5) minus the bottom (D1 or Q1).",
@@ -360,8 +372,8 @@
       "title": "Weighting",
       "source": "weightings",
       "items": {
-        "ew": "Every bond in a leg counts the same.",
-        "vw": "Bonds count in proportion to price times amount outstanding, so large issues weigh more."
+        "ew": "Equal weights, 1/N.",
+        "vw": "Bonds are weighted by their market cap, defined as price plus accrued interest, multiplied by the amount outstanding."
       }
     },
     "flip": {
@@ -378,7 +390,7 @@
     },
     "m_against": {
       "title": "Benchmark models",
-      "text": "<strong>MKTB (r - rf)</strong>, the bond market's total return minus the one-month T-bill.<br><strong>MKTB (credit)</strong>, the market's total return minus the duration-matched Treasury portfolio, on the return definition of your first factor (APR, BNS or CLS).<br><strong>BNS two-factor model</strong>, the decomposed DCAPM, with the credit and term parts of the corporate bond market factor.<br><strong>FF (1993) five-factor model</strong>, the original Fama-French five factors, Mkt-Rf, SMB, HML, DEF and TERM."
+      "text": "<strong>MKTB (r - rf)</strong>, the bond market's total return minus the one-month T-bill.<br><strong>MKTB (credit)</strong>, the market's total return minus the duration-matched Treasury portfolio, using the return definition of your first factor (APR, BNS or CLS).<br><strong>BNS two-factor model</strong>, the decomposed DCAPM, with the credit and term parts of the corporate bond market factor.<br><strong>FF (1993) five-factor model</strong>, the original Fama-French five factors, Mkt-Rf, SMB, HML, DEF and TERM."
     },
     "m_frontier": {
       "title": "The frontier",

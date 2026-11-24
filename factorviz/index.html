@@ -288,8 +288,9 @@
     108 long-short corporate bond factors from
     <a href="https://openbondassetpricing.com">Open Source Bond Asset Pricing</a> and
     <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a>,
-    on three datasets going back to 1973. Each factor comes as a single sort and a within-firm
-    sort, with four return definitions, three rating universes and two weightings.
+    with three datasets going back to 1973. Each factor is formed using two methods (single
+    sort and within-firm), with four return definitions, three rating universes and two
+    weightings.
   </p>
 </header>
 
@@ -366,7 +367,7 @@
       Alpha is the intercept of a regression of the factor on the bond market benchmark with
       the same return definition, the one-factor bond CAPM (CAPMB) of
       <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson,
-      Mueller and Robotti (2023)</a>. Both t-statistics use Newey-West standard errors with
+      Mueller and Robotti (2023)</a>. Both <em>t</em>-statistics use Newey-West standard errors with
       floor(T<sup>0.25</sup>) lags, where T is the number of months in the series.
     </p>
     <div class="scroll"><table id="e-table"></table></div>
@@ -377,7 +378,7 @@
 <section id="panel-compare" class="hidden">
   <div class="warn">
     Add factors from any dataset, sort, return definition, universe and weighting, and
-    compare them on one chart and in one table.
+    compare them in a chart and a table.
   </div>
 
   <div class="controls">
@@ -1459,11 +1460,11 @@ const COLUMNS = [
   ["factor",    "Factor",        null],
   ["n",         "Months",        0],
   ["mean_ann",  "Return % p.a.", 2],
-  ["tstat",     "t-stat",        2],
+  ["tstat",     "<em>t</em>-stat", 2],
   ["vol_ann",   "Vol % p.a.",    2],
   ["sharpe",    "Sharpe",        2],
   ["alpha_ann", "Alpha % p.a.",  2],
-  ["alpha_t",   "t(alpha)",      2],
+  ["alpha_t",   "<em>t</em>(alpha)", 2],
   ["beta",      "Beta",          2],
   ["ir",        "Info. ratio",   2],
   ["maxdd",     "Max DD %",      1],
@@ -2526,16 +2527,16 @@ async function renderModels() {
     return r;
   });
   const cols = [["_label", "Factor"], ["weight", "Weight, % of gross", 1, true], ["mean_ann", "Return % p.a.", 2, true],
-                ["tstat", "t-stat", 2, true], ["vol_ann", "Vol % p.a.", 2, false], ["sharpe", "Sharpe", 2, true]];
-  if (first) cols.push(["alpha_ann", `Alpha % p.a. on ${first.label}`, 2, true], ["alpha_t", "t(alpha)", 2, true]);
+                ["tstat", "<em>t</em>-stat", 2, true], ["vol_ann", "Vol % p.a.", 2, false], ["sharpe", "Sharpe", 2, true]];
+  if (first) cols.push(["alpha_ann", `Alpha % p.a. on ${first.label}`, 2, true], ["alpha_t", "<em>t</em>(alpha)", 2, true]);
   simpleTable($("m-model"), cols, rows);
   const srAnn = Math.sqrt(Math.max(mine.adjusted, 0) * 12);
   $("m-model-note").textContent = `${name} · ${span}`;
-  $("m-model-foot").textContent =
+  $("m-model-foot").innerHTML =
     `Weights are the tangency portfolio's, V⁻¹μ, as a share of gross exposure. The model's `
     + `bias-adjusted squared Sharpe ratio is ${fmt(mine.adjusted, 3)} per month `
     + `(p = ${fmt(mine.p, 3)} against zero), an annualised Sharpe ratio of ${fmt(srAnn, 2)}. `
-    + `t-statistics use Newey-West with ${lag} lag${lag === 1 ? "" : "s"}.`
+    + `<em>t</em>-statistics use Newey-West with ${lag} lag${lag === 1 ? "" : "s"}.`
     + (signs.some((x) => x < 0) ? " A factor marked \u2212 is shown with its sign reversed so its mean is positive, which changes nothing about the model." : "");
 
   // --- the comparison
@@ -2555,7 +2556,7 @@ async function renderModels() {
   simpleTable($("m-compare"), [["_label", "Model"], ["k", "K", 0, false], ["theta", "θ̂² per month", 3, true],
                                 ["p0", "p (θ² = 0)", 3, false], ["diff", `${name} minus this`, 3, true],
                                 ["test", "Test"], ["p", "p", 3, false],
-                                ["alpha", `Alpha of ${name} % p.a.`, 2, true], ["alpha_t", "t(alpha)", 2, true],
+                                ["alpha", `Alpha of ${name} % p.a.`, 2, true], ["alpha_t", "<em>t</em>(alpha)", 2, true],
                                 ["ir", "Info. ratio", 2, true]], cmpRows);
   $("m-compare-note").textContent = rivals.length ? `${name}, θ̂² ${fmt(mine.adjusted, 3)}, against ${rivals.length} model${rivals.length === 1 ? "" : "s"}` : "tick a model to compare against";
   $("m-verdicts").innerHTML = verdicts.map((v) => `<p class="method" style="margin-top:8px">${v}</p>`).join("");
@@ -2732,13 +2733,26 @@ function helpHtml(topic) {
       // dataset already carries. Writing those lines here a second time is how they drift.
       const d = META.return_type_detail && META.return_type_detail[k];
       const ds = h.source === "datasets" && META.datasets && META.datasets[k];
-      let txt = h.items[k] || (d && d.long) || (ds && ds.blurb) || "";
-      if (txt && !txt.endsWith(".")) txt += ".";
+      let txt = (h.items[k] || (d && d.long) || (ds && ds.blurb) || "").replace(/\.$/, "");
+      // The paper a return definition comes from, declared beside it in spec/factors.json.
+      if (topic === "rt" && d && d.url && d.cite_short) txt += `, as in ${paperLink(d.url, d.cite_short)}`;
+      if (txt) txt += ".";
       return `<dt>${helpLead(topic, k)}</dt><dd>${txt}</dd>`;
     }).join("") + "</dl>";
   }
   if (h.note) body += `<p class="muted" style="margin-top:9px">${h.note}</p>`;
+  // spec/factorviz.json -> help.<topic>.links: the first occurrence of each phrase links to
+  // its paper. Declared there, so the prose itself carries no address.
+  for (const [phrase, url] of Object.entries(h.links || {})) {
+    const i = body.indexOf(phrase);
+    if (i >= 0) body = body.slice(0, i) + paperLink(url, phrase) + body.slice(i + phrase.length);
+  }
   return body;
+}
+
+// A paper opens in a new tab, so the reader keeps their place in FactorViz.
+function paperLink(url, text) {
+  return `<a href="${url}" target="_blank" rel="noopener">${text}</a>`;
 }
 
 let openHelp = null;
@@ -2812,7 +2826,8 @@ function renderAbout() {
     const d = D[k];
     if (d.equation && d.equation_tex) math.push([`eq-${k}`, d.equation_tex]);
     const eq = d.equation ? `<div class="eq" id="eq-${k}">${d.equation}</div>` : "";
-    const cite = d.cite_full ? `<div class="cite">${d.cite_full}</div>` : "";
+    const cite = d.cite_full
+      ? `<div class="cite">${d.url ? paperLink(d.url, d.cite_full) : d.cite_full}</div>` : "";
     // ❗Not "benchmark". On this tab that word already means the market a factor is
     // regressed on. Here it is the series SUBTRACTED to build the return.
     const bm = d.benchmark
@@ -2838,7 +2853,7 @@ function renderAbout() {
                 <td><a href="${it.csv.url}">CSV</a>${mb(it.csv.bytes)}</td></tr>`;
       }).join("") +
       `</tbody></table></div>
-       <p><a href="${D_.all_url}"><strong>All twelve archives in one place</strong></a></p>`;
+       <p><a href="${D_.all_url}"><strong>All twelve archives</strong></a></p>`;
 
   const bm = Object.entries(META.benchmarks.pairing)
     .map(([rt, b]) => `<tr><td>${(D[rt] && D[rt].short) || META.return_types[rt]}
@@ -2855,9 +2870,9 @@ function renderAbout() {
        <a href="https://pypi.org/project/pybondlab/">PyBondLab</a>.</p>
 
     <h2>Download the data</h2>
-    <p>Each set comes as time series, one CSV per return definition, universe and weighting,
-       and as a parquet panel that adds the long and short legs, turnover and portfolio
-       counts.</p>
+    <p>Each set is available as time series, a CSV file for each return definition, universe
+       and weighting, and as a parquet panel that adds the long and short legs, turnover and
+       portfolio counts.</p>
     ${dl}
     <p>Every archive has a <code>MANIFEST.json</code> with the SHA-256 of each file.</p>
 
@@ -2869,8 +2884,8 @@ function renderAbout() {
     <h3>Single sorts</h3>
     <p>Each month bonds are sorted into deciles over all bonds, and into quintiles within
        investment grade and within high yield. The factor is the top portfolio minus the
-       bottom one, equal-weighted and value-weighted, with value weights of price times
-       amount outstanding.</p>
+       bottom portfolio, equal-weighted and value-weighted. Value weights are market
+       capitalization, price plus accrued interest multiplied by the amount outstanding.</p>
     <h3>Within-firm sorts</h3>
     <p>Bonds are ranked only against other bonds of the <em>same issuer</em>, identified by
        CRSP <code>permno</code>.</p>
@@ -2878,15 +2893,15 @@ function renderAbout() {
        valid signal and a positive market value. The cutoffs are the one-third and two-thirds
        points of the <em>distinct</em> signal values in that firm and rating group. Bonds
        strictly above the upper cutoff form the firm's long leg, and bonds strictly below the
-       lower one its short leg. In the equal-weighted factor each leg is an equal average
+       lower cutoff its short leg. In the equal-weighted factor each leg is an equal average
        inside the firm, and the firms' long-minus-short returns are averaged equally. In the
        value-weighted factor each leg is value-weighted inside the firm, and firms count in
        proportion to the market value of the bonds in their two legs. This is done separately
        in three rating groups (AAA to A-, BBB, and below investment grade), and the factor is
        the average over the groups that have a firm that month, as in Dick-Nielsen et al.
        (2023).</p>
-    <p>The long and short legs in the downloads pool every firm's long bonds into one
-       portfolio and every firm's short bonds into another. Pooling brings back the
+    <p>The long and short legs in the downloads pool the long bonds of every firm, and the
+       short bonds of every firm, into a long and a short portfolio. Pooling brings back the
        differences between firms that the factor removes, so a within-firm factor is not its
        long leg minus its short leg.</p>
 
@@ -2896,8 +2911,8 @@ function renderAbout() {
        a duration-matched portfolio of Treasuries to isolate the credit component, and differ
        only in how that portfolio is built.</p>
     <p>Characteristics estimated from returns, such as momentum and the factor betas, are
-       re-estimated on each return definition. The 6-month momentum factor on BNS returns,
-       for example, sorts on 6-month momentum computed from BNS returns.</p>
+       re-estimated with each return definition. For example, the 6-month momentum factor
+       built from BNS returns sorts bonds by 6-month momentum computed from BNS returns.</p>
     ${returns}
 
     <h2>The one business day signal gap</h2>
@@ -2916,7 +2931,7 @@ function renderAbout() {
     <p>Alpha and beta come from a time-series regression of the factor on a bond market
        benchmark, the one-factor bond CAPM (CAPMB) of
        <a href="https://www.sciencedirect.com/science/article/pii/S0304405X23001393">Dickerson, Mueller and Robotti (2023)</a>.
-       Each return definition has its own benchmark, the market return on the same
+       Each return definition has its own benchmark, the market return under the same
        definition, so a duration-adjusted factor is regressed on a duration-adjusted
        market.</p>
     <div class="scroll"><table><thead><tr><th>Return definition</th>
@@ -3035,7 +3050,7 @@ async function boot() {
     const e = modelPick();
     $("m-quick-note").textContent = "";
     if (models.cart.some((x) => cartKey(x) === cartKey(e))) { $("m-quick-note").textContent = "already in the model"; return; }
-    if (models.cart.length >= 10) { $("m-quick-note").textContent = "ten factors in one model is the limit, remove one first"; return; }
+    if (models.cart.length >= 10) { $("m-quick-note").textContent = "a model holds at most ten factors, remove a factor first"; return; }
     models.cart.push(e);
     renderModels();
   };
@@ -3129,7 +3144,7 @@ async function boot() {
   $("foot-built").innerHTML =
     `Built ${META.built_utc.replace("T", " ").replace("+00:00", " UTC")} &middot; `
     + `alpha from the one-factor bond CAPM, on the market benchmark with the same `
-    + `return definition &middot; Newey-West t-statistics`;
+    + `return definition &middot; Newey-West <em>t</em>-statistics`;
 
   mountHelp();
   refreshCompareFactors();
