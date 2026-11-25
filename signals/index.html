@@ -256,21 +256,21 @@
   the line of our code that forms it, the paper it comes from and the months it covers.
 </p>
 <p>
-  Each factor is long the top decile and short the bottom decile of its signal over all bonds. In
-  the within-firm sort, bonds are ranked only against other bonds of the same issuer, so
-  firm-level differences such as default risk and leverage drop out. The factors' returns and
-  alphas are in <a href="../factorviz/">FactorViz</a>.
+  Over all bonds, each factor is long the top decile of its signal and short the bottom decile.
+  The within-firm sort ranks a bond only against other bonds of the same issuer, which removes
+  firm-level differences such as default risk and leverage. <a href="../factorviz/">FactorViz</a> has the factors'
+  returns and alphas.
 </p>
 <p>
-  When the same noisy transaction price enters both a signal and the return that follows it, the
-  errors in the two are correlated, the correlated errors-in-variables (CEIV) problem. In the
-  TRACE data our price-based signals use a price at least one business day before the price that
-  starts the return, and each signal below says whether it is one of them.
+  When a noisy transaction price enters both a signal and the return that follows it, the errors
+  in the two are correlated. This is the correlated errors-in-variables (CEIV) problem. In the
+  TRACE data our price-based signals therefore use a price at least one business day before the
+  price that starts the return. Each signal below says whether it is corrected this way.
 </p>
 <p>
-  The full sample joins Lehman Brothers and ICE BofA quote data to TRACE. A signal that needs
-  transaction data or daily returns, or is estimated on a factor that starts with TRACE, has no
-  data before TRACE.
+  Before TRACE, the full sample uses Lehman Brothers and ICE BofA quotes. Signals that need
+  transaction data or daily returns start with TRACE, and so do signals estimated on a factor that
+  starts with TRACE.
 </p>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.6/katex.min.css">
 <div class="sig-tools">

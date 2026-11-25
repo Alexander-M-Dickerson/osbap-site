@@ -253,10 +253,10 @@
 <h1>Corporate bond data</h1>
 <h2>Load the data in Python</h2>
 <p>
-  Every file on this page is also on <a href="https://huggingface.co/datasets/OpenBondAssetPricing/CorporateBonds">Hugging Face</a>, unpacked, so pandas reads it from
-  there directly and downloads only the columns you ask for. We update the data once a year, and
-  this is release 2026. Each release keeps its own branch on Hugging
-  Face, so you can always load the exact files a paper used.
+  Every file on this page is also on <a href="https://huggingface.co/datasets/OpenBondAssetPricing/CorporateBonds">Hugging Face</a>, unzipped. In pandas you can read a
+  file there directly and download only the columns you need. We update the data once a year,
+  and this is release 2026. Each release keeps its own branch on Hugging
+  Face, so the files used in a paper can still be loaded later.
 </p>
 <pre><code>import pandas as pd  # with pyarrow and huggingface_hub installed
 
