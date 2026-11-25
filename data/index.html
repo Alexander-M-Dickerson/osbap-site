@@ -258,7 +258,8 @@
   and this is release 2026. Each release keeps its own branch on Hugging
   Face, so the files used in a paper can still be loaded later.
 </p>
-<pre><code>import pandas as pd  # with pyarrow and huggingface_hub installed
+<pre><code># pip install pandas pyarrow huggingface_hub
+import pandas as pd
 
 df = pd.read_parquet(
     "hf://datasets/OpenBondAssetPricing/CorporateBonds/monthly/monthly_main/main_panel_2026.parquet",
