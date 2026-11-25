@@ -18,7 +18,7 @@
       on the WordPress site, and a link anywhere else opens in the whole window. A jump within the
       page, a file of ours (the figure's data) and a download made in the page stay as they are.
 
-   "./" is the site root relative to this page, ["/", "/code/", "/data/", "/factorviz/"] our pages relative to that
+   "./" is the site root relative to this page, ["/", "/code/", "/data/", "/factorviz/", "/signals/"] our pages relative to that
    root, the same paths the WordPress pages have. FactorViz passes no pages. */
 (function (root, pages) {
   if (window.self === window.top) return;
@@ -45,7 +45,7 @@
     }
     a.target = "_top";
   }, true);
-})("./", ["/", "/code/", "/data/", "/factorviz/"]);
+})("./", ["/", "/code/", "/data/", "/factorviz/", "/signals/"]);
 
 </script>
 <!--
@@ -204,6 +204,25 @@
   .figure-box { position: relative; height: 380px; }
   .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
 
+  /* The Signals page: a cluster list and a search box over 108 entries already in the HTML. */
+  .sig-tools { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end;
+               margin: 18px 0 6px; }
+  label.pick input { font: inherit; font-size: 13px; text-transform: none; letter-spacing: normal;
+                     color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+                     border-radius: 4px; padding: 5px 8px; min-width: 260px; }
+  .sig-group h2 .muted { font-size: 12.5px; font-weight: 400; margin-left: 6px; }
+  /* One signal: its name, then the facts as label and value; stacked on a phone. */
+  article.sig { border-top: 1px solid var(--line); padding: 14px 0 8px; }
+  article.sig h3 { margin: 0 0 6px; font-size: 15px; }
+  article.sig h3 code { font-size: 12px; font-weight: 400; }
+  dl.sig-facts { display: grid; grid-template-columns: 9.5em 1fr; gap: 3px 14px;
+                 margin: 0 0 10px; max-width: 92ch; font-size: 13.5px; }
+  dl.sig-facts dt { color: var(--ink-soft); }
+  dl.sig-facts dd { margin: 0; }
+  dl.sig-facts dd code { font-size: 12.5px; overflow-wrap: anywhere; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  [hidden] { display: none !important; }
+
   .contributors { list-style: none; padding: 0; margin: 0 0 8px; display: grid;
             grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px 18px; }
   .papers li { margin-bottom: 8px; }
@@ -220,6 +239,10 @@
     table.dl td.get { text-align: right; white-space: normal; }
     .figure { padding: 12px; }
     .figure-box { height: 300px; }
+    dl.sig-facts { grid-template-columns: 1fr; }
+    dl.sig-facts dd { margin-bottom: 6px; }
+    .sig-tools label.pick { flex: 1 1 100%; }
+    label.pick input { min-width: 0; width: 100%; }
   }
 
 </style>

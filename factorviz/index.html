@@ -2863,6 +2863,22 @@ function renderAbout() {
                        <span class="muted">(${rt})</span></td>
                        <td><code>${b}</code></td></tr>`).join("");
 
+  // ❗Counted, never typed (Alex, 2026-11-25: every release adds signals and extends the
+  // sample). Each product carries every signal's first month (make_factorviz.py); a signal's
+  // first month in a dataset is the earliest over its sorts. The Signals page counts the same.
+  const firstOf = (ds) => {
+    const out = {};
+    Object.values(p).filter((x) => x.dataset === ds).forEach((x) =>
+      Object.entries(x.first_month || {}).forEach(([s, m]) => {
+        if (!(s in out) || m < out[s]) out[s] = m;
+      }));
+    return out;
+  };
+  const traceStart = META.window_detail.trace.start.slice(0, 7);
+  const nAll = Object.keys(META.signals).length;
+  const nLI = Object.keys(firstOf("lehman_ice")).length;
+  const nBefore = Object.values(firstOf("extended")).filter((m) => m < traceStart).length;
+
   math.push(["eq-capmb", "r_t = \\alpha + \\beta\\, MKT_t + \\varepsilon_t"]);
   $("about-body").innerHTML = `<div class="prose">
     <h2>What this data is</h2>
@@ -2961,8 +2977,9 @@ function renderAbout() {
       <li>${META.datasets.lehman_ice.label}. ${META.datasets.lehman_ice.blurb}</li>
     </ul>
     <p>Lehman-ICE prices are quotes, so the characteristics that need transaction data or
-       daily returns start with TRACE in August 2002. The Lehman-ICE dataset has 83 of the
-       108 characteristics.</p>
+       daily returns start with TRACE in August 2002. The Lehman-ICE dataset has ${nLI} of the
+       ${nAll} characteristics. Of these, ${nBefore} have data before August 2002, and the other
+       ${nLI - nBefore} are estimated on factors that start with TRACE.</p>
 
     <h2>Known gaps</h2>
     <ul>

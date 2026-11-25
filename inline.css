@@ -68,6 +68,18 @@
 .osbap-inline label.pick { position: relative; }
 .osbap-inline .figure-box { position: relative; height: 380px; }
 .osbap-inline .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
+.osbap-inline .sig-tools { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; margin: 18px 0 6px; }
+.osbap-inline label.pick input { font: inherit; font-size: 13px; text-transform: none; letter-spacing: normal; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; min-width: 260px; }
+.osbap-inline .sig-group h2 .muted { font-size: 12.5px; font-weight: 400; margin-left: 6px; }
+.osbap-inline article.sig { border-top: 1px solid var(--line); padding: 14px 0 8px; }
+.osbap-inline article.sig h3 { margin: 0 0 6px; font-size: 15px; }
+.osbap-inline article.sig h3 code { font-size: 12px; font-weight: 400; }
+.osbap-inline dl.sig-facts { display: grid; grid-template-columns: 9.5em 1fr; gap: 3px 14px; margin: 0 0 10px; max-width: 92ch; font-size: 13.5px; }
+.osbap-inline dl.sig-facts dt { color: var(--ink-soft); }
+.osbap-inline dl.sig-facts dd { margin: 0; }
+.osbap-inline dl.sig-facts dd code { font-size: 12.5px; overflow-wrap: anywhere; }
+.osbap-inline .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.osbap-inline [hidden] { display: none !important; }
 .osbap-inline .contributors { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px 18px; }
 .osbap-inline .papers li { margin-bottom: 8px; }
 @media (max-width: 640px) {
@@ -79,4 +91,8 @@
 .osbap-inline table.dl td.get { text-align: right; white-space: normal; }
 .osbap-inline .figure { padding: 12px; }
 .osbap-inline .figure-box { height: 300px; }
+.osbap-inline dl.sig-facts { grid-template-columns: 1fr; }
+.osbap-inline dl.sig-facts dd { margin-bottom: 6px; }
+.osbap-inline .sig-tools label.pick { flex: 1 1 100%; }
+.osbap-inline label.pick input { min-width: 0; width: 100%; }
 }

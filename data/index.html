@@ -18,7 +18,7 @@
       on the WordPress site, and a link anywhere else opens in the whole window. A jump within the
       page, a file of ours (the figure's data) and a download made in the page stay as they are.
 
-   "../" is the site root relative to this page, ["/", "/code/", "/data/", "/factorviz/"] our pages relative to that
+   "../" is the site root relative to this page, ["/", "/code/", "/data/", "/factorviz/", "/signals/"] our pages relative to that
    root, the same paths the WordPress pages have. FactorViz passes no pages. */
 (function (root, pages) {
   if (window.self === window.top) return;
@@ -45,7 +45,7 @@
     }
     a.target = "_top";
   }, true);
-})("../", ["/", "/code/", "/data/", "/factorviz/"]);
+})("../", ["/", "/code/", "/data/", "/factorviz/", "/signals/"]);
 
 </script>
 <!--
@@ -204,6 +204,25 @@
   .figure-box { position: relative; height: 380px; }
   .figure-foot { font-size: 12.5px; color: var(--ink-soft); margin: 12px 0 0; max-width: 80ch; }
 
+  /* The Signals page: a cluster list and a search box over 108 entries already in the HTML. */
+  .sig-tools { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end;
+               margin: 18px 0 6px; }
+  label.pick input { font: inherit; font-size: 13px; text-transform: none; letter-spacing: normal;
+                     color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+                     border-radius: 4px; padding: 5px 8px; min-width: 260px; }
+  .sig-group h2 .muted { font-size: 12.5px; font-weight: 400; margin-left: 6px; }
+  /* One signal: its name, then the facts as label and value; stacked on a phone. */
+  article.sig { border-top: 1px solid var(--line); padding: 14px 0 8px; }
+  article.sig h3 { margin: 0 0 6px; font-size: 15px; }
+  article.sig h3 code { font-size: 12px; font-weight: 400; }
+  dl.sig-facts { display: grid; grid-template-columns: 9.5em 1fr; gap: 3px 14px;
+                 margin: 0 0 10px; max-width: 92ch; font-size: 13.5px; }
+  dl.sig-facts dt { color: var(--ink-soft); }
+  dl.sig-facts dd { margin: 0; }
+  dl.sig-facts dd code { font-size: 12.5px; overflow-wrap: anywhere; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  [hidden] { display: none !important; }
+
   .contributors { list-style: none; padding: 0; margin: 0 0 8px; display: grid;
             grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px 18px; }
   .papers li { margin-bottom: 8px; }
@@ -220,6 +239,10 @@
     table.dl td.get { text-align: right; white-space: normal; }
     .figure { padding: 12px; }
     .figure-box { height: 300px; }
+    dl.sig-facts { grid-template-columns: 1fr; }
+    dl.sig-facts dd { margin-bottom: 6px; }
+    .sig-tools label.pick { flex: 1 1 100%; }
+    label.pick input { min-width: 0; width: 100%; }
   }
 
 </style>
@@ -228,6 +251,20 @@
 
 <div class="wrap">
 <h1>Corporate bond data</h1>
+<h2>Load the data in Python</h2>
+<p>
+  Every file on this page is also on <a href="https://huggingface.co/datasets/OpenBondAssetPricing/CorporateBonds">Hugging Face</a>, unpacked, so pandas reads it from
+  there directly and downloads only the columns you ask for. We update the data once a year, and
+  this is release 2026. Each release keeps its own branch on Hugging
+  Face, so you can always load the exact files a paper used.
+</p>
+<pre><code>import pandas as pd  # with pyarrow and huggingface_hub installed
+
+df = pd.read_parquet(
+    "hf://datasets/OpenBondAssetPricing/CorporateBonds/monthly/monthly_main/main_panel_2026.parquet",
+    columns=["cusip", "date", "ret_vw", "cs"],
+)</code></pre>
+
 <h2>Corporate bond factors</h2>
 <p>
   108 long-short factors, 1973 to 2025, built from the combined Lehman-ICE and TRACE data. Over
@@ -265,6 +302,17 @@
 
 <h2>Papers</h2>
 <div class="scroll"><table><tbody><tr><td><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966"><strong>The Corporate Bond Factor Replication Crisis</strong></a><span class="what">The paper behind the data and the pipeline.</span></td></tr><tr><td><a href="https://www.sciencedirect.com/science/article/pii/S0304405X26000668"><strong>The Co-Pricing Factor Zoo</strong></a><span class="what">Journal of Financial Economics 182, article 104295.</span></td></tr><tr><td><a href="https://www.sciencedirect.com/science/article/abs/pii/S0304405X23001393"><strong>Priced risk in corporate bonds</strong></a><span class="what">Journal of Financial Economics 150, article 103707.</span></td></tr></tbody></table></div>
+
+<h2>Citing the data</h2>
+<p>
+  Please cite <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966">Dickerson, Robotti and Rossetti (2026)</a> when you use the data.
+</p>
+<pre><code>@misc{Dickerson-Robotti-Rossetti-2026,
+  title  = {The Corporate Bond Factor Replication Crisis},
+  author = {Alexander Dickerson and Cesare Robotti and Giulio Rossetti},
+  year   = {2026},
+  note   = {Working paper},
+  url    = {https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6088966}}</code></pre>
 
 <h2>Notes on the files</h2>
 <ul>
